@@ -8,6 +8,8 @@ services:
     startCommand: node dist-server/index.cjs
     healthCheckPath: /api/health
     envVars:
+      - key: NPM_CONFIG_PRODUCTION
+        value: false
       - key: NODE_ENV
         value: production
       - key: RENDER
