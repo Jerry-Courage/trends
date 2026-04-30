@@ -28,7 +28,3 @@ services:
         sync: false
       - key: VITE_GOOGLE_CLIENT_ID
         sync: false
-    disk:
-      name: trends-data
-      mountPath: /data
-      sizeGB: 1

@@ -3,10 +3,8 @@ import Database from "better-sqlite3";
 import * as schema from "../shared/schema";
 import path from "path";
 
-// On Render, use the persistent disk at /data; locally use project root
-const dbPath = process.env.RENDER
-  ? "/data/sqlite_v2.db"
-  : path.resolve("sqlite_v2.db");
+// On Render free tier there's no persistent disk — DB lives in the project root
+const dbPath = path.resolve(process.cwd(), "sqlite_v2.db");
 console.log("### DB_CHECKPOINT: Initializing database at", dbPath);
 
 let sqlite;
