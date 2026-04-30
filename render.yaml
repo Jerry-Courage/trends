@@ -4,7 +4,7 @@ services:
     runtime: node
     region: oregon
     plan: free
-    buildCommand: npm install && npm run build:render
+    buildCommand: npm install --include=dev && npm run build:render
     startCommand: node dist-server/index.cjs
     healthCheckPath: /api/health
     envVars:
