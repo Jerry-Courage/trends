@@ -4,11 +4,11 @@ import { z } from "zod";
 import { sql } from "drizzle-orm";
 
 // SQLite doesn't have native enums, so we'll use text with Zod validation
-export const roles = ["customer", "kitchen", "rider", "admin"] as const;
+export const roles = ["customer", "warehouse", "courier", "admin"] as const;
 export const orderStatuses = [
   "pending",
   "confirmed",
-  "preparing",
+  "packaging",
   "ready",
   "assigned",
   "picked_up",
@@ -26,7 +26,7 @@ export const users = sqliteTable("users", {
   role: text("role", { enum: roles }).notNull().default("customer"),
   address: text("address"),
   points: integer("points").notNull().default(0),
-  allergies: text("allergies"),
+  interests: text("interests"),
   createdAt: integer("created_at", { mode: 'timestamp' }).default(sql`(unixepoch())`).notNull(),
 });
 
@@ -37,7 +37,7 @@ export const menuItems = sqliteTable("menu_items", {
   price: text("price").notNull(), // Switched to text for decimal precision
   imageUrl: text("image_url"),
   category: text("category").notNull(),
-  calories: integer("calories"),
+  specs: text("specs"),
   tags: text("tags"), // Stored as JSON string
   rating: text("rating"),
   reviews: integer("reviews"),
@@ -60,9 +60,9 @@ export const orders = sqliteTable("orders", {
   paymentMethod: text("payment_method").notNull().default("card"),
   paymentStatus: text("payment_status").notNull().default("pending"),
   transactionId: text("transaction_id"),
-  riderId: integer("rider_id").references(() => users.id),
-  riderLat: real("rider_lat"),
-  riderLng: real("rider_lng"),
+  courierId: integer("courier_id").references(() => users.id),
+  courierLat: real("courier_lat"),
+  courierLng: real("courier_lng"),
   customerLat: real("customer_lat"),
   customerLng: real("customer_lng"),
   notes: text("notes"),
@@ -97,7 +97,7 @@ export const insertUserSchema = z.object({
   role: z.enum(roles).optional(),
   address: z.string().optional(),
   points: z.number().optional(),
-  allergies: z.string().optional(),
+  interests: z.string().optional(),
 });
 
 export const insertOrderSchema = z.object({

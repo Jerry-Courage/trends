@@ -14,11 +14,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import "leaflet/dist/leaflet.css";
 
 const locations = [
-  { name: "Fishing Panda's Tse Addo", badge: "⚡FASTEST", address: "Tse Addo, Accra, Ghana", dist: "0.8 mi", rating: 4.8, time: "15-20 min", status: "Open", lat: 5.6020, lng: -0.1118 },
-  { name: "Fishing Panda's Adjiringanor", address: "Adjiringanor, Accra, Ghana", dist: "2.4 mi", rating: 4.5, time: "25-35 min", status: "Open", lat: 5.6512, lng: -0.1485 },
-  { name: "Fishing Panda's UG Legon", address: "Bani Hostel, UG, Legon", dist: "3.1 mi", rating: 4.2, time: "30-45 min", status: "Closing Soon", lat: 5.6540, lng: -0.1865 },
-  { name: "Fishing Panda's Awoshie", address: "Awoshie, Accra, Ghana", dist: "4.5 mi", rating: 4.3, time: "35-50 min", status: "Open", lat: 5.5925, lng: -0.2740 },
-  { name: "Fishing Panda's Dansoman", address: "Dansoman, Accra, Ghana", dist: "5.2 mi", rating: 4.6, time: "40-55 min", status: "Open", lat: 5.5545, lng: -0.2520 },
+  { name: "Trends Electronics Tse Addo", badge: "⚡FASTEST", address: "Tse Addo, Accra, Ghana", dist: "0.8 mi", rating: 4.8, time: "15-20 min", status: "Open", lat: 5.6020, lng: -0.1118 },
+  { name: "Trends Electronics Adjiringanor", address: "Adjiringanor, Accra, Ghana", dist: "2.4 mi", rating: 4.5, time: "25-35 min", status: "Open", lat: 5.6512, lng: -0.1485 },
+  { name: "Trends Electronics UG Legon", address: "Bani Hostel, UG, Legon", dist: "3.1 mi", rating: 4.2, time: "30-45 min", status: "Closing Soon", lat: 5.6540, lng: -0.1865 },
+  { name: "Trends Electronics Awoshie", address: "Awoshie, Accra, Ghana", dist: "4.5 mi", rating: 4.3, time: "35-50 min", status: "Open", lat: 5.5925, lng: -0.2740 },
+  { name: "Trends Electronics Dansoman", address: "Dansoman, Accra, Ghana", dist: "5.2 mi", rating: 4.6, time: "40-55 min", status: "Open", lat: 5.5545, lng: -0.2520 },
 ];
 
 const NearbyPage = () => {
@@ -170,7 +170,7 @@ const NearbyPage = () => {
   if (isLoading) {
     return (
       <div className="pb-4 relative bg-black min-h-screen">
-        <AppHeader title="Find Fishing Panda" />
+        <AppHeader title="Find Trends Electronics" />
         <div className="md:grid md:grid-cols-2 md:gap-4 md:px-4 md:mt-3">
           <div className="px-4 md:px-0">
             <Skeleton className="w-full h-[320px] rounded-[2rem]" />
@@ -225,7 +225,7 @@ const NearbyPage = () => {
       </Dialog>
 
       <div className={`transition-all duration-500 ${pickupLocation ? 'opacity-0 scale-95 pointer-events-none' : 'opacity-100 scale-100'}`}>
-        <AppHeader title="Find Fishing Panda" />
+        <AppHeader title="Find Trends Electronics" />
         
         <div className="md:grid md:grid-cols-2 md:gap-4 md:px-4 md:mt-3">
           <div>
@@ -236,7 +236,7 @@ const NearbyPage = () => {
             >
               <div className="absolute top-4 left-4 z-[1000] bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10 flex items-center gap-2 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
                 <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
-                <span className="text-[10px] text-white font-bold tracking-widest uppercase">Live Kitchen Data</span>
+                <span className="text-[10px] text-white font-bold tracking-widest uppercase">Live Warehouse Status</span>
               </div>
             </div>
           </div>
@@ -259,9 +259,9 @@ const NearbyPage = () => {
               <div className="flex items-start gap-2">
                 <Zap className="w-5 h-5 text-secondary flex-shrink-0 mt-0.5" />
                 <div>
-                  <h3 className="font-bold text-sm text-foreground">AI Tip: Fastest Choice</h3>
+                  <h3 className="font-bold text-sm text-foreground">AI Tip: Fastest Pickup</h3>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    The <strong>Tse Addo</strong> location has the lowest kitchen volume right now. Save <strong>12 minutes</strong> by ordering here!
+                    The <strong>Tse Addo</strong> hub has the lowest order volume right now. Save <strong>12 minutes</strong> by picking up here!
                   </p>
                 </div>
               </div>
@@ -297,7 +297,7 @@ const NearbyPage = () => {
                       <span className="flex items-center gap-0.5"><Clock className="w-3 h-3" /> Delivery: {loc.time}</span>
                     </div>
                     <div className="flex gap-2 mt-3">
-                      <button onClick={() => navigate("/menu")} className="px-4 py-2 border border-border rounded-xl text-xs font-semibold text-foreground hover:bg-white/5 transition-colors">Menu</button>
+                      <button onClick={() => navigate("/menu")} className="px-4 py-2 border border-border rounded-xl text-xs font-semibold text-foreground hover:bg-white/5 transition-colors">Store</button>
                       <button 
                         onClick={() => setPickupLocation(loc)} 
                         className="px-4 py-2 border border-border rounded-xl text-xs font-semibold text-foreground hover:bg-white/5 transition-colors"
@@ -341,7 +341,7 @@ const PickupNavigation = ({ location, onClose }: { location: any; onClose: () =>
         maxZoom: 20,
       }).addTo(map);
 
-      // Add Restaurant Marker
+      // Add Warehouse Marker
       const destIcon = L.divIcon({
         className: 'pulsing-marker',
         html: `<div style="width:18px;height:18px;background:#FFB800;border-radius:50%;border:3px solid white;box-shadow:0 0 20px rgba(255,184,0,0.6)"></div>`,

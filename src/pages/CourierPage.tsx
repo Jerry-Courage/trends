@@ -15,8 +15,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
+import logo from "@/assets/logo.png";
 
-type OrderStatus = "pending" | "confirmed" | "preparing" | "ready" | "assigned" | "picked_up" | "delivered" | "cancelled";
+type OrderStatus = "pending" | "confirmed" | "packaging" | "ready" | "assigned" | "picked_up" | "delivered" | "cancelled";
 
 interface OrderItem { id: number; name: string; quantity: number; price: string }
 interface Order {
@@ -43,7 +44,7 @@ const DELIVERY_STEPS = [
   { key: "delivered", label: "Delivered",   icon: <CheckCircle size={14}/> },
 ];
 
-const RiderPage = () => {
+const CourierPage = () => {
   const { user, logout } = useAuth();
   const { socket } = useSocket();
   const navigate = useNavigate();
@@ -59,10 +60,10 @@ const RiderPage = () => {
   const [isSharing, setIsSharing] = useState(false);
 
   const { data: orders = [], isLoading, refetch } = useQuery<Order[]>({
-    queryKey: ["/api/rider/orders"],
-    queryFn: () => api.get("/rider/orders"),
+    queryKey: ["/api/courier/orders"],
+    queryFn: () => api.get("/courier/orders"),
     refetchInterval: 10000,
-    enabled: user?.role === "rider",
+    enabled: user?.role === "courier",
   });
 
   const active = orders.filter(o => !["delivered", "cancelled"].includes(o.status));
@@ -73,7 +74,7 @@ const RiderPage = () => {
   useEffect(() => {
     if (!socket) return;
     socket.on("order_assigned", () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/rider/orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/courier/orders"] });
     });
     return () => { socket.off("order_assigned"); };
   }, [socket, queryClient]);
@@ -85,7 +86,7 @@ const RiderPage = () => {
       socket.on("chat:history", (messages: ChatMessage[]) => setChatMessages(messages));
       socket.on("chat:message", (message: ChatMessage) => {
         setChatMessages(prev => prev.find(m => m.id === message.id) ? prev : [...prev, message]);
-        if (message.senderRole !== "rider") {
+        if (message.senderRole !== "courier") {
           setUnreadCounts(prev => ({ ...prev, [chatOrderId]: (prev[chatOrderId] || 0) + 1 }));
         }
       });
@@ -105,7 +106,7 @@ const RiderPage = () => {
 
   const sendMessage = useCallback(() => {
     if (!chatInput.trim() || !socket || chatOrderId === null || !user) return;
-    socket.emit("chat:send", { orderId: chatOrderId, text: chatInput.trim(), senderRole: "rider", senderName: user.name });
+    socket.emit("chat:send", { orderId: chatOrderId, text: chatInput.trim(), senderRole: "courier", senderName: user.name });
     setChatInput("");
   }, [chatInput, socket, chatOrderId, user]);
 
@@ -135,8 +136,8 @@ const RiderPage = () => {
 
   const statusMutation = useMutation({
     mutationFn: ({ id, status }: { id: number; status: "picked_up" | "delivered" }) =>
-      api.patch(`/rider/orders/${id}/status`, { status }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/rider/orders"] }),
+      api.patch(`/courier/orders/${id}/status`, { status }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/courier/orders"] }),
   });
 
   const chatOrder = orders.find(o => o.id === chatOrderId);
@@ -149,12 +150,12 @@ const RiderPage = () => {
           <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-primary/5 opacity-50" />
           
           <div className="relative flex items-center gap-3 md:gap-4">
-             <div className="w-10 h-10 md:w-12 md:h-12 bg-primary/20 rounded-xl md:rounded-2xl flex items-center justify-center border border-primary/20 group">
-                <Bike className="w-5 h-5 md:w-6 md:h-6 text-primary group-hover:scale-110 transition-transform duration-500" />
+             <div className="w-10 h-10 md:w-12 md:h-12 bg-primary/20 rounded-xl md:rounded-2xl flex items-center justify-center border border-primary/20 overflow-hidden">
+                <img src={logo} alt="Trends Electronics" className="w-6 h-6 md:w-8 md:h-8 object-contain" />
              </div>
              <div>
                 <div className="flex items-center gap-2">
-                   <h1 className="font-black text-lg md:text-xl tracking-tight uppercase italic italic-shadow">Dispatch</h1>
+                   <h1 className="font-black text-lg md:text-xl tracking-tight uppercase italic italic-shadow">Trends Courier</h1>
                    {isSharing && (
                       <div className="hidden xs:flex items-center gap-1.5 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
                          <div className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse" />
@@ -162,7 +163,7 @@ const RiderPage = () => {
                       </div>
                    )}
                 </div>
-                <p className="text-[8px] md:text-[10px] text-white/40 uppercase font-bold tracking-[0.2em] mt-0.5">{user?.name?.split(' ')[0]} · Fleet</p>
+                <p className="text-[8px] md:text-[10px] text-white/40 uppercase font-bold tracking-[0.2em] mt-0.5">{user?.name?.split(' ')[0]} · Courier Fleet</p>
              </div>
           </div>
 
@@ -177,7 +178,7 @@ const RiderPage = () => {
         </header>
       </div>
 
-      {/* Rider Stats HUD */}
+      {/* Courier Stats HUD */}
       <div className="px-6 py-2 grid grid-cols-2 md:grid-cols-3 gap-4">
          <motion.div whileHover={{ y: -4 }} className="bg-white/[0.03] rounded-3xl p-5 border border-white/[0.05] relative overflow-hidden group">
             <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
@@ -234,7 +235,7 @@ const RiderPage = () => {
                   <Zap size={40} className="animate-pulse" />
                </div>
                <p className="text-xl font-bold text-white/40 uppercase tracking-widest italic">Standing By...</p>
-               <p className="text-xs text-white/20 uppercase font-black tracking-widest mt-2">Waiting for kitchen dispatch</p>
+               <p className="text-xs text-white/20 uppercase font-black tracking-widest mt-2">Waiting for warehouse dispatch</p>
             </div>
          ) : (
             <LayoutGroup>
@@ -339,7 +340,7 @@ const RiderPage = () => {
                                        className="flex-1 min-w-[200px] h-14 md:h-16 bg-primary text-primary-foreground font-black uppercase tracking-[0.2em] italic rounded-2xl md:rounded-3xl flex items-center justify-center gap-3 shadow-2xl transition-all active:scale-95 disabled:opacity-30 text-xs"
                                     >
                                        <Package size={18} />
-                                       Establish Pickup
+                                       Secure Package
                                     </motion.button>
                                  )}
                                  {isPickedUp && (
@@ -415,7 +416,7 @@ const RiderPage = () => {
                      </div>
                   )}
                   {chatMessages.map(msg => {
-                     const isMe = msg.senderRole === "rider";
+                     const isMe = msg.senderRole === "courier";
                      return (
                         <motion.div
                            key={msg.id}
@@ -472,4 +473,4 @@ const RiderPage = () => {
   );
 };
 
-export default RiderPage;
+export default CourierPage;

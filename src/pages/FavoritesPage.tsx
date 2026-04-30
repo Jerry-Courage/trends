@@ -16,7 +16,7 @@ interface DBMenuItem {
   price: string;
   imageUrl: string | null;
   category: string;
-  calories: number | null;
+  specs: string | null;
   tags: string | null;
 }
 
@@ -51,9 +51,9 @@ const FavoritesPage = () => {
       name: item.name,
       description: item.description,
       price: parseFloat(item.price),
-      image: item.imageUrl || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c",
+      image: item.imageUrl || "https://images.unsplash.com/photo-1519389950473-47ba0277781c",
       category: item.category,
-      calories: item.calories || undefined,
+      specs: item.specs || undefined,
       tags: item.tags ? JSON.parse(item.tags) : undefined,
     };
     
@@ -92,9 +92,9 @@ const FavoritesPage = () => {
             </div>
             <h2 className="text-xl font-semibold mb-2">No favorites yet</h2>
             <p className="text-muted-foreground mb-6 max-w-[250px]">
-              Tap the heart icon on any dish to save it here for quick ordering.
+              Tap the heart icon on any product to save it here for quick access.
             </p>
-            <Button onClick={() => navigate("/menu")}>Browse Menu</Button>
+            <Button onClick={() => navigate("/menu")}>Explore Store</Button>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -106,7 +106,7 @@ const FavoritesPage = () => {
                     onClick={() => navigate(`/item/${item.id}`)}
                   >
                     <img 
-                      src={item.imageUrl || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c"} 
+                      src={item.imageUrl || "https://images.unsplash.com/photo-1519389950473-47ba0277781c"} 
                       alt={item.name}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                     />

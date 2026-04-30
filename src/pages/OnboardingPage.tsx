@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { 
   ShoppingBag, 
-  Bike, 
-  ChefHat, 
+  Truck, 
+  Package, 
   LayoutDashboard, 
   ArrowRight, 
   ArrowLeft,
@@ -23,39 +23,39 @@ const roles = [
   {
     id: "customer",
     title: "Customer",
-    description: "Order delicious food from Fishing Panda and get it delivered.",
+    description: "Shop high-end gadgets from Trends Electronics and get them delivered.",
     icon: ShoppingBag,
-    color: "from-orange-500 to-orange-600",
-    shadow: "shadow-orange-500/20",
+    color: "from-blue-500 to-blue-600",
+    shadow: "shadow-blue-500/20",
     features: ["Real-time tracking", "AI recommendations", "Express delivery"]
   },
   {
-    id: "rider",
-    title: "Delivery Partner",
-    description: "Join our elite fleet and earn money on your own schedule.",
-    icon: Bike,
-    color: "from-blue-500 to-blue-600",
-    shadow: "shadow-blue-500/20",
-    features: ["Flexible hours", "Instant payouts", "Rider assistance"]
+    id: "courier",
+    title: "Premium Courier",
+    description: "Join our elite fleet and deliver high-end electronics securely.",
+    icon: Truck,
+    color: "from-cyan-500 to-cyan-600",
+    shadow: "shadow-cyan-500/20",
+    features: ["Flexible hours", "High-value payouts", "Logistics assistance"]
   },
   {
-    id: "kitchen",
-    title: "Kitchen Staff",
-    description: "The heart of the operation. Manage orders and ensure quality.",
-    icon: ChefHat,
+    id: "warehouse",
+    title: "Warehouse Tech",
+    description: "Handle high-value inventory and ensure premium quality control.",
+    icon: Package,
     color: "from-zinc-500 to-zinc-700",
     shadow: "shadow-zinc-500/20",
-    features: ["Order management", "Inventory control", "Performance analytics"],
+    features: ["Inventory management", "Stock control", "Security analytics"],
     isPrivate: true
   },
   {
     id: "admin",
-    title: "Oversight",
-    description: "Complete restaurant management and AI business insights.",
+    title: "Operations",
+    description: "Complete retail management and AI business insights.",
     icon: LayoutDashboard,
     color: "from-emerald-500 to-emerald-700",
     shadow: "shadow-emerald-500/20",
-    features: ["Full analytics", "Menu management", "AI Consultant"],
+    features: ["Full analytics", "Catalog management", "AI Consultant"],
     isPrivate: true
   }
 ];
@@ -74,8 +74,8 @@ export default function OnboardingPage() {
 
   const handleNext = () => {
     if (step === 1 && selectedRole) {
-      if (selectedRole === "rider") {
-        navigate("/rider-onboarding");
+      if (selectedRole === "courier") {
+        navigate("/courier-onboarding");
       } else {
         setStep(2);
       }
@@ -88,14 +88,14 @@ export default function OnboardingPage() {
   return (
     <div className="min-h-screen bg-[#050505] text-white flex flex-col items-center justify-center overflow-y-auto overflow-x-hidden relative selection:bg-orange-500/30">
       {/* Background Glow */}
-      <div className="fixed top-0 left-0 w-full h-[50vh] bg-gradient-to-b from-orange-500/10 via-transparent to-transparent pointer-events-none" />
+      <div className="fixed top-0 left-0 w-full h-[50vh] bg-gradient-to-b from-blue-500/10 via-transparent to-transparent pointer-events-none" />
       <motion.div 
         animate={{ 
           scale: [1, 1.2, 1],
           opacity: [0.3, 0.5, 0.3],
         }}
         transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute top-1/4 left-1/4 w-[400px] h-[400px] bg-orange-500/20 rounded-full blur-[140px] pointer-events-none" 
+        className="absolute top-1/4 left-1/4 w-[400px] h-[400px] bg-blue-500/20 rounded-full blur-[140px] pointer-events-none" 
       />
       <motion.div 
         animate={{ 
@@ -137,12 +137,12 @@ export default function OnboardingPage() {
                       transition={{ delay: 0.1 }}
                       className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest text-white/70 mb-2 backdrop-blur-md"
                     >
-                      <Sparkles size={14} className="text-orange-400" /> Getting Started
+                      <Sparkles size={14} className="text-blue-400" /> Getting Started
                     </motion.div>
                     <h1 className="text-[2.25rem] font-black tracking-tighter uppercase italic leading-[1] text-white">
-                      Choose Your <br/> <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-orange-600">Journey</span>
+                      Choose Your <br/> <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-blue-600">Journey</span>
                     </h1>
-                    <p className="text-neutral-400 text-sm font-medium px-4">How would you like to use Fishing Panda today?</p>
+                    <p className="text-neutral-400 text-sm font-medium px-4">How would you like to use Trends Electronics today?</p>
                   </div>
 
                   <div className="grid grid-cols-1 gap-4 flex-1 content-center">
@@ -156,7 +156,7 @@ export default function OnboardingPage() {
                         className={cn(
                           "relative p-5 cursor-pointer transition-all duration-300 border bg-[#0A0A0A]/80 backdrop-blur-3xl group overflow-hidden rounded-3xl",
                           selectedRole === role.id 
-                            ? "border-orange-500/50 shadow-[0_0_40px_rgba(249,115,22,0.15)] scale-[1.02] bg-[#111]" 
+                            ? "border-blue-500/50 shadow-[0_0_40px_rgba(59,130,246,0.15)] scale-[1.02] bg-[#111]" 
                             : "border-white/5 hover:border-white/20 active:scale-[0.98]"
                         )}
                       >
@@ -182,12 +182,12 @@ export default function OnboardingPage() {
                           
                           <div className="flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors duration-300 ml-2"
                             style={{
-                              borderColor: selectedRole === role.id ? 'rgb(249, 115, 22)' : 'rgba(255,255,255,0.1)'
+                              borderColor: selectedRole === role.id ? 'rgb(59, 130, 246)' : 'rgba(255,255,255,0.1)'
                             }}>
                             {selectedRole === role.id && (
                               <motion.div 
                                 layoutId="role-check"
-                                className="w-3 h-3 rounded-full bg-orange-500"
+                                className="w-3 h-3 rounded-full bg-blue-500"
                               />
                             )}
                           </div>
@@ -212,7 +212,7 @@ export default function OnboardingPage() {
                       Already have an account?{" "}
                       <button 
                         onClick={() => navigate("/login")}
-                        className="text-white hover:text-orange-400 transition-colors p-2 -m-2"
+                        className="text-white hover:text-blue-400 transition-colors p-2 -m-2"
                       >
                         Sign In
                       </button>
@@ -251,7 +251,7 @@ export default function OnboardingPage() {
                     </motion.div>
 
                     <div className="text-center space-y-3">
-                      <h2 className="text-3xl font-black tracking-tighter uppercase italic leading-[1] text-white">Join as <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-orange-600">{currentRoleData.title}</span></h2>
+                      <h2 className="text-3xl font-black tracking-tighter uppercase italic leading-[1] text-white">Join as <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-blue-600">{currentRoleData.title}</span></h2>
                       <p className="text-neutral-400 text-sm font-medium px-4 leading-relaxed">{currentRoleData.description}</p>
                     </div>
 
@@ -267,7 +267,7 @@ export default function OnboardingPage() {
                             className="flex items-center gap-4 text-white text-[13px] font-bold"
                           >
                             <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center flex-shrink-0 border border-white/5">
-                              <CheckCircle2 size={16} className="text-orange-500" />
+                              <CheckCircle2 size={16} className="text-blue-500" />
                             </div>
                             {feature}
                           </motion.div>

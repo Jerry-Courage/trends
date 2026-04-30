@@ -14,14 +14,14 @@ const categories = [
 ];
 
 const faqs = [
-  { q: "My order is taking longer than usual", a: "We apologize for the delay! Traffic or high kitchen volume might be affecting your delivery. Check the 'Order Tracking' screen for real-time updates or use Live Chat for a status check." },
+  { q: "My order is taking longer than usual", a: "We apologize for the delay! Traffic or high warehouse activity might be affecting your delivery. Check the 'Order Tracking' screen for real-time updates or use Live Chat for a status check." },
   { q: "How do I request a refund?", a: "Go to Orders → select the order → View Receipt & Details → Request Refund." },
   { q: "Can I edit my order after placing it?", a: "You can modify your order within 2 minutes of placing it. After that, contact support." },
 ];
 
 const notifications = [
-  { icon: Truck, title: "Order #8829 Arriving Soon", desc: "Your Kung Pao Chicken is just 5 minutes away! Get ready for a delicious meal.", time: "2m ago", isNew: true },
-  { icon: CreditCard, title: "Weekend Special: 20% OFF", desc: "Use code WU20 for 20% off all Dim Sum combos this weekend. Valid until Sunday midnight.", time: "1h ago", isNew: true },
+  { icon: Truck, title: "Order #8829 Arriving Soon", desc: "Your iPhone 15 Pro is just 5 minutes away! Get ready for your new gadget.", time: "2m ago", isNew: true },
+  { icon: CreditCard, title: "Weekend Special: 10% OFF", desc: "Use code TRENDS10 for 10% off all tech bundles this weekend. Valid until Sunday midnight.", time: "1h ago", isNew: true },
   { icon: CreditCard, title: "Refund Processed Successfully", desc: "The refund of GH₵12.50 for Order #8712 has been sent to your original payment method.", time: "Yesterday", isNew: false },
   { icon: Bell, title: "Account Security Update", desc: "We've enhanced our login security. Your account is now more protected than ever.", time: "2d ago", isNew: false },
 ];
@@ -83,12 +83,12 @@ const HelpPage = () => {
           </div>
           <div className="text-left">
             <h3 className="font-bold text-sm">AI Live Support</h3>
-            <p className="text-xs opacity-80">Instant help from Fishing Panda Brain</p>
+            <p className="text-xs opacity-80">Instant help from Trends Electronics Intelligence</p>
           </div>
           <ChevronRight className="w-5 h-5 ml-auto" />
         </button>
         <button 
-          onClick={() => window.location.href = "mailto:support@mrwu.com"}
+          onClick={() => window.location.href = "mailto:support@trendselectronics.com"}
           className="w-full bg-card border border-border rounded-xl p-4 flex items-center gap-3 hover:bg-muted/50 transition-all"
         >
           <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
@@ -185,8 +185,8 @@ const HelpPage = () => {
 
       {/* Footer */}
       <div className="text-center mt-8 pb-4">
-        <p className="text-xs text-muted-foreground">Support ID: WU-HELP-99X2-771</p>
-        <p className="text-xs text-muted-foreground">Fishing Panda Customer Service © 2024</p>
+        <p className="text-xs text-muted-foreground">Support ID: TRENDS-SUPPORT-2025</p>
+        <p className="text-xs text-muted-foreground">Trends Electronics Support © 2025</p>
       </div>
       <SupportChat isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
     </div>

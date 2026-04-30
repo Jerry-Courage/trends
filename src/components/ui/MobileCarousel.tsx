@@ -3,32 +3,33 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ChefHat, Bike, MapPin, ArrowRight, Sparkles, Zap, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import logo from "@/assets/logo.png";
 
 const slides = [
   {
     id: 1,
-    title: "Authentic Masterpieces",
-    description: "Every dish is a work of art, crafted by master chefs using centuries-old techniques.",
-    icon: <ChefHat className="text-orange-500" size={56} />,
-    badge: <Sparkles size={14} className="text-orange-400" />,
-    badgeText: "Culinary Excellence",
-    color: "from-orange-500/30 to-orange-900/10",
-    glowColor: "bg-orange-500/20"
-  },
-  {
-    id: 2,
-    title: "Lightning Delivery",
-    description: "Our elite fleet is optimized for speed, ensuring your flavors arrive piping hot.",
-    icon: <Bike className="text-blue-500" size={56} />,
-    badge: <Zap size={14} className="text-blue-400" />,
-    badgeText: "Kinetic Logistics",
+    title: "Tech Masterpieces",
+    description: "Every device is a masterpiece of engineering, curated for the modern technologist.",
+    icon: <img src={logo} alt="Trends Electronics" className="w-20 h-20 object-contain" />,
+    badge: <Sparkles size={14} className="text-blue-400" />,
+    badgeText: "Premium Gadgets",
     color: "from-blue-500/30 to-blue-900/10",
     glowColor: "bg-blue-500/20"
   },
   {
+    id: 2,
+    title: "Lightning Delivery",
+    description: "Our elite courier fleet is optimized for speed and security, ensuring your tech arrives safe.",
+    icon: <Bike className="text-cyan-500" size={56} />,
+    badge: <Zap size={14} className="text-cyan-400" />,
+    badgeText: "Kinetic Logistics",
+    color: "from-cyan-500/30 to-cyan-900/10",
+    glowColor: "bg-cyan-500/20"
+  },
+  {
     id: 3,
     title: "Total Control",
-    description: "Real-time AI tracking gives you full oversight from the kitchen to your doorstep.",
+    description: "Real-time AI tracking gives you full oversight from the warehouse to your doorstep.",
     icon: <MapPin className="text-emerald-500" size={56} />,
     badge: <Clock size={14} className="text-emerald-400" />,
     badgeText: "Live Oversight",

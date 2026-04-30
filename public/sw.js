@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mrwu-v1';
+const CACHE_NAME = 'trends-v1';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',

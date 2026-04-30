@@ -116,7 +116,7 @@ const SupportChat = ({ isOpen, onClose }: SupportChatProps) => {
       setMessages([
         { 
           role: "assistant", 
-          content: `Hi ${user?.name || "there"}! 👋 I'm Fishing Panda AI assistant. How can I help you today?` 
+          content: `Hi ${user?.name || "there"}! 👋 I'm your Trends Electronics AI assistant. How can I help you today?` 
         }
       ]);
     }
@@ -141,7 +141,7 @@ const SupportChat = ({ isOpen, onClose }: SupportChatProps) => {
     } catch (err) {
       setMessages(prev => [...prev, { 
         role: "assistant", 
-        content: "I'm sorry, I encountered an error. Please try again or contact support@mrwu.com." 
+        content: "I'm sorry, I encountered an error. Please try again or contact support@trendselectronics.com." 
       }]);
     } finally {
       setIsLoading(false);
@@ -175,7 +175,7 @@ const SupportChat = ({ isOpen, onClose }: SupportChatProps) => {
                   <Sparkles className="w-5 h-5 text-primary-foreground" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-primary-foreground">Fishing Panda Assistant</h3>
+                  <h3 className="text-sm font-bold text-primary-foreground">Trends Electronics Assistant</h3>
                   <div className="flex items-center gap-1">
                     <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
                     <span className="text-[10px] text-primary-foreground/70 uppercase font-bold tracking-widest">Always Active</span>
@@ -241,7 +241,7 @@ const SupportChat = ({ isOpen, onClose }: SupportChatProps) => {
                   <Send className="w-4 h-4" />
                 </button>
               </div>
-              <p className="text-[10px] text-center text-muted-foreground mt-2 uppercase font-bold tracking-widest opacity-50">Powered by Wu AI Intelligence</p>
+              <p className="text-[10px] text-center text-muted-foreground mt-2 uppercase font-bold tracking-widest opacity-50">Powered by Trends AI Intelligence</p>
             </div>
           </motion.div>
         </>

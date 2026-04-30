@@ -6,7 +6,7 @@ import AppHeader from "@/components/layout/AppHeader";
 import { api } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 
-type OrderStatus = "pending" | "confirmed" | "preparing" | "ready" | "assigned" | "picked_up" | "delivered" | "cancelled";
+type OrderStatus = "pending" | "confirmed" | "packaging" | "ready" | "assigned" | "picked_up" | "delivered" | "cancelled";
 
 interface OrderItem { id: number; name: string; quantity: number; price: string }
 interface Order {
@@ -21,7 +21,7 @@ interface Order {
 const STATUS_LABELS: Record<OrderStatus, string> = {
   pending: "Pending",
   confirmed: "Confirmed",
-  preparing: "Preparing",
+  packaging: "Packaging",
   ready: "Ready",
   assigned: "Assigned",
   picked_up: "Out for Delivery",
@@ -32,7 +32,7 @@ const STATUS_LABELS: Record<OrderStatus, string> = {
 const STATUS_COLORS: Record<OrderStatus, string> = {
   pending: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
   confirmed: "bg-blue-500/10 text-blue-500 border-blue-500/20",
-  preparing: "bg-orange-500/10 text-orange-500 border-orange-500/20",
+  packaging: "bg-orange-500/10 text-orange-500 border-orange-500/20",
   ready: "bg-green-500/10 text-green-500 border-green-500/20",
   assigned: "bg-purple-500/10 text-purple-500 border-purple-500/20",
   picked_up: "bg-primary/20 text-primary border-primary/30 shadow-[0_0_15px_rgba(255,184,0,0.2)]",
@@ -43,7 +43,7 @@ const STATUS_COLORS: Record<OrderStatus, string> = {
 const STATUS_PROGRESS: Record<OrderStatus, number> = {
   pending: 10,
   confirmed: 25,
-  preparing: 50,
+  packaging: 50,
   ready: 75,
   assigned: 85,
   picked_up: 95,
@@ -51,7 +51,7 @@ const STATUS_PROGRESS: Record<OrderStatus, number> = {
   cancelled: 0,
 };
 
-const ACTIVE_STATUSES: OrderStatus[] = ["pending", "confirmed", "preparing", "ready", "assigned", "picked_up"];
+const ACTIVE_STATUSES: OrderStatus[] = ["pending", "confirmed", "packaging", "ready", "assigned", "picked_up"];
 
 const OrdersPage = () => {
   const { user } = useAuth();
@@ -72,7 +72,7 @@ const OrdersPage = () => {
         <div className="flex flex-col items-center justify-center py-20 px-4">
           <Package className="w-16 h-16 text-muted-foreground mb-4" />
           <h3 className="font-bold text-foreground text-lg mb-2">Sign in to see your orders</h3>
-          <p className="text-muted-foreground text-sm text-center mb-6">Track your deliveries and reorder your favorites</p>
+          <p className="text-muted-foreground text-sm text-center mb-6">Track your package deliveries and manage your tech</p>
           <button onClick={() => navigate("/login")} className="bg-primary text-primary-foreground font-bold px-8 py-3 rounded-xl">
             Sign In
           </button>
@@ -96,7 +96,7 @@ const OrdersPage = () => {
           <h3 className="font-bold text-foreground text-lg mb-2">No orders yet</h3>
           <p className="text-muted-foreground text-sm text-center mb-6">Your order history will appear here</p>
           <button onClick={() => navigate("/menu")} className="bg-primary text-primary-foreground font-bold px-8 py-3 rounded-xl">
-            Browse Menu
+            Shop Latest Gadgets
           </button>
         </div>
       ) : (

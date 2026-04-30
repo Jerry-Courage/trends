@@ -3,7 +3,7 @@ import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import logo from "@/assets/logo.png";
-import { Eye, EyeOff, ArrowRight, Chrome } from "lucide-react";
+import { Eye, EyeOff, ArrowRight, Chrome, Zap } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { GoogleLogin } from "@react-oauth/google";
 
@@ -29,7 +29,7 @@ const LoginPage = () => {
     if (roleParam) {
       setRegisterData(p => ({ ...p, role: roleParam }));
     } else if (isStaffMode) {
-      setRegisterData(p => ({ ...p, role: "kitchen" }));
+      setRegisterData(p => ({ ...p, role: "warehouse" }));
     } else {
       setRegisterData(p => ({ ...p, role: "customer", adminSecret: "" }));
     }
@@ -44,8 +44,8 @@ const LoginPage = () => {
 
   const roleHome: Record<string, string> = {
     customer: "/",
-    kitchen: "/management",
-    rider: "/rider",
+    warehouse: "/management",
+    courier: "/courier",
     admin: "/admin",
   };
 
@@ -110,17 +110,13 @@ const LoginPage = () => {
         {/* Header Section */}
         <div className="flex flex-col items-center mb-8">
           <motion.div 
-            whileHover={{ scale: 1.02 }}
+            whileHover={{ scale: 1.05 }}
             className="w-24 h-24 flex items-center justify-center mb-4"
           >
-            <img 
-              src={logo} 
-              alt="Fishing Panda Logo" 
-              className="w-full h-full object-contain drop-shadow-xl" 
-            />
+            <img src={logo} alt="Trends Electronics" className="w-full h-full object-contain" />
           </motion.div>
           <h1 className="text-[26px] font-black text-white tracking-tight">Welcome back</h1>
-          <p className="text-muted-foreground text-xs mt-1.5 font-medium">Log in to your Fishing Panda account</p>
+          <p className="text-muted-foreground text-xs mt-1.5 font-medium">Log in to your Trends Electronics account</p>
         </div>
 
         {/* Auth Tab Selector */}
@@ -224,7 +220,7 @@ const LoginPage = () => {
                     }
                   />
 
-                  {(registerData.role === "kitchen" || registerData.role === "admin" || isStaffMode) && (
+                  {(registerData.role === "warehouse" || registerData.role === "admin" || isStaffMode) && (
                     <div className="pt-4 space-y-4 border-t border-white/5">
                       <div className="space-y-1.5">
                         <label className="text-xs font-medium text-muted-foreground ml-1">Staff Role</label>
@@ -234,8 +230,8 @@ const LoginPage = () => {
                           className="w-full px-5 py-4 bg-[#161616] rounded-2xl text-white font-medium border border-white/5 focus:outline-none focus:border-primary/50 transition-all appearance-none"
                         >
                           <option value="customer" className="bg-[#111]">Customer</option>
-                          <option value="rider" className="bg-[#111]">Delivery Rider</option>
-                          <option value="kitchen" className="bg-[#111]">Kitchen Staff</option>
+                          <option value="courier" className="bg-[#111]">Delivery Courier</option>
+                          <option value="warehouse" className="bg-[#111]">Warehouse Staff</option>
                           <option value="admin" className="bg-[#111]">Admin</option>
                         </select>
                       </div>
@@ -285,14 +281,14 @@ const LoginPage = () => {
         {/* Footer */}
         <div className="mt-12 flex flex-col items-center gap-8">
           <button 
-            onClick={() => navigate("/rider-onboarding")}
+            onClick={() => navigate("/courier-onboarding")}
             className="group flex items-center gap-3 text-sm font-semibold text-white/50 hover:text-white transition-all duration-300"
           >
             Looking for delivery work? <span className="text-primary group-hover:translate-x-1 transition-transform">Get started</span>
           </button>
           
           <p className="text-center text-[10px] text-muted-foreground tracking-wide leading-loose max-w-[280px]">
-            By continuing, you agree to Fishing Panda's <span className="text-white border-b border-white/20 cursor-pointer">Terms of Service</span> and <span className="text-white border-b border-white/20 cursor-pointer">Privacy Policy</span>.
+            By continuing, you agree to Trends Electronics' <span className="text-white border-b border-white/20 cursor-pointer">Terms of Service</span> and <span className="text-white border-b border-white/20 cursor-pointer">Privacy Policy</span>.
           </p>
         </div>
       </motion.div>

@@ -109,7 +109,7 @@ const PaymentMethodsPage = () => {
             <div>
               <h4 className="font-bold mb-1">Your data is secure</h4>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                We use industry-standard encryption to protect your payment information. Fishing Panda never stores your full card numbers.
+                We use industry-standard encryption to protect your payment information. Trends Electronics never stores your full card numbers.
               </p>
             </div>
           </div>

@@ -1,5 +1,5 @@
 import "dotenv/config";
-console.log("### SERVER_CHECKPOINT: Starting Fishing Panda Delivery App...");
+console.log("### SERVER_CHECKPOINT: Starting Trends Electronics Delivery App...");
 import express from "express";
 import cors from "cors";
 import { createServer } from "http";
@@ -134,12 +134,12 @@ app.use((err: any, _req: express.Request, res: express.Response, _next: express.
 });
 
 async function seedSuperAdmin() {
-  const email = "admin@mrwu.com";
+  const email = "admin@trendselectronics.com";
   const existing = await db.select().from(users).where(eq(users.email, email));
   
   if (existing.length > 0) {
     const user = existing[0];
-    const passwordHash = await bcrypt.hash("mrwu-admin-2025", 10);
+    const passwordHash = await bcrypt.hash("trends-admin-2025", 10);
     console.log(`### Updating existing admin account: ${email}`);
     await db.update(users).set({ 
       role: "admin",
@@ -148,45 +148,58 @@ async function seedSuperAdmin() {
     return;
   }
 
-  const passwordHash = await bcrypt.hash("mrwu-admin-2025", 10);
+  const passwordHash = await bcrypt.hash("trends-admin-2025", 10);
   await db.insert(users).values({
     email,
     passwordHash,
-    name: "Super Admin",
+    name: "Trends Admin",
     role: "admin",
     createdAt: new Date(),
   });
-  console.log("Super Admin seeded: admin@mrwu.com / mrwu-admin-2025");
+  console.log("Super Admin seeded: admin@trendselectronics.com / trends-admin-2025");
 }
 
 async function initializeDatabase() {
   console.log("### DB_CHECKPOINT: Running self-healing migrations...");
   try {
-    // Get raw better-sqlite3 database instance from drizzle
-    // @ts-ignore - access internal sqlite instance for raw pragma checks
+    // @ts-ignore
     const sqlite = db.session.client;
 
     // 1. Check/Add columns to users table
-    const tableInfo = sqlite.prepare("PRAGMA table_info(users)").all() as any[];
-    const columns = tableInfo.map((c) => c.name);
+    const userTableInfo = sqlite.prepare("PRAGMA table_info(users)").all() as any[];
+    const userColumns = userTableInfo.map((c) => c.name);
 
-    if (!columns.includes("points")) {
-      console.log("### DB_CHECKPOINT: Adding 'points' column to users...");
+    if (!userColumns.includes("points")) {
       sqlite.prepare("ALTER TABLE users ADD COLUMN points INTEGER DEFAULT 0").run();
     }
-    if (!columns.includes("allergies")) {
-      console.log("### DB_CHECKPOINT: Adding 'allergies' column to users...");
-      sqlite.prepare("ALTER TABLE users ADD COLUMN allergies TEXT").run();
+    if (!userColumns.includes("interests")) {
+      // If allergies exists but interests doesn't, we can try to rename or just add
+      if (userColumns.includes("allergies")) {
+        sqlite.prepare("ALTER TABLE users RENAME COLUMN allergies TO interests").run();
+      } else {
+        sqlite.prepare("ALTER TABLE users ADD COLUMN interests TEXT").run();
+      }
     }
-    if (!columns.includes("google_id")) {
-      console.log("### DB_CHECKPOINT: Adding 'google_id' column to users...");
+    if (!userColumns.includes("google_id")) {
       sqlite.prepare("ALTER TABLE users ADD COLUMN google_id TEXT").run();
     }
 
-    // 2. Check/Create favorites table
+    // 2. Check/Add columns to menu_items table
+    const menuTableInfo = sqlite.prepare("PRAGMA table_info(menu_items)").all() as any[];
+    const menuColumns = menuTableInfo.map((c) => c.name);
+
+    if (!menuColumns.includes("specs")) {
+      if (menuColumns.includes("calories")) {
+        sqlite.prepare("ALTER TABLE menu_items RENAME COLUMN calories TO specs").run();
+        sqlite.prepare("UPDATE menu_items SET specs = CAST(specs AS TEXT)").run(); // Convert type if needed
+      } else {
+        sqlite.prepare("ALTER TABLE menu_items ADD COLUMN specs TEXT").run();
+      }
+    }
+
+    // 3. Check/Create favorites table
     const favoritesTable = sqlite.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='favorites'").get();
     if (!favoritesTable) {
-      console.log("### DB_CHECKPOINT: Creating 'favorites' table...");
       sqlite.prepare(`
         CREATE TABLE favorites (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -200,17 +213,16 @@ async function initializeDatabase() {
     console.log("### DB_CHECKPOINT: Database structure verified");
   } catch (err) {
     console.error("### DB_ERROR: Self-healing migration failed:", err);
-    // Don't exit process, try for seed even if migration partially failed
   }
 }
 
 async function seedStaffAccounts() {
   const staff = [
-    { email: "chef@mrwu.com", name: "Chef Wu", role: "kitchen" as const },
-    { email: "rider@mrwu.com", name: "Rider Wu", role: "rider" as const }
+    { email: "support@trendselectronics.com", name: "Trends Support", role: "warehouse" as const },
+    { email: "delivery@trendselectronics.com", name: "Trends Courier", role: "courier" as const }
   ];
 
-  const passwordHash = await bcrypt.hash("mrwu-staff-2025", 10);
+  const passwordHash = await bcrypt.hash("trends-staff-2025", 10);
   for (const s of staff) {
     const [existing] = await db.select().from(users).where(eq(users.email, s.email));
     if (!existing) {
@@ -231,16 +243,16 @@ async function seedMenuItems() {
   if (existing.length > 0) return;
 
   await db.insert(menuItems).values([
-    { name: "General Tso's Chicken", description: "Crispy chicken chunks tossed in a sweet and spicy glaze with peppers", price: "16.50", imageUrl: "/assets/general-tsos.jpg", calories: 840, tags: JSON.stringify(["Spicy"]), category: "Mains", rating: "4.8", reviews: 250, isTop: 1, isAvailable: 1 },
-    { name: "Spicy Szechuan Beef", description: "Tender slices of premium beef wok-seared with Szechuan peppercorns and dried chilies", price: "14.50", imageUrl: "/assets/szechuan-beef.jpg", calories: 640, tags: JSON.stringify(["Spicy"]), category: "Mains", rating: "4.9", reviews: 250, isTop: 0, isAvailable: 1 },
-    { name: "Golden Pork Dumplings", description: "Pan-seared dumplings filled with seasoned ground pork and chives", price: "8.95", imageUrl: "/assets/golden-pork.jpg", calories: 420, category: "Appetizers", isTop: 0, isAvailable: 1 },
-    { name: "Peking Duck Bao", description: "Fluffy steamed bao buns with crispy duck and hoisin sauce", price: "12.50", imageUrl: "/assets/peking-duck.jpg", calories: 560, category: "Appetizers", isTop: 0, isAvailable: 1 },
-    { name: "Sichuan Beef Noodles", description: "Hand-pulled wheat noodles in a rich, numbing beef broth", price: "15.50", imageUrl: "/assets/sichuan-noodles.jpg", calories: 920, tags: JSON.stringify(["Spicy"]), category: "Mains", isTop: 0, isAvailable: 1 },
-    { name: "Fishing Panda Family Combo", description: "2 Mains, 2 Appetizers, and Large Rice. Perfect for 3-4 people.", price: "45.00", imageUrl: "/assets/family-combo.jpg", category: "Combos", isTop: 1, isAvailable: 1 },
-    { name: "Mapo Tofu (Silken)", description: "Soft tofu cubes set in a spicy sauce with fermented black beans", price: "12.00", imageUrl: "/assets/mapo-tofu.jpg", calories: 580, tags: JSON.stringify(["Spicy", "Veg"]), category: "Mains", isTop: 0, isAvailable: 1 },
-    { name: "Crispy Spring Rolls", description: "Golden fried spring rolls with vegetable filling", price: "5.95", imageUrl: "/assets/spring-rolls.jpg", calories: 320, category: "Appetizers", isTop: 0, isAvailable: 1 },
-    { name: "Pork Soup Dumplings (6pcs)", description: "Traditional ginger vinegar steamed xiaolongbao", price: "19.80", imageUrl: "/assets/soup-dumplings.jpg", calories: 480, category: "Appetizers", isTop: 0, isAvailable: 1 },
-    { name: "Whole Peking Duck", description: "Roasted whole duck with crispy skin, pancakes, and condiments", price: "52.00", imageUrl: "/assets/whole-peking-duck.jpg", calories: 1200, category: "Mains", isTop: 1, isAvailable: 1 },
+    { name: "iPhone 15 Pro", description: "Titanium design, A17 Pro chip, Action button, and a more versatile Pro camera system", price: "999.00", imageUrl: "/assets/iphone-15.jpg", specs: "A17 Pro Chip, 48MP Camera, USB-C", tags: JSON.stringify(["Apple", "New"]), category: "Smartphones", rating: "4.9", reviews: 1200, isTop: 1, isAvailable: 1 },
+    { name: "Samsung Galaxy S24 Ultra", description: "The ultimate Galaxy AI experience with a 200MP camera and built-in S Pen", price: "1299.00", imageUrl: "/assets/s24-ultra.jpg", specs: "Snapdragon 8 Gen 3, 200MP Zoom, S-Pen", tags: JSON.stringify(["Samsung", "AI"]), category: "Smartphones", rating: "4.8", reviews: 850, isTop: 1, isAvailable: 1 },
+    { name: "MacBook Air M3", description: "Strikingly thin and fast, so you can work, play, or create anything — anywhere", price: "1099.00", imageUrl: "/assets/macbook-air.jpg", specs: "M3 Chip, 13.6\" Liquid Retina, 18hr Battery", tags: JSON.stringify(["Apple", "Laptop"]), category: "Laptops", rating: "4.9", reviews: 450, isTop: 1, isAvailable: 1 },
+    { name: "Sony WH-1000XM5", description: "Industry-leading noise canceling headphones with exceptional sound quality", price: "399.00", imageUrl: "/assets/sony-xm5.jpg", specs: "30hr Battery, Multi-point Connection", tags: JSON.stringify(["Audio", "Noise Canceling"]), category: "Audio", rating: "4.7", reviews: 2100, isTop: 0, isAvailable: 1 },
+    { name: "iPad Pro M4", description: "The thinnest Apple product ever, featuring the world’s most advanced display", price: "999.00", imageUrl: "/assets/ipad-pro.jpg", specs: "M4 Chip, Tandem OLED, Ultra-thin", tags: JSON.stringify(["Apple", "Tablet"]), category: "Tablets", rating: "4.8", reviews: 300, isTop: 0, isAvailable: 1 },
+    { name: "Home Entertainment Bundle", description: "Sony 65\" 4K TV + Soundbar + Subwoofer. Ultimate cinematic experience.", price: "1899.00", imageUrl: "/assets/tv-bundle.jpg", specs: "4K HDR, Dolby Atmos, Smart TV", category: "Bundles", isTop: 1, isAvailable: 1 },
+    { name: "AirPods Pro (2nd Gen)", description: "MagSafe Charging Case (USB-C) and twice the noise cancellation", price: "249.00", imageUrl: "/assets/airpods-pro.jpg", specs: "H2 Chip, Adaptive Audio, USB-C", tags: JSON.stringify(["Apple", "Audio"]), category: "Audio", isTop: 0, isAvailable: 1 },
+    { name: "Apple Watch Series 9", description: "Smarter, brighter, and mightier with the S9 SiP and double tap gesture", price: "399.00", imageUrl: "/assets/apple-watch.jpg", specs: "S9 SiP, Blood Oxygen, ECG", tags: JSON.stringify(["Apple", "Wearable"]), category: "Wearables", isTop: 0, isAvailable: 1 },
+    { name: "Logitech MX Master 3S", description: "Performance wireless mouse with quiet clicks and 8K DPI tracking", price: "99.00", imageUrl: "/assets/mx-master.jpg", specs: "8000 DPI, Quiet Clicks, MagSpeed", tags: JSON.stringify(["Accessories", "Logitech"]), category: "Accessories", isTop: 0, isAvailable: 1 },
+    { name: "Dell XPS 15", description: "Stunning 4K OLED display with high performance for creators", price: "1599.00", imageUrl: "/assets/dell-xps.jpg", specs: "i9 Processor, 32GB RAM, RTX 4060", tags: JSON.stringify(["Dell", "Laptop"]), category: "Laptops", isTop: 0, isAvailable: 1 },
   ]);
   console.log("Menu items seeded");
 }

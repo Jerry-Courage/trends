@@ -4,7 +4,7 @@ import rateLimit from "express-rate-limit";
 import { storage } from "./storage";
 import { roles } from "../shared/schema";
 import { z } from "zod";
-import { getRecommendations, getOrderETA, getKitchenSummary, getAdminInsights, searchMenu, getSupportResponse } from "./ai";
+import { getRecommendations, getOrderETA, getWarehouseSummary, getAdminInsights, searchMenu, getSupportResponse } from "./ai";
 import { io } from "./index";
 import multer from "multer";
 import path from "path";
@@ -38,7 +38,7 @@ const aiLimiter = rateLimit({
 import { OAuth2Client } from "google-auth-library";
 
 const router = Router();
-const JWT_SECRET = process.env.JWT_SECRET || "mrwus-secret-key-change-in-production";
+const JWT_SECRET = process.env.JWT_SECRET || "trends-electronics-secret-key-change-in-production";
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "";
 const client = new OAuth2Client(GOOGLE_CLIENT_ID);
 
@@ -86,16 +86,16 @@ router.post("/auth/register", async (req, res) => {
   const { role, adminSecret, email } = result.data;
   const lowerEmail = email.toLowerCase();
 
-  // Role-based protection: Only Customers and Riders can register publicly
-  if (role === "admin" || role === "kitchen") {
+  // Role-based protection: Only Customers and Couriers can register publicly
+  if (role === "admin" || role === "warehouse") {
     return res.status(403).json({ error: "Administrative accounts must be created by the Super Admin" });
   }
 
   // Prevent hijacking the Super Admin email
-  if (lowerEmail === "admin@mrwu.com") {
+  if (lowerEmail === "admin@trendselectronics.com") {
     return res.status(403).json({ error: "Unauthorized email address" });
   }
-  // Riders and Customers are public (No secret required)
+  // Couriers and Customers are public (No secret required)
 
   const existing = await storage.getUserByEmail(email);
   if (existing) return res.status(409).json({ error: "Email already in use" });
@@ -172,13 +172,13 @@ router.get("/auth/me", auth, async (req: AuthRequest, res) => {
     phone: user.phone, 
     address: user.address,
     points: user.points,
-    allergies: user.allergies
+    interests: user.interests
   });
 });
 
 router.patch("/auth/profile", auth, async (req: AuthRequest, res) => {
-  const { name, phone, address, allergies } = req.body;
-  const user = await storage.updateUserProfile(req.user!.id, { name, phone, address, allergies });
+  const { name, phone, address, interests } = req.body;
+  const user = await storage.updateUserProfile(req.user!.id, { name, phone, address, interests });
   if (!user) return res.status(404).json({ error: "User not found" });
   res.json({ 
     id: user.id, 
@@ -188,7 +188,7 @@ router.patch("/auth/profile", auth, async (req: AuthRequest, res) => {
     phone: user.phone, 
     address: user.address,
     points: user.points,
-    allergies: user.allergies
+    interests: user.interests
   });
 });
 
@@ -205,14 +205,14 @@ router.get("/menu/:id", async (req, res) => {
   res.json(item);
 });
 
-router.patch("/admin/menu-items/:id/image", auth, requireRole("kitchen"), async (req, res) => {
+router.patch("/admin/menu-items/:id/image", auth, requireRole("warehouse"), async (req, res) => {
   const { imageUrl } = req.body;
   if (!imageUrl) return res.status(400).json({ error: "imageUrl required" });
   const item = await storage.updateMenuItemImage(Number(req.params.id), imageUrl);
   res.json(item);
 });
 
-router.post("/upload", auth, requireRole("admin", "kitchen"), upload.single("image"), (req, res) => {
+router.post("/upload", auth, requireRole("admin", "warehouse"), upload.single("image"), (req, res) => {
   if (!req.file) return res.status(400).json({ error: "No file uploaded" });
   res.json({ url: `/uploads/${req.file.filename}` });
 });
@@ -244,8 +244,8 @@ router.post("/orders", auth, requireRole("customer"), async (req: AuthRequest, r
 
   const order = await (storage as any).createOrder({ userId: req.user!.id, ...result.data });
   
-  // Notify kitchen of new order
-  io.to("kitchen").emit("new_order", { orderId: order.id, customerName: req.user!.email });
+  // Notify warehouse of new order
+  io.to("warehouse").emit("new_order", { orderId: order.id, customerName: req.user!.email });
   
   res.status(201).json(order);
 });
@@ -265,16 +265,16 @@ router.get("/orders/:id", auth, async (req: AuthRequest, res) => {
   res.json(order);
 });
 
-router.patch("/orders/:id/location", auth, requireRole("rider", "admin"), async (req, res) => {
+router.patch("/orders/:id/location", auth, requireRole("courier", "admin"), async (req, res) => {
   const { lat, lng } = req.body;
   if (typeof lat !== "number" || typeof lng !== "number") {
     return res.status(400).json({ error: "Invalid coordinates" });
   }
 
-  const order = await storage.updateRiderLocation(Number(req.params.id), lat, lng);
+  const order = await storage.updateCourierLocation(Number(req.params.id), lat, lng);
   
   // Broadcast location to anyone tracking this order
-  io.to(`order:${order.id}`).emit("rider:location_updated", { lat, lng });
+  io.to(`order:${order.id}`).emit("courier:location_updated", { lat, lng });
   
   res.json(order);
 });
@@ -373,16 +373,16 @@ router.post("/payments/verify", auth, async (req: AuthRequest, res) => {
   }
 });
 
-// ─── Orders (Kitchen / Management) ──────────────────────────────────────────
+// ─── Orders (Warehouse / Management) ──────────────────────────────────────────
 
-router.get("/management/orders", auth, requireRole("kitchen"), async (_req, res) => {
+router.get("/management/orders", auth, requireRole("warehouse"), async (_req, res) => {
   const allOrders = await storage.getAllOrders();
   res.json(allOrders);
 });
 
-router.patch("/management/orders/:id/status", auth, requireRole("kitchen"), async (req, res) => {
+router.patch("/management/orders/:id/status", auth, requireRole("warehouse"), async (req, res) => {
   const { status } = req.body;
-  const validStatuses = ["pending", "confirmed", "preparing", "ready", "assigned", "picked_up", "delivered", "cancelled"] as const;
+  const validStatuses = ["pending", "confirmed", "packaging", "ready", "assigned", "picked_up", "delivered", "cancelled"] as const;
   if (!validStatuses.includes(status)) return res.status(400).json({ error: "Invalid status" });
   
   const order = await storage.updateOrderStatus(Number(req.params.id), status);
@@ -393,39 +393,39 @@ router.patch("/management/orders/:id/status", auth, requireRole("kitchen"), asyn
   res.json(order);
 });
 
-router.patch("/management/orders/:id/assign", auth, requireRole("kitchen"), async (req, res) => {
-  const { riderId } = req.body;
-  if (!riderId) return res.status(400).json({ error: "riderId required" });
-  const order = await storage.assignRider(Number(req.params.id), Number(riderId));
+router.patch("/management/orders/:id/assign", auth, requireRole("warehouse"), async (req, res) => {
+  const { courierId } = req.body;
+  if (!courierId) return res.status(400).json({ error: "courierId required" });
+  const order = await storage.assignCourier(Number(req.params.id), Number(courierId));
   
-  // Notify rider
-  io.to(`rider:${riderId}`).emit("order_assigned", { orderId: order.id });
+  // Notify courier
+  io.to(`courier:${courierId}`).emit("order_assigned", { orderId: order.id });
   // Notify customer
   io.to(`user:${order.userId}`).emit("order_status", { orderId: order.id, status: "assigned" });
   
   res.json(order);
 });
 
-router.get("/management/riders", auth, requireRole("kitchen"), async (_req, res) => {
-  const riders = await storage.getAllRiders();
-  res.json(riders.map(r => ({ id: r.id, name: r.name, email: r.email, phone: r.phone })));
+router.get("/management/couriers", auth, requireRole("warehouse"), async (_req, res) => {
+  const couriers = await storage.getAllCouriers();
+  res.json(couriers.map(r => ({ id: r.id, name: r.name, email: r.email, phone: r.phone })));
 });
 
-// ─── Orders (Rider) ──────────────────────────────────────────────────────────
+// ─── Orders (Courier) ──────────────────────────────────────────────────────────
 
-router.get("/rider/orders", auth, requireRole("rider"), async (req: AuthRequest, res) => {
-  const riderOrders = await storage.getRiderOrders(req.user!.id);
-  res.json(riderOrders);
+router.get("/courier/orders", auth, requireRole("courier"), async (req: AuthRequest, res) => {
+  const courierOrders = await storage.getCourierOrders(req.user!.id);
+  res.json(courierOrders);
 });
 
-router.patch("/rider/orders/:id/status", auth, requireRole("rider"), async (req: AuthRequest, res) => {
+router.patch("/courier/orders/:id/status", auth, requireRole("courier"), async (req: AuthRequest, res) => {
   const { status } = req.body;
   const allowedStatuses = ["picked_up", "delivered"] as const;
-  if (!allowedStatuses.includes(status)) return res.status(400).json({ error: "Invalid status for rider" });
+  if (!allowedStatuses.includes(status)) return res.status(400).json({ error: "Invalid status for courier" });
 
   const order = await storage.getOrderById(Number(req.params.id));
   if (!order) return res.status(404).json({ error: "Order not found" });
-  if (order.riderId !== req.user!.id) return res.status(403).json({ error: "Not your order" });
+  if (order.courierId !== req.user!.id) return res.status(403).json({ error: "Not your order" });
 
   const updated = await storage.updateOrderStatus(Number(req.params.id), status);
   
@@ -440,12 +440,12 @@ router.patch("/rider/orders/:id/status", auth, requireRole("rider"), async (req:
 router.get("/ai/recommendations", aiLimiter, async (req: AuthRequest, res) => {
   try {
     const menuItems = await storage.getMenuItems();
-    const { recentOrders, allergies } = await (async () => {
+    const { recentOrders, interests } = await (async () => {
       const authHeader = req.headers.authorization;
-      if (!authHeader) return { recentOrders: [], allergies: null };
+      if (!authHeader) return { recentOrders: [], interests: null };
       
       const token = authHeader.split(" ")[1];
-      if (!token) return { recentOrders: [], allergies: null };
+      if (!token) return { recentOrders: [], interests: null };
 
       try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET || "fallback-secret") as { id: number };
@@ -453,9 +453,9 @@ router.get("/ai/recommendations", aiLimiter, async (req: AuthRequest, res) => {
           storage.getOrdersByUser(decoded.id),
           storage.getUserById(decoded.id)
         ]);
-        return { recentOrders: orders, allergies: user?.allergies };
+        return { recentOrders: orders, interests: user?.interests };
       } catch {
-        return { recentOrders: [], allergies: null };
+        return { recentOrders: [], interests: null };
       }
     })();
 
@@ -471,7 +471,7 @@ router.get("/ai/recommendations", aiLimiter, async (req: AuthRequest, res) => {
       tags: m.tags ? JSON.parse(m.tags) : [],
     }));
 
-    const recs = await getRecommendations(simplified as any, recentOrders, timeOfDay, allergies);
+    const recs = await getRecommendations(simplified as any, recentOrders, timeOfDay, interests);
     res.json(recs);
   } catch (err) {
     console.error("AI recommendations error:", err);
@@ -495,7 +495,7 @@ router.get("/ai/eta/:orderId", aiLimiter, auth, async (req: AuthRequest, res) =>
   }
 });
 
-router.get("/ai/kitchen-summary", aiLimiter, auth, requireRole("kitchen"), async (_req, res) => {
+router.get("/ai/warehouse-summary", aiLimiter, auth, requireRole("warehouse"), async (_req, res) => {
   try {
     const allOrders = await storage.getAllOrders();
     const simplified = allOrders.map(o => ({
@@ -504,11 +504,11 @@ router.get("/ai/kitchen-summary", aiLimiter, auth, requireRole("kitchen"), async
       createdAt: new Date(o.createdAt),
       items: o.items.map(i => ({ name: i.name, quantity: i.quantity })),
     }));
-    const summary = await getKitchenSummary(simplified);
+    const summary = await getWarehouseSummary(simplified);
     res.json({ summary });
   } catch (err) {
-    console.error("AI kitchen summary error:", err);
-    res.json({ summary: "Kitchen is busy, but running smoothly. Check new orders frequently." });
+    console.error("AI warehouse summary error:", err);
+    res.json({ summary: "Warehouse is busy, but running smoothly. Check new orders frequently." });
   }
 });
 // ─── Admin Management ────────────────────────────────────────────────────────
@@ -519,7 +519,7 @@ router.get("/admin/stats", auth, requireRole("admin"), async (req, res) => {
   res.json(stats);
 });
 
-router.get("/admin/menu-items", auth, requireRole("admin", "kitchen"), async (_req, res) => {
+router.get("/admin/menu-items", auth, requireRole("admin", "warehouse"), async (_req, res) => {
   const items = await storage.getMenuItems(true); // Include unavailable
   res.json(items);
 });
@@ -529,7 +529,7 @@ router.post("/admin/menu-items", auth, requireRole("admin"), async (req, res) =>
   res.status(201).json(item);
 });
 
-router.patch("/admin/menu-items/:id", auth, requireRole("admin", "kitchen"), async (req, res) => {
+router.patch("/admin/menu-items/:id", auth, requireRole("admin", "warehouse"), async (req, res) => {
   const item = await storage.updateMenuItem(Number(req.params.id), req.body);
   res.json(item);
 });
@@ -618,11 +618,11 @@ router.post("/ai/support", aiLimiter, async (req: AuthRequest, res) => {
       }
     })();
 
-    const reply = await getSupportResponse(message, history || [], simplified, user?.allergies, activeOrders);
+    const reply = await getSupportResponse(message, history || [], simplified, user?.interests, activeOrders);
     res.json({ reply });
   } catch (err) {
     console.error("### AI_SUPPORT_ROUTE_ERROR:", err);
-    res.json({ reply: "I'm here to help! Please contact us at support@mrwu.com or call our hotline for urgent issues." });
+    res.json({ reply: "I'm here to help! Please contact us at support@trendselectronics.com or call our hotline for urgent issues." });
   }
 });
 
@@ -635,7 +635,7 @@ router.post("/ai/admin-insights", aiLimiter, auth, requireRole("admin"), async (
       res.json({ insights });
     } catch {
       res.json({
-        insights: `Over the past ${days} days, the restaurant recorded ${stats.totalOrders} orders totalling $${stats.totalRevenue.toFixed(2)}. ${stats.popularItems.length > 0 ? `Top seller: ${stats.popularItems[0].name} (${stats.popularItems[0].count} sold).` : ""} Focus on maintaining quality and delivery speed to sustain growth.`
+        insights: `Over the past ${days} days, the store recorded ${stats.totalOrders} orders totalling GH₵${stats.totalRevenue.toFixed(2)}. ${stats.popularItems.length > 0 ? `Top seller: ${stats.popularItems[0].name} (${stats.popularItems[0].count} sold).` : ""} Focus on maintaining quality and delivery speed to sustain growth.`
       });
     }
   } catch (err) {
@@ -647,7 +647,7 @@ router.post("/ai/admin-insights", aiLimiter, auth, requireRole("admin"), async (
 // ─── Staff Management (Admin Only) ──────────────────────────────────────────
 
 router.get("/admin/staff", auth, requireRole("admin"), async (_req, res) => {
-  const staff = await storage.getUsersByRole("kitchen");
+  const staff = await storage.getUsersByRole("warehouse");
   res.json(staff.map(s => ({ id: s.id, email: s.email, name: s.name, createdAt: s.createdAt })));
 });
 
@@ -665,7 +665,7 @@ router.post("/admin/staff", auth, requireRole("admin"), async (req, res) => {
   const existing = await storage.getUserByEmail(email);
   if (existing) return res.status(409).json({ error: "Email already in use" });
 
-  const user = await storage.createUser({ email, password, name, role: "kitchen" });
+  const user = await storage.createUser({ email, password, name, role: "warehouse" });
   res.status(201).json({ id: user.id, email: user.email, name: user.name, role: user.role });
 });
 
@@ -685,9 +685,9 @@ router.delete("/admin/staff/:id", auth, requireRole("admin"), async (req, res) =
     return res.status(404).json({ error: "Staff member not found" });
   }
   
-  if (user.role !== "kitchen") {
-    console.log(`### DELETE STAFF FAILED: User ${id} is not kitchen staff (role=${user.role})`);
-    return res.status(400).json({ error: "Can only remove kitchen staff" });
+  if (user.role !== "warehouse") {
+    console.log(`### DELETE STAFF FAILED: User ${id} is not warehouse staff (role=${user.role})`);
+    return res.status(400).json({ error: "Can only remove warehouse staff" });
   }
 
   await storage.deleteUser(id);

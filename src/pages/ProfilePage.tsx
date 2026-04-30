@@ -70,8 +70,8 @@ const ProfilePage = () => {
   const accountItems = [
     { icon: MapPin, label: "Saved Addresses", desc: user?.address || "Add a delivery address", action: openEdit },
     { icon: CreditCard, label: "Payment Methods", desc: "Visa, Mastercard, Momo", action: () => navigate("/payment-methods") },
-    { icon: Heart, label: "Favorites", desc: "Your top dishes", action: () => navigate("/favorites") },
-    { icon: AlertTriangle, label: "Allergies & Preferences", desc: user?.allergies || "None set", badge: !user?.allergies ? "Action Required" : undefined, action: openEdit },
+    { icon: Heart, label: "Favorites", desc: "Your top gadgets", action: () => navigate("/favorites") },
+    { icon: AlertTriangle, label: "Tech Preferences", desc: user?.allergies || "No preferences set", action: openEdit },
   ];
 
   const settingsItems = [
@@ -87,7 +87,7 @@ const ProfilePage = () => {
           <div className="w-14 h-14 flex items-center justify-center overflow-hidden">
             <img 
               src={logo} 
-              alt="Fishing Panda" 
+              alt="Trends Electronics" 
               className="w-full h-full object-contain" 
             />
           </div>
@@ -156,11 +156,11 @@ const ProfilePage = () => {
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">Allergies & Preferences</label>
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">Tech Preferences</label>
                 <textarea
                   value={editForm.allergies}
                   onChange={e => setEditForm(f => ({ ...f, allergies: e.target.value }))}
-                  placeholder="e.g. No Peanuts, Gluten Free, Extra Spicy"
+                  placeholder="e.g. Apple enthusiast, Android developer, Gaming setup"
                   rows={2}
                   className="w-full border border-border rounded-xl px-4 py-2.5 text-sm bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors resize-none"
                 />
@@ -191,7 +191,7 @@ const ProfilePage = () => {
         <div className="w-14 h-14 flex items-center justify-center overflow-hidden">
           <img 
             src={logo} 
-            alt="Fishing Panda" 
+            alt="Trends Electronics" 
             className="w-full h-full object-contain" 
           />
         </div>
@@ -248,26 +248,26 @@ const ProfilePage = () => {
             </div>
           </div>
 
-          {user.role === "kitchen" && (
+          {user.role === "warehouse" && (
             <div className="px-4 md:px-0 mt-4">
               <button
                 data-testid="button-management"
                 onClick={() => navigate("/management")}
                 className="w-full bg-primary text-primary-foreground font-bold py-3 rounded-xl text-sm"
               >
-                Go to Kitchen Dashboard
+                Go to Warehouse Dashboard
               </button>
             </div>
           )}
 
-          {user.role === "rider" && (
+          {user.role === "courier" && (
             <div className="px-4 md:px-0 mt-4">
               <button
-                data-testid="button-rider"
-                onClick={() => navigate("/rider")}
+                data-testid="button-courier"
+                onClick={() => navigate("/courier")}
                 className="w-full bg-primary text-primary-foreground font-bold py-3 rounded-xl text-sm"
               >
-                Go to Rider Dashboard
+                Go to Courier Dashboard
               </button>
             </div>
           )}
@@ -344,7 +344,7 @@ const ProfilePage = () => {
         </div>
       </div>
 
-      <p className="text-center text-xs text-muted-foreground mt-6 pb-2">MR WU'S DELIVERY APP<br />Version 2.4.12 (Build 402)</p>
+      <p className="text-center text-xs text-muted-foreground mt-6 pb-2">TRENDS ELECTRONICS<br />Version 3.0.0 (Build 2025)</p>
     </div>
   );
 };

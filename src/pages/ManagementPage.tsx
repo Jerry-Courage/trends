@@ -4,18 +4,19 @@ import { api } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import {
-  ChefHat, Clock, CheckCircle, Bike, Package, LogOut,
+  Clock, CheckCircle, Bike, Package, LogOut,
   RefreshCw, UserCheck, Sparkles, AlertTriangle, X, Flame, Bell,
-  ChevronRight, Timer, UtensilsCrossed
+  ChevronRight, Timer, Box
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useSocket } from "@/context/SocketContext";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import { cn } from "@/lib/utils";
+import logo from "@/assets/logo.png";
 
-type OrderStatus = "pending" | "confirmed" | "preparing" | "ready" | "assigned" | "picked_up" | "delivered" | "cancelled";
+type OrderStatus = "pending" | "confirmed" | "packaging" | "ready" | "assigned" | "picked_up" | "delivered" | "cancelled";
 
-interface Rider { id: number; name: string; email: string; phone?: string | null }
+interface Courier { id: number; name: string; email: string; phone?: string | null }
 interface OrderItem { id: number; name: string; quantity: number; price: string; specialInstructions?: string | null }
 interface Order {
   id: number;
@@ -24,28 +25,28 @@ interface Order {
   total: string;
   createdAt: string;
   notes?: string | null;
-  riderId?: number | null;
+  courierId?: number | null;
   items: OrderItem[];
   customer: { id: number; name: string; email: string; phone?: string | null };
-  rider?: { id: number; name: string } | null;
+  courier?: { id: number; name: string } | null;
 }
 
 const NEXT_STATUS: Partial<Record<OrderStatus, OrderStatus>> = {
   pending: "confirmed",
-  confirmed: "preparing",
-  preparing: "ready",
+  confirmed: "packaging",
+  packaging: "ready",
 };
 
 const NEXT_LABEL: Partial<Record<OrderStatus, string>> = {
   pending: "Confirm Order",
-  confirmed: "Start Preparing",
-  preparing: "Mark Ready",
+  confirmed: "Start Packing",
+  packaging: "Mark Ready",
 };
 
 const STATUS_CONFIG: Record<OrderStatus, { label: string; color: string; bg: string; dot: string; glow: string }> = {
   pending:   { label: "Pending",      color: "text-amber-500",   bg: "bg-amber-500/10",   dot: "bg-amber-500", glow: "shadow-amber-500/20" },
   confirmed: { label: "Confirmed",    color: "text-blue-500",     bg: "bg-blue-500/10",     dot: "bg-blue-500",  glow: "shadow-blue-500/20" },
-  preparing: { label: "Preparing",    color: "text-orange-500",  bg: "bg-orange-500/10",  dot: "bg-orange-500",glow: "shadow-orange-500/20" },
+  packaging: { label: "Packaging",    color: "text-orange-500",  bg: "bg-orange-500/10",  dot: "bg-orange-500",glow: "shadow-orange-500/20" },
   ready:     { label: "Ready",        color: "text-emerald-500", bg: "bg-emerald-500/10", dot: "bg-emerald-500",glow: "shadow-emerald-500/20" },
   assigned:  { label: "Assigned",     color: "text-violet-500",   bg: "bg-violet-500/10",   dot: "bg-violet-500", glow: "shadow-violet-500/20" },
   picked_up: { label: "Delivery",     color: "text-indigo-500",   bg: "bg-indigo-500/10",   dot: "bg-indigo-500", glow: "shadow-indigo-500/20" },
@@ -56,7 +57,7 @@ const STATUS_CONFIG: Record<OrderStatus, { label: string; color: string; bg: str
 const FILTER_TABS: Array<{ key: OrderStatus | "all"; label: string }> = [
   { key: "all",      label: "Live Orders" },
   { key: "pending",  label: "Pending" },
-  { key: "preparing",label: "Kitchen" },
+  { key: "packaging",label: "Warehouse" },
   { key: "ready",    label: "Ready" },
   { key: "assigned", label: "Assigned" },
 ];
@@ -73,7 +74,7 @@ const ManagementPage = () => {
   const { toast } = useToast();
   const [filter, setFilter] = useState<OrderStatus | "all">("all");
   const [assignModal, setAssignModal] = useState<{ orderId: number } | null>(null);
-  const [selectedRider, setSelectedRider] = useState<number | "">("");
+  const [selectedCourier, setSelectedCourier] = useState<number | "">("");
   const prevOrderCount = useRef(0);
 
   const chime = useRef<HTMLAudioElement | null>(null);
@@ -85,21 +86,21 @@ const ManagementPage = () => {
     queryKey: ["/api/management/orders"],
     queryFn: () => api.get("/management/orders"),
     refetchInterval: 10000,
-    enabled: user?.role === "kitchen",
+    enabled: user?.role === "warehouse",
   });
 
-  const { data: riders = [] } = useQuery<Rider[]>({
-    queryKey: ["/api/management/riders"],
-    queryFn: () => api.get("/management/riders"),
-    enabled: user?.role === "kitchen",
+  const { data: couriers = [] } = useQuery<Courier[]>({
+    queryKey: ["/api/management/couriers"],
+    queryFn: () => api.get("/management/couriers"),
+    enabled: user?.role === "warehouse",
   });
 
   const { data: aiSummary, isLoading: aiLoading } = useQuery<{ summary: string }>({
-    queryKey: ["/api/ai/kitchen-summary"],
-    queryFn: () => api.get("/ai/kitchen-summary"),
+    queryKey: ["/api/ai/warehouse-summary"],
+    queryFn: () => api.get("/ai/warehouse-summary"),
     refetchInterval: 60000,
     retry: 1,
-    enabled: user?.role === "kitchen",
+    enabled: user?.role === "warehouse",
   });
 
   useEffect(() => {
@@ -113,7 +114,7 @@ const ManagementPage = () => {
     if (!socket) return;
     socket.on("new_order", () => {
       queryClient.invalidateQueries({ queryKey: ["/api/management/orders"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/ai/kitchen-summary"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/ai/warehouse-summary"] });
     });
     return () => { socket.off("new_order"); };
   }, [socket, queryClient]);
@@ -125,13 +126,13 @@ const ManagementPage = () => {
   });
 
   const assignMutation = useMutation({
-    mutationFn: ({ orderId, riderId }: { orderId: number; riderId: number }) =>
-      api.patch(`/management/orders/${orderId}/assign`, { riderId }),
+    mutationFn: ({ orderId, courierId }: { orderId: number; courierId: number }) =>
+      api.patch(`/management/orders/${orderId}/assign`, { courierId }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/management/orders"] });
       setAssignModal(null);
-      setSelectedRider("");
-      toast({ title: "Rider Assigned" });
+      setSelectedCourier("");
+      toast({ title: "Courier Assigned" });
     },
   });
 
@@ -156,12 +157,12 @@ const ManagementPage = () => {
           <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-primary/5 opacity-50" />
           
           <div className="relative flex items-center gap-3 md:gap-4">
-            <div className="w-10 h-10 md:w-12 md:h-12 bg-primary/20 rounded-xl md:rounded-2xl flex items-center justify-center border border-primary/20 group">
-              <ChefHat className="w-5 h-5 md:w-6 md:h-6 text-primary group-hover:scale-110 transition-transform duration-500" />
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-primary/20 rounded-xl md:rounded-2xl flex items-center justify-center border border-primary/20 overflow-hidden">
+              <img src={logo} alt="Trends Electronics" className="w-8 h-8 object-contain" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="font-black text-lg md:text-xl tracking-tight uppercase italic italic-shadow">Kitchen</h1>
+                <h1 className="font-black text-lg md:text-xl tracking-tight uppercase italic italic-shadow">Trends Warehouse</h1>
                 <div className="hidden xs:flex items-center gap-1.5 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
                   <div className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse" />
                   <span className="text-[8px] font-bold text-emerald-500 uppercase tracking-widest">Live</span>
@@ -193,9 +194,9 @@ const ManagementPage = () => {
       <div className="px-6 py-2 grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
           { label: "New Queue",    key: "pending",   Icon: Bell,         color: "text-amber-500",   gradient: "from-amber-500/20 to-transparent" },
-          { label: "On Fire",      key: "preparing",  Icon: Flame,         color: "text-orange-500",  gradient: "from-orange-500/20 to-transparent" },
+          { label: "On Fire",      key: "packaging",  Icon: Flame,         color: "text-orange-500",  gradient: "from-orange-500/20 to-transparent" },
           { label: "Ready to Go",  key: "ready",      Icon: Package,       color: "text-emerald-500", gradient: "from-emerald-500/20 to-transparent" },
-          { label: "In Transit",   key: "picked_up",  Icon: Bike,          color: "text-indigo-500",  gradient: "from-indigo-500/20 to-transparent" },
+          { label: "In Transit",   key: "picked_up",  Icon: Package,       color: "text-indigo-500",  gradient: "from-indigo-500/20 to-transparent" },
         ].map(({ label, key, Icon, color, gradient }) => (
           <motion.div 
             whileHover={{ y: -4, scale: 1.02 }}
@@ -232,7 +233,7 @@ const ManagementPage = () => {
                <div className="absolute inset-0 rounded-2xl bg-primary/20 animate-ping opacity-20" />
             </div>
             <div>
-              <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Neural Kitchen Intelligence</p>
+              <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Neural Warehouse Intelligence</p>
               <p className="text-sm font-bold text-white/80">Real-time Efficiency Stream</p>
             </div>
           </div>
@@ -244,7 +245,7 @@ const ManagementPage = () => {
             </div>
           ) : (
             <p className="text-base text-white/70 leading-relaxed font-medium italic italic-shadow">
-              "{aiSummary?.summary || "Analysing current kitchen velocity and order distribution..."}"
+              "{aiSummary?.summary || "Analysing current warehouse velocity and package distribution..."}"
             </p>
           )}
         </motion.div>
@@ -286,7 +287,7 @@ const ManagementPage = () => {
           </div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-24 bg-white/[0.02] border border-dashed border-white/10 rounded-[3rem]">
-            <UtensilsCrossed className="w-16 h-16 text-white/5 mx-auto mb-6" />
+            <Package className="w-16 h-16 text-white/5 mx-auto mb-6" />
             <p className="text-xl font-bold text-white/40 uppercase tracking-widest">No Active Commands</p>
           </div>
         ) : (
@@ -406,7 +407,7 @@ const ManagementPage = () => {
                                   <ChevronRight className="w-4 h-4 md:w-5 md:h-5 group-hover/btn:translate-x-1 transition-transform" />
                                </span>
                             </motion.button>
-                          ) : order.status === "ready" && !order.riderId ? (
+                          ) : order.status === "ready" && !order.courierId ? (
                              <motion.button
                               whileHover={{ scale: 1.02 }}
                               whileTap={{ scale: 0.98 }}
@@ -415,13 +416,13 @@ const ManagementPage = () => {
                             >
                                <div className="absolute inset-0 bg-white/20 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-500" />
                                <span className="relative z-10 flex items-center justify-center gap-2 md:gap-3 text-white font-black uppercase tracking-widest md:tracking-[0.2em] italic text-xs md:text-sm">
-                                  <Bike className="w-4 h-4 md:w-5 md:h-5" />
+                                  <Package className="w-4 h-4 md:w-5 md:h-5" />
                                   Assign
                                </span>
                             </motion.button>
                           ) : (
                             <div className="h-12 md:h-14 bg-white/5 border border-white/10 rounded-xl md:rounded-2xl flex items-center justify-center text-[8px] md:text-[10px] font-black text-white/30 uppercase tracking-[0.2em] md:tracking-[0.4em]">
-                               Waiting for Rider
+                               Waiting for Courier
                             </div>
                           )}
                         </div>
@@ -434,7 +435,7 @@ const ManagementPage = () => {
         )}
       </div>
 
-      {/* AMOLED Rider Modal */}
+      {/* AMOLED Courier Modal */}
       <AnimatePresence>
         {assignModal && (
           <motion.div
@@ -455,7 +456,7 @@ const ManagementPage = () => {
                 <div className="flex items-center justify-between mb-8">
                    <div>
                      <h2 className="text-3xl font-black text-white tracking-tighter uppercase italic">Dispatch Order</h2>
-                     <p className="text-xs font-bold text-white/30 tracking-[0.4em] uppercase mt-1">Select Rider Team</p>
+                     <p className="text-xs font-bold text-white/30 tracking-[0.4em] uppercase mt-1">Select Courier Team</p>
                    </div>
                    <button onClick={() => setAssignModal(null)} className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center hover:bg-white/10 transition-colors">
                       <X className="w-6 h-6 text-white/60" />
@@ -463,12 +464,12 @@ const ManagementPage = () => {
                 </div>
 
                 <div className="space-y-3 max-h-[40vh] overflow-y-auto no-scrollbar pr-1">
-                   {riders.map(rider => (
+                   {couriers.map(courier => (
                      <label
-                       key={rider.id}
+                       key={courier.id}
                        className={cn(
                         "group relative flex items-center gap-4 p-5 rounded-[2rem] border cursor-pointer transition-all duration-500",
-                        selectedRider === rider.id 
+                        selectedCourier === courier.id 
                           ? "border-primary bg-primary/10 shadow-[0_0_30px_rgba(var(--primary),0.1)]" 
                           : "border-white/5 bg-white/[0.02] hover:border-white/20"
                        )}
@@ -476,20 +477,20 @@ const ManagementPage = () => {
                        <input 
                          type="radio" 
                          className="hidden" 
-                         checked={selectedRider === rider.id} 
-                         onChange={() => setSelectedRider(rider.id)} 
+                         checked={selectedCourier === courier.id} 
+                         onChange={() => setSelectedCourier(courier.id)} 
                        />
                        <div className={cn(
                          "w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-500",
-                         selectedRider === rider.id ? "bg-primary text-primary-foreground" : "bg-white/5 text-white/20 group-hover:text-white"
+                         selectedCourier === courier.id ? "bg-primary text-primary-foreground" : "bg-white/5 text-white/20 group-hover:text-white"
                        )}>
-                          <Bike />
+                          <Package />
                        </div>
                        <div className="flex-1">
-                          <p className="font-black text-white uppercase italic tracking-tighter text-lg leading-none">{rider.name}</p>
-                          <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest mt-1">{rider.phone || "Active Duty"}</p>
+                          <p className="font-black text-white uppercase italic tracking-tighter text-lg leading-none">{courier.name}</p>
+                          <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest mt-1">{courier.phone || "Active Duty"}</p>
                        </div>
-                       {selectedRider === rider.id && (
+                       {selectedCourier === courier.id && (
                           <motion.div layoutId="select-indicator">
                              <CheckCircle className="text-primary w-6 h-6" />
                           </motion.div>
@@ -500,8 +501,8 @@ const ManagementPage = () => {
 
                 <div className="flex gap-4 mt-8 pb-4">
                    <button 
-                    disabled={!selectedRider || assignMutation.isPending}
-                    onClick={() => selectedRider && assignMutation.mutate({ orderId: assignModal.orderId, riderId: selectedRider as number })}
+                    disabled={!selectedCourier || assignMutation.isPending}
+                    onClick={() => selectedCourier && assignMutation.mutate({ orderId: assignModal.orderId, courierId: selectedCourier as number })}
                     className="flex-1 h-14 bg-primary text-primary-foreground font-black uppercase tracking-[0.2em] italic rounded-2xl disabled:opacity-30 shadow-2xl transition-all active:scale-95"
                    >
                      Confirm Dispatch

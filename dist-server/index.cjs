@@ -121451,11 +121451,11 @@ var coerce = {
 var NEVER = INVALID;
 
 // shared/schema.ts
-var roles = ["customer", "kitchen", "rider", "admin"];
+var roles = ["customer", "warehouse", "courier", "admin"];
 var orderStatuses = [
   "pending",
   "confirmed",
-  "preparing",
+  "packaging",
   "ready",
   "assigned",
   "picked_up",
@@ -121474,7 +121474,7 @@ var users = sqliteTable("users", {
   role: text("role", { enum: roles }).notNull().default("customer"),
   address: text("address"),
   points: integer("points").notNull().default(0),
-  allergies: text("allergies"),
+  interests: text("interests"),
   createdAt: integer("created_at", { mode: "timestamp" }).default(sql`(unixepoch())`).notNull()
 });
 var menuItems = sqliteTable("menu_items", {
@@ -121485,7 +121485,7 @@ var menuItems = sqliteTable("menu_items", {
   // Switched to text for decimal precision
   imageUrl: text("image_url"),
   category: text("category").notNull(),
-  calories: integer("calories"),
+  specs: text("specs"),
   tags: text("tags"),
   // Stored as JSON string
   rating: text("rating"),
@@ -121508,9 +121508,9 @@ var orders = sqliteTable("orders", {
   paymentMethod: text("payment_method").notNull().default("card"),
   paymentStatus: text("payment_status").notNull().default("pending"),
   transactionId: text("transaction_id"),
-  riderId: integer("rider_id").references(() => users.id),
-  riderLat: real("rider_lat"),
-  riderLng: real("rider_lng"),
+  courierId: integer("courier_id").references(() => users.id),
+  courierLat: real("courier_lat"),
+  courierLng: real("courier_lng"),
   customerLat: real("customer_lat"),
   customerLng: real("customer_lng"),
   notes: text("notes"),
@@ -121543,7 +121543,7 @@ var insertUserSchema = external_exports.object({
   role: external_exports.enum(roles).optional(),
   address: external_exports.string().optional(),
   points: external_exports.number().optional(),
-  allergies: external_exports.string().optional()
+  interests: external_exports.string().optional()
 });
 var insertOrderSchema = external_exports.object({
   userId: external_exports.number().int(),
@@ -124264,8 +124264,8 @@ var Storage = class {
   async deleteUser(id) {
     await db.delete(users).where(eq(users.id, id));
   }
-  async getAllRiders() {
-    return db.select().from(users).where(eq(users.role, "rider"));
+  async getAllCouriers() {
+    return db.select().from(users).where(eq(users.role, "courier"));
   }
   async getMenuItems(includeUnavailable) {
     if (includeUnavailable) {
@@ -124333,12 +124333,12 @@ var Storage = class {
     const [order] = await db.select().from(orders).where(eq(orders.id, id));
     if (!order) return null;
     const items = await db.select().from(orderItems).where(eq(orderItems.orderId, id));
-    let rider = null;
-    if (order.riderId) {
-      const [r2] = await db.select({ id: users.id, name: users.name }).from(users).where(eq(users.id, order.riderId));
-      rider = r2 ?? null;
+    let courier = null;
+    if (order.courierId) {
+      const [r2] = await db.select({ id: users.id, name: users.name }).from(users).where(eq(users.id, order.courierId));
+      courier = r2 ?? null;
     }
-    return { ...order, items, rider };
+    return { ...order, items, courier };
   }
   async getOrdersByUser(userId) {
     const userOrders = await db.select().from(orders).where(eq(orders.userId, userId)).orderBy(desc(orders.createdAt));
@@ -124356,22 +124356,22 @@ var Storage = class {
       allOrders.map(async (order) => {
         const items = await db.select().from(orderItems).where(eq(orderItems.orderId, order.id));
         const [customer] = await db.select().from(users).where(eq(users.id, order.userId));
-        let rider = null;
-        if (order.riderId) {
-          const [r2] = await db.select().from(users).where(eq(users.id, order.riderId));
-          rider = r2 ?? null;
+        let courier = null;
+        if (order.courierId) {
+          const [r2] = await db.select().from(users).where(eq(users.id, order.courierId));
+          courier = r2 ?? null;
         }
-        return { ...order, items, customer, rider };
+        return { ...order, items, customer, courier };
       })
     );
     return result;
   }
-  async getRiderOrders(riderId) {
-    const riderOrders = await db.select().from(orders).where(
-      eq(orders.riderId, riderId)
+  async getCourierOrders(courierId) {
+    const courierOrders = await db.select().from(orders).where(
+      eq(orders.courierId, courierId)
     ).orderBy(desc(orders.createdAt));
     const result = await Promise.all(
-      riderOrders.map(async (order) => {
+      courierOrders.map(async (order) => {
         const items = await db.select().from(orderItems).where(eq(orderItems.orderId, order.id));
         const [customer] = await db.select().from(users).where(eq(users.id, order.userId));
         return { ...order, items, customer };
@@ -124400,7 +124400,7 @@ var Storage = class {
     if (data.name !== void 0) updates.name = data.name;
     if (data.phone !== void 0) updates.phone = data.phone;
     if (data.address !== void 0) updates.address = data.address;
-    if (data.allergies !== void 0) updates.allergies = data.allergies;
+    if (data.interests !== void 0) updates.interests = data.interests;
     if (Object.keys(updates).length === 0) {
       return this.getUserById(id);
     }
@@ -124427,12 +124427,12 @@ var Storage = class {
       and(eq(favorites.userId, userId), eq(favorites.menuItemId, menuItemId))
     );
   }
-  async assignRider(orderId, riderId) {
-    const [order] = await db.update(orders).set({ riderId, status: "assigned", updatedAt: /* @__PURE__ */ new Date() }).where(eq(orders.id, orderId)).returning();
+  async assignCourier(orderId, courierId) {
+    const [order] = await db.update(orders).set({ courierId, status: "assigned", updatedAt: /* @__PURE__ */ new Date() }).where(eq(orders.id, orderId)).returning();
     return order;
   }
-  async updateRiderLocation(orderId, lat, lng) {
-    const [order] = await db.update(orders).set({ riderLat: lat, riderLng: lng, updatedAt: /* @__PURE__ */ new Date() }).where(eq(orders.id, orderId)).returning();
+  async updateCourierLocation(orderId, lat, lng) {
+    const [order] = await db.update(orders).set({ courierLat: lat, courierLng: lng, updatedAt: /* @__PURE__ */ new Date() }).where(eq(orders.id, orderId)).returning();
     return order;
   }
   async updateCustomerLocation(orderId, lat, lng) {
@@ -124514,7 +124514,7 @@ var Storage = class {
   }
   async getAdminUsers() {
     const fetchedUsers = await db.select().from(users);
-    const filteredUsers = fetchedUsers.filter((u) => u.role === "customer" || u.role === "rider");
+    const filteredUsers = fetchedUsers.filter((u) => u.role === "customer" || u.role === "courier");
     const result = await Promise.all(
       filteredUsers.map(async (user) => {
         const userOrders = await db.select().from(orders).where(eq(orders.userId, user.id));
@@ -124532,25 +124532,21 @@ var Storage = class {
 var storage = new Storage();
 
 // server/ai.ts
-var BASE_URL = "https://openrouter.ai/api/v1/chat/completions";
+var BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models/";
 var MODELS = [
-  "openrouter/auto",
-  "openrouter/free",
-  // New smart router for free models
-  "google/gemini-2.0-flash-lite-001:free",
-  "deepseek/deepseek-r1:free",
-  "meta-llama/llama-3.3-70b-instruct:free",
-  "qwen/qwen-2.5-coder-32b-instruct:free",
-  "mistralai/mistral-small-24b-instruct-2501:free",
-  "google/gemini-2.0-flash-exp:free"
+  "gemma-3-27b-it",
+  "gemma-3-12b-it",
+  "gemma-3-4b-it",
+  "gemma-3-1b-it"
 ];
 var rateLimitedUntil = {};
 var COOLDOWN_MS = 10 * 60 * 1e3;
+var WAREHOUSE_LOCATION = { lat: 5.6201, lng: -0.174 };
 function getKey() {
-  const key = process.env.OPENROUTER_API_KEY;
+  const key = process.env.GEMINI_API_KEY;
   if (!key) {
-    console.error("### AI_ERROR: OPENROUTER_API_KEY is not set in the environment!");
-    throw new Error("OPENROUTER_API_KEY not set");
+    console.error("### AI_ERROR: GEMINI_API_KEY is not set in the environment!");
+    throw new Error("GEMINI_API_KEY not set");
   }
   return key;
 }
@@ -124560,10 +124556,21 @@ function getAvailableModels() {
 }
 async function chat(messages) {
   const key = getKey();
-  const sanitizedMessages = messages.map((msg) => ({
-    ...msg,
-    content: msg.content.length > 4e3 ? msg.content.substring(0, 4e3) + "..." : msg.content
-  }));
+  let systemText = "";
+  const contents = [];
+  for (const msg of messages) {
+    if (msg.role === "system") {
+      systemText += msg.content + "\n\n";
+    } else if (msg.role === "user") {
+      const text2 = contents.length === 0 && systemText ? systemText + msg.content : msg.content;
+      contents.push({ role: "user", parts: [{ text: text2 }] });
+    } else if (msg.role === "assistant") {
+      contents.push({ role: "model", parts: [{ text: msg.content }] });
+    }
+  }
+  if (contents.length === 0 && systemText) {
+    contents.push({ role: "user", parts: [{ text: systemText }] });
+  }
   let lastError = null;
   const available = getAvailableModels();
   if (available.length === 0) {
@@ -124573,36 +124580,34 @@ async function chat(messages) {
   for (const modelId of available) {
     try {
       console.log(`### AI Request (${modelId})`);
-      const res = await fetch(BASE_URL, {
+      const res = await fetch(`${BASE_URL}${modelId}:generateContent?key=${key}`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${key}`,
-          "Content-Type": "application/json",
-          "HTTP-Referer": "https://mrwus.app",
-          "X-Title": "Mr Wu's Delivery App"
+          "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          model: modelId,
-          messages: sanitizedMessages,
-          max_tokens: 150,
-          temperature: 0.7
+          contents,
+          generationConfig: {
+            maxOutputTokens: 250,
+            temperature: 0.7
+          }
         })
       });
       if (!res.ok) {
         const errText = await res.text();
         const status = res.status;
         console.warn(`### AI ${modelId} failed (${status}): ${errText.slice(0, 200)}`);
-        if (status === 429 || status === 402) {
+        if (status === 429 || status === 402 || status === 403 || status === 503 || status === 404) {
           rateLimitedUntil[modelId] = Date.now() + COOLDOWN_MS;
-          console.log(`### Model ${modelId} rate-limited, cooling down for 10min`);
-          lastError = new Error(`Rate limited on ${modelId}`);
+          console.log(`### Model ${modelId} rate-limited or unavailable, cooling down for 10min`);
+          lastError = new Error(`Rate limited or unavailable on ${modelId}`);
           continue;
         }
         lastError = new Error(`Error ${status} on ${modelId}`);
         continue;
       }
       const data = await res.json();
-      const content = data.choices?.[0]?.message?.content;
+      const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
       if (content) {
         console.log(`### AI success via ${modelId}`);
         return content;
@@ -124618,17 +124623,17 @@ async function chat(messages) {
   console.error(`### AI_FATAL: ${errorMessage}`);
   throw lastError || new Error("All AI models failed");
 }
-async function getRecommendations(menuItems2, recentOrders, timeOfDay, allergies) {
+async function getRecommendations(menuItems2, recentOrders, timeOfDay, interests) {
   const menuText = menuItems2.map((i2) => `ID:${i2.id} "${i2.name}" (${i2.category}, $${i2.price}${i2.tags?.length ? ", " + i2.tags.join("/") : ""})`).join("\n");
   const historyText = recentOrders.length > 0 ? recentOrders.slice(0, 3).map((o) => o.items.map((i2) => i2.name).join(", ")).join(" | ") : "No previous orders";
   const prompt = `Menu:
 ${menuText}
 Orders: ${historyText}
 Time: ${timeOfDay}
-Allergies/Preferences: ${allergies || "None"}. DO NOT recommend any dishes containing these allergens or violating these preferences.
+Interests/Preferences: ${interests || "None"}. DO NOT recommend any products violating these preferences.
 Respond with 4 best JSON recommendations only: [{"id":"1","name":"Item","reason":"reason","confidence":0.95}]`;
   const response = await chat([
-    { role: "system", content: "You are a food recommender. Respond with JSON arrays only." },
+    { role: "system", content: "You are a tech product recommender. Respond with JSON arrays only." },
     { role: "user", content: prompt }
   ]);
   try {
@@ -124645,9 +124650,9 @@ Respond with 4 best JSON recommendations only: [{"id":"1","name":"Item","reason"
 }
 async function getOrderETA(status, createdAt, itemCount) {
   const minutesSinceOrder = Math.floor((Date.now() - createdAt.getTime()) / 6e4);
-  const prompt = `You are an AI delivery time estimator for a Chinese restaurant.
+  const prompt = `You are an AI delivery time estimator for a tech retail store.
 Order: status="${status}", placed ${minutesSinceOrder} min ago, ${itemCount} items.
-Estimate remaining delivery time. Respond with valid JSON only: {"minutes":15,"message":"Your food is being prepared!"}`;
+Estimate remaining delivery time. Respond with valid JSON only: {"minutes":15,"message":"Your gadgets are being secured for transport!"}`;
   const response = await chat([
     { role: "system", content: "You are a delivery ETA AI. Respond with valid JSON only." },
     { role: "user", content: prompt }
@@ -124657,18 +124662,18 @@ Estimate remaining delivery time. Respond with valid JSON only: {"minutes":15,"m
     return JSON.parse(cleaned);
   } catch {
     const fallbacks = {
-      pending: { minutes: 35, message: "Order received! Kitchen will start soon." },
-      confirmed: { minutes: 28, message: "Kitchen confirmed your order!" },
-      preparing: { minutes: 20, message: "Your food is being cooked fresh!" },
-      ready: { minutes: 12, message: "Food is ready, waiting for pickup!" },
-      assigned: { minutes: 10, message: "Rider is on the way to the restaurant!" },
-      picked_up: { minutes: 8, message: "Your food is out for delivery!" },
-      delivered: { minutes: 0, message: "Order delivered. Enjoy your meal!" }
+      pending: { minutes: 35, message: "Order received! Processing your tech request." },
+      confirmed: { minutes: 28, message: "Inventory confirmed! Preparing for dispatch." },
+      packaging: { minutes: 20, message: "Your gadgets are being carefully packed!" },
+      ready: { minutes: 12, message: "Order is ready for the courier!" },
+      assigned: { minutes: 10, message: "Courier is arriving at the warehouse!" },
+      picked_up: { minutes: 8, message: "Your order is out for delivery!" },
+      delivered: { minutes: 0, message: "Order delivered. Power on and enjoy!" }
     };
     return fallbacks[status] ?? { minutes: 20, message: "On the way!" };
   }
 }
-async function getKitchenSummary(orders2) {
+async function getWarehouseSummary(orders2) {
   if (orders2.length === 0) return "No active orders right now. Enjoy the quiet!";
   const filtered = orders2.filter((o) => o && !["delivered", "cancelled"].includes(o.status)).slice(0, 10);
   if (filtered.length === 0) return "No active orders to report. Great time to prep for the next rush!";
@@ -124677,11 +124682,11 @@ async function getKitchenSummary(orders2) {
     const items = (o.items || []).map((i2) => `${i2.quantity}\xD7 ${i2.name}`).join(", ");
     return `Order #${String(o.id).padStart(5, "0")} [${o.status}, ${age}min ago]: ${items}`;
   }).join("\n");
-  const prompt = `Kitchen assistant at Mr Wu's. Active orders:
+  const prompt = `Warehouse assistant at Trends Electronics. Active orders:
 ${ordersText}
 Give a 1-2 sentence briefing. Flag orders waiting >15 min. Be concise.`;
   const response = await chat([
-    { role: "system", content: "You are a kitchen operations assistant. Be brief and actionable." },
+    { role: "system", content: "You are a warehouse operations assistant. Be brief and actionable." },
     { role: "user", content: prompt }
   ]);
   return response.trim() || "All orders looking good. Keep up the great work!";
@@ -124693,7 +124698,7 @@ ${menuText}
 Query: "${query}"
 Respond with best matches as valid JSON only: {"message":"Msg","itemIds":[1,3]}`;
   const response = await chat([
-    { role: "system", content: "You are a restaurant assistant. Always respond with valid JSON only." },
+    { role: "system", content: "You are a tech retail assistant. Always respond with valid JSON only." },
     { role: "user", content: prompt }
   ]);
   try {
@@ -124706,34 +124711,53 @@ Respond with best matches as valid JSON only: {"message":"Msg","itemIds":[1,3]}`
 async function getAdminInsights(stats) {
   const popularText = stats.popularItems.map((i2) => `${i2.name} (${i2.count} sold)`).join(", ");
   const recentRevenue = stats.revenue.slice(-7).map((r2) => `$${r2.amount}`).join(", ");
-  const prompt = `Business consultant for Mr Wu's Chinese Delivery.
+  const prompt = `Business consultant for Trends Electronics.
 30-Day: Revenue=$${stats.totalRevenue.toFixed(2)}, Orders=${stats.totalOrders}, Top items: ${popularText}, Last 7 days revenue: ${recentRevenue}.
 Give a professional 2-3 sentence strategic insight.`;
   const response = await chat([
-    { role: "system", content: "You are a strategic business analyst for a restaurant. Be concise and insightful." },
+    { role: "system", content: "You are a strategic business analyst for a retail store. Be concise and insightful." },
     { role: "user", content: prompt }
   ]);
   return response.trim() || "Performance is steady. Focus on maintaining quality and speed.";
 }
-async function getSupportResponse(userQuery, history = [], menuItems2 = [], allergies) {
+async function getSupportResponse(userQuery, history = [], menuItems2 = [], interests, activeOrders = []) {
   const query = userQuery.toLowerCase();
-  const foodKeywords = ["menu", "recommend", "eat", "food", "dish", "meal", "order", "combo", "main", "starter", "drink", "spicy", "price", "cost", "vegetarian", "vegan"];
-  const hasFoodIntent = foodKeywords.some((word) => query.includes(word));
-  const menuText = hasFoodIntent && menuItems2.length > 0 ? menuItems2.map((i2) => `ID:${i2.id} "${i2.name}" ($${i2.price}) - ${i2.category}. ${i2.description}${i2.tags?.length ? " [" + i2.tags.join(", ") + "]" : ""}`).join("\n") : "";
+  const techKeywords = ["shop", "recommend", "buy", "product", "gadget", "device", "phone", "laptop", "audio", "watch", "gaming", "accessories", "price", "cost", "warranty", "spec", "stock"];
+  const trackingKeywords = ["where", "track", "status", "courier", "courier", "delivery", "arrival", "eta", "location", "coming", "package"];
+  const hasTechIntent = techKeywords.some((word) => query.includes(word));
+  const hasTrackingIntent = trackingKeywords.some((word) => query.includes(word));
+  const menuText = hasTechIntent && menuItems2.length > 0 ? menuItems2.map((i2) => `ID:${i2.id} "${i2.name}" ($${i2.price}) - ${i2.category}. ${i2.description}${i2.tags?.length ? " [" + i2.tags.join(", ") + "]" : ""}`).join("\n") : "";
+  const orderContext = activeOrders.length > 0 ? activeOrders.map((o) => {
+    const items = o.items.map((i2) => `${i2.quantity}x ${i2.name}`).join(", ");
+    const courierLoc = o.courierLat && o.courierLng ? `Courier at [${o.courierLat}, ${o.courierLng}]` : "Courier location unknown";
+    const restLoc = `Warehouse at [${WAREHOUSE_LOCATION.lat}, ${WAREHOUSE_LOCATION.lng}]`;
+    const custLoc = o.customerLat && o.customerLng ? `Customer at [${o.customerLat}, ${o.customerLng}]` : "Customer location unknown";
+    return `Order #${o.id}: Status=${o.status}. Items: ${items}. ${courierLoc}. ${restLoc}. ${custLoc}.`;
+  }).join("\n") : "No active orders for this user.";
   let systemPrompt;
-  if (hasFoodIntent) {
-    systemPrompt = `You are Mr Wu's AI Support Assistant.
-MASTER ORDER: You are a elite food concierge. Proactively suggest a COMPLETE MEAL (Starter + Main + Drink) using [PRODUCT:id] tags.
-TONE: Friendly, sophisticated, and EXTREMELY BRIEF (Max 25-30 words). Provide high-detail value in fewer words.
-ALLERGIES: Strictly avoid "${allergies || "None recognized"}".
+  if (hasTrackingIntent && activeOrders.length > 0) {
+    systemPrompt = `You are Trends Electronics' elite logistics coordinator.
+Goal: Provide a precise update on the user's package using the TRACKING CONTEXT below.
+Coordinates: Translate [lat, lng] into human-friendly terms relative to the warehouse and customer.
+Note: If the courier is closer to the customer than the warehouse, say they're "on the home stretch".
+Tone: Informed, professional, and very brief (under 30 words).
+
+TRACKING CONTEXT:
+${orderContext}`;
+  } else if (hasTechIntent) {
+    systemPrompt = `You are Trends Electronics' elite tech concierge. 
+Goal: Provide a complete tech setup recommendation (Device + Accessories) using the PRODUCT DATA below.
+Requirement: You MUST use [PRODUCT:id] tags for every item you mention to generate interactive cards.
+Interests: Strictly align with "${interests || "None recognized"}".
+Tone: Helpful, tech-savvy, and very brief (under 30 words).
 
 MENU DATA:
 ${menuText}`;
   } else {
-    systemPrompt = `You are Mr Wu's AI Support Assistant.
-MASTER ORDER: General query. Be friendly, welcoming, and helpful.
-STRICT NEGATIVE CONSTRAINT: DO NOT mention the menu, food, or products.
-TONE: Warm "Mr. Wu" persona. Sophisticated but VERY SHORT (Under 20 words).`;
+    systemPrompt = `You are Trends Electronics' friendly AI assistant.
+Goal: Handle greetings and general chat warmly.
+Note: You don't have the product catalog open right now. If the user wants to see gadgets or the store, encourage them to ask specifically for "recommendations" or "the store".
+Tone: Professional "Trends" persona. Tech-savvy and very short (under 20 words).`;
   }
   const messages = [
     { role: "system", content: systemPrompt },
@@ -124772,7 +124796,7 @@ var aiLimiter = rate_limit_default({
   message: { error: "Too many AI requests, please try again in a minute." }
 });
 var router = (0, import_express.Router)();
-var JWT_SECRET = process.env.JWT_SECRET || "mrwus-secret-key-change-in-production";
+var JWT_SECRET = process.env.JWT_SECRET || "trends-electronics-secret-key-change-in-production";
 var GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "";
 var client = new import_google_auth_library.OAuth2Client(GOOGLE_CLIENT_ID);
 function auth(req, res, next) {
@@ -124808,10 +124832,10 @@ router.post("/auth/register", async (req, res) => {
   if (!result.success) return res.status(400).json({ error: result.error.flatten() });
   const { role, adminSecret, email } = result.data;
   const lowerEmail = email.toLowerCase();
-  if (role === "admin" || role === "kitchen") {
+  if (role === "admin" || role === "warehouse") {
     return res.status(403).json({ error: "Administrative accounts must be created by the Super Admin" });
   }
-  if (lowerEmail === "admin@mrwu.com") {
+  if (lowerEmail === "admin@trendselectronics.com") {
     return res.status(403).json({ error: "Unauthorized email address" });
   }
   const existing = await storage.getUserByEmail(email);
@@ -124874,12 +124898,12 @@ router.get("/auth/me", auth, async (req, res) => {
     phone: user.phone,
     address: user.address,
     points: user.points,
-    allergies: user.allergies
+    interests: user.interests
   });
 });
 router.patch("/auth/profile", auth, async (req, res) => {
-  const { name, phone, address, allergies } = req.body;
-  const user = await storage.updateUserProfile(req.user.id, { name, phone, address, allergies });
+  const { name, phone, address, interests } = req.body;
+  const user = await storage.updateUserProfile(req.user.id, { name, phone, address, interests });
   if (!user) return res.status(404).json({ error: "User not found" });
   res.json({
     id: user.id,
@@ -124889,7 +124913,7 @@ router.patch("/auth/profile", auth, async (req, res) => {
     phone: user.phone,
     address: user.address,
     points: user.points,
-    allergies: user.allergies
+    interests: user.interests
   });
 });
 router.get("/menu", async (_req, res) => {
@@ -124901,13 +124925,13 @@ router.get("/menu/:id", async (req, res) => {
   if (!item) return res.status(404).json({ error: "Not found" });
   res.json(item);
 });
-router.patch("/admin/menu-items/:id/image", auth, requireRole("kitchen"), async (req, res) => {
+router.patch("/admin/menu-items/:id/image", auth, requireRole("warehouse"), async (req, res) => {
   const { imageUrl } = req.body;
   if (!imageUrl) return res.status(400).json({ error: "imageUrl required" });
   const item = await storage.updateMenuItemImage(Number(req.params.id), imageUrl);
   res.json(item);
 });
-router.post("/upload", auth, requireRole("admin", "kitchen"), upload.single("image"), (req, res) => {
+router.post("/upload", auth, requireRole("admin", "warehouse"), upload.single("image"), (req, res) => {
   if (!req.file) return res.status(400).json({ error: "No file uploaded" });
   res.json({ url: `/uploads/${req.file.filename}` });
 });
@@ -124933,7 +124957,7 @@ router.post("/orders", auth, requireRole("customer"), async (req, res) => {
   const result = createOrderSchema.safeParse(req.body);
   if (!result.success) return res.status(400).json({ error: result.error.flatten() });
   const order = await storage.createOrder({ userId: req.user.id, ...result.data });
-  io2.to("kitchen").emit("new_order", { orderId: order.id, customerName: req.user.email });
+  io2.to("warehouse").emit("new_order", { orderId: order.id, customerName: req.user.email });
   res.status(201).json(order);
 });
 router.get("/orders/my", auth, requireRole("customer"), async (req, res) => {
@@ -124948,13 +124972,13 @@ router.get("/orders/:id", auth, async (req, res) => {
   }
   res.json(order);
 });
-router.patch("/orders/:id/location", auth, requireRole("rider", "admin"), async (req, res) => {
+router.patch("/orders/:id/location", auth, requireRole("courier", "admin"), async (req, res) => {
   const { lat, lng } = req.body;
   if (typeof lat !== "number" || typeof lng !== "number") {
     return res.status(400).json({ error: "Invalid coordinates" });
   }
-  const order = await storage.updateRiderLocation(Number(req.params.id), lat, lng);
-  io2.to(`order:${order.id}`).emit("rider:location_updated", { lat, lng });
+  const order = await storage.updateCourierLocation(Number(req.params.id), lat, lng);
+  io2.to(`order:${order.id}`).emit("courier:location_updated", { lat, lng });
   res.json(order);
 });
 router.patch("/orders/:id/customer-location", auth, async (req, res) => {
@@ -125030,41 +125054,41 @@ router.post("/payments/verify", auth, async (req, res) => {
     res.status(500).json({ error: "Payment verification failed" });
   }
 });
-router.get("/management/orders", auth, requireRole("kitchen"), async (_req, res) => {
+router.get("/management/orders", auth, requireRole("warehouse"), async (_req, res) => {
   const allOrders = await storage.getAllOrders();
   res.json(allOrders);
 });
-router.patch("/management/orders/:id/status", auth, requireRole("kitchen"), async (req, res) => {
+router.patch("/management/orders/:id/status", auth, requireRole("warehouse"), async (req, res) => {
   const { status } = req.body;
-  const validStatuses = ["pending", "confirmed", "preparing", "ready", "assigned", "picked_up", "delivered", "cancelled"];
+  const validStatuses = ["pending", "confirmed", "packaging", "ready", "assigned", "picked_up", "delivered", "cancelled"];
   if (!validStatuses.includes(status)) return res.status(400).json({ error: "Invalid status" });
   const order = await storage.updateOrderStatus(Number(req.params.id), status);
   io2.to(`user:${order.userId}`).emit("order_status", { orderId: order.id, status });
   res.json(order);
 });
-router.patch("/management/orders/:id/assign", auth, requireRole("kitchen"), async (req, res) => {
-  const { riderId } = req.body;
-  if (!riderId) return res.status(400).json({ error: "riderId required" });
-  const order = await storage.assignRider(Number(req.params.id), Number(riderId));
-  io2.to(`rider:${riderId}`).emit("order_assigned", { orderId: order.id });
+router.patch("/management/orders/:id/assign", auth, requireRole("warehouse"), async (req, res) => {
+  const { courierId } = req.body;
+  if (!courierId) return res.status(400).json({ error: "courierId required" });
+  const order = await storage.assignCourier(Number(req.params.id), Number(courierId));
+  io2.to(`courier:${courierId}`).emit("order_assigned", { orderId: order.id });
   io2.to(`user:${order.userId}`).emit("order_status", { orderId: order.id, status: "assigned" });
   res.json(order);
 });
-router.get("/management/riders", auth, requireRole("kitchen"), async (_req, res) => {
-  const riders = await storage.getAllRiders();
-  res.json(riders.map((r2) => ({ id: r2.id, name: r2.name, email: r2.email, phone: r2.phone })));
+router.get("/management/couriers", auth, requireRole("warehouse"), async (_req, res) => {
+  const couriers = await storage.getAllCouriers();
+  res.json(couriers.map((r2) => ({ id: r2.id, name: r2.name, email: r2.email, phone: r2.phone })));
 });
-router.get("/rider/orders", auth, requireRole("rider"), async (req, res) => {
-  const riderOrders = await storage.getRiderOrders(req.user.id);
-  res.json(riderOrders);
+router.get("/courier/orders", auth, requireRole("courier"), async (req, res) => {
+  const courierOrders = await storage.getCourierOrders(req.user.id);
+  res.json(courierOrders);
 });
-router.patch("/rider/orders/:id/status", auth, requireRole("rider"), async (req, res) => {
+router.patch("/courier/orders/:id/status", auth, requireRole("courier"), async (req, res) => {
   const { status } = req.body;
   const allowedStatuses = ["picked_up", "delivered"];
-  if (!allowedStatuses.includes(status)) return res.status(400).json({ error: "Invalid status for rider" });
+  if (!allowedStatuses.includes(status)) return res.status(400).json({ error: "Invalid status for courier" });
   const order = await storage.getOrderById(Number(req.params.id));
   if (!order) return res.status(404).json({ error: "Order not found" });
-  if (order.riderId !== req.user.id) return res.status(403).json({ error: "Not your order" });
+  if (order.courierId !== req.user.id) return res.status(403).json({ error: "Not your order" });
   const updated = await storage.updateOrderStatus(Number(req.params.id), status);
   io2.to(`user:${updated.userId}`).emit("order_status", { orderId: updated.id, status });
   res.json(updated);
@@ -125072,20 +125096,20 @@ router.patch("/rider/orders/:id/status", auth, requireRole("rider"), async (req,
 router.get("/ai/recommendations", aiLimiter, async (req, res) => {
   try {
     const menuItems2 = await storage.getMenuItems();
-    const { recentOrders, allergies } = await (async () => {
+    const { recentOrders, interests } = await (async () => {
       const authHeader = req.headers.authorization;
-      if (!authHeader) return { recentOrders: [], allergies: null };
+      if (!authHeader) return { recentOrders: [], interests: null };
       const token = authHeader.split(" ")[1];
-      if (!token) return { recentOrders: [], allergies: null };
+      if (!token) return { recentOrders: [], interests: null };
       try {
         const decoded = import_jsonwebtoken.default.verify(token, process.env.JWT_SECRET || "fallback-secret");
         const [orders2, user] = await Promise.all([
           storage.getOrdersByUser(decoded.id),
           storage.getUserById(decoded.id)
         ]);
-        return { recentOrders: orders2, allergies: user?.allergies };
+        return { recentOrders: orders2, interests: user?.interests };
       } catch {
-        return { recentOrders: [], allergies: null };
+        return { recentOrders: [], interests: null };
       }
     })();
     const hour = (/* @__PURE__ */ new Date()).getHours();
@@ -125097,7 +125121,7 @@ router.get("/ai/recommendations", aiLimiter, async (req, res) => {
       price: m2.price,
       tags: m2.tags ? JSON.parse(m2.tags) : []
     }));
-    const recs = await getRecommendations(simplified, recentOrders, timeOfDay, allergies);
+    const recs = await getRecommendations(simplified, recentOrders, timeOfDay, interests);
     res.json(recs);
   } catch (err) {
     console.error("AI recommendations error:", err);
@@ -125118,7 +125142,7 @@ router.get("/ai/eta/:orderId", aiLimiter, auth, async (req, res) => {
     res.json({ eta: "Usually ready in 15-20 min", details: "AI service temporarily unavailable" });
   }
 });
-router.get("/ai/kitchen-summary", aiLimiter, auth, requireRole("kitchen"), async (_req, res) => {
+router.get("/ai/warehouse-summary", aiLimiter, auth, requireRole("warehouse"), async (_req, res) => {
   try {
     const allOrders = await storage.getAllOrders();
     const simplified = allOrders.map((o) => ({
@@ -125127,11 +125151,11 @@ router.get("/ai/kitchen-summary", aiLimiter, auth, requireRole("kitchen"), async
       createdAt: new Date(o.createdAt),
       items: o.items.map((i2) => ({ name: i2.name, quantity: i2.quantity }))
     }));
-    const summary = await getKitchenSummary(simplified);
+    const summary = await getWarehouseSummary(simplified);
     res.json({ summary });
   } catch (err) {
-    console.error("AI kitchen summary error:", err);
-    res.json({ summary: "Kitchen is busy, but running smoothly. Check new orders frequently." });
+    console.error("AI warehouse summary error:", err);
+    res.json({ summary: "Warehouse is busy, but running smoothly. Check new orders frequently." });
   }
 });
 router.get("/admin/stats", auth, requireRole("admin"), async (req, res) => {
@@ -125139,7 +125163,7 @@ router.get("/admin/stats", auth, requireRole("admin"), async (req, res) => {
   const stats = await storage.getAdminStats(days);
   res.json(stats);
 });
-router.get("/admin/menu-items", auth, requireRole("admin", "kitchen"), async (_req, res) => {
+router.get("/admin/menu-items", auth, requireRole("admin", "warehouse"), async (_req, res) => {
   const items = await storage.getMenuItems(true);
   res.json(items);
 });
@@ -125147,7 +125171,7 @@ router.post("/admin/menu-items", auth, requireRole("admin"), async (req, res) =>
   const item = await storage.createMenuItem(req.body);
   res.status(201).json(item);
 });
-router.patch("/admin/menu-items/:id", auth, requireRole("admin", "kitchen"), async (req, res) => {
+router.patch("/admin/menu-items/:id", auth, requireRole("admin", "warehouse"), async (req, res) => {
   const item = await storage.updateMenuItem(Number(req.params.id), req.body);
   res.json(item);
 });
@@ -125205,23 +125229,28 @@ router.post("/ai/support", aiLimiter, async (req, res) => {
       description: m2.description,
       tags: m2.tags ? JSON.parse(m2.tags) : []
     }));
-    const user = await (async () => {
+    const { user, activeOrders } = await (async () => {
       const authHeader = req.headers.authorization;
-      if (!authHeader) return null;
+      if (!authHeader) return { user: null, activeOrders: [] };
       const token = authHeader.split(" ")[1];
-      if (!token) return null;
+      if (!token) return { user: null, activeOrders: [] };
       try {
         const decoded = import_jsonwebtoken.default.verify(token, JWT_SECRET);
-        return await storage.getUserById(decoded.id);
+        const [userData, orders2] = await Promise.all([
+          storage.getUserById(decoded.id),
+          storage.getOrdersByUser(decoded.id)
+        ]);
+        const active = orders2.filter((o) => !["delivered", "cancelled"].includes(o.status));
+        return { user: userData, activeOrders: active };
       } catch {
-        return null;
+        return { user: null, activeOrders: [] };
       }
     })();
-    const reply = await getSupportResponse(message, history || [], simplified, user?.allergies);
+    const reply = await getSupportResponse(message, history || [], simplified, user?.interests, activeOrders);
     res.json({ reply });
   } catch (err) {
     console.error("### AI_SUPPORT_ROUTE_ERROR:", err);
-    res.json({ reply: "I'm here to help! Please contact us at support@mrwu.com or call our hotline for urgent issues." });
+    res.json({ reply: "I'm here to help! Please contact us at support@trendselectronics.com or call our hotline for urgent issues." });
   }
 });
 router.post("/ai/admin-insights", aiLimiter, auth, requireRole("admin"), async (req, res) => {
@@ -125233,7 +125262,7 @@ router.post("/ai/admin-insights", aiLimiter, auth, requireRole("admin"), async (
       res.json({ insights });
     } catch {
       res.json({
-        insights: `Over the past ${days} days, the restaurant recorded ${stats.totalOrders} orders totalling $${stats.totalRevenue.toFixed(2)}. ${stats.popularItems.length > 0 ? `Top seller: ${stats.popularItems[0].name} (${stats.popularItems[0].count} sold).` : ""} Focus on maintaining quality and delivery speed to sustain growth.`
+        insights: `Over the past ${days} days, the store recorded ${stats.totalOrders} orders totalling GH\u20B5${stats.totalRevenue.toFixed(2)}. ${stats.popularItems.length > 0 ? `Top seller: ${stats.popularItems[0].name} (${stats.popularItems[0].count} sold).` : ""} Focus on maintaining quality and delivery speed to sustain growth.`
       });
     }
   } catch (err) {
@@ -125242,7 +125271,7 @@ router.post("/ai/admin-insights", aiLimiter, auth, requireRole("admin"), async (
   }
 });
 router.get("/admin/staff", auth, requireRole("admin"), async (_req, res) => {
-  const staff = await storage.getUsersByRole("kitchen");
+  const staff = await storage.getUsersByRole("warehouse");
   res.json(staff.map((s2) => ({ id: s2.id, email: s2.email, name: s2.name, createdAt: s2.createdAt })));
 });
 router.get("/admin/users", auth, requireRole("admin"), async (_req, res) => {
@@ -125256,7 +125285,7 @@ router.post("/admin/staff", auth, requireRole("admin"), async (req, res) => {
   }
   const existing = await storage.getUserByEmail(email);
   if (existing) return res.status(409).json({ error: "Email already in use" });
-  const user = await storage.createUser({ email, password, name, role: "kitchen" });
+  const user = await storage.createUser({ email, password, name, role: "warehouse" });
   res.status(201).json({ id: user.id, email: user.email, name: user.name, role: user.role });
 });
 router.delete("/admin/staff/:id", auth, requireRole("admin"), async (req, res) => {
@@ -125271,9 +125300,9 @@ router.delete("/admin/staff/:id", auth, requireRole("admin"), async (req, res) =
     console.log(`### DELETE STAFF FAILED: User ${id} not found in database`);
     return res.status(404).json({ error: "Staff member not found" });
   }
-  if (user.role !== "kitchen") {
-    console.log(`### DELETE STAFF FAILED: User ${id} is not kitchen staff (role=${user.role})`);
-    return res.status(400).json({ error: "Can only remove kitchen staff" });
+  if (user.role !== "warehouse") {
+    console.log(`### DELETE STAFF FAILED: User ${id} is not warehouse staff (role=${user.role})`);
+    return res.status(400).json({ error: "Can only remove warehouse staff" });
   }
   await storage.deleteUser(id);
   console.log(`### DELETE STAFF SUCCESS: User ${id} removed`);
@@ -125316,7 +125345,7 @@ var routes_default = router;
 // server/index.ts
 var import_fs = __toESM(require("fs"), 1);
 var import_path3 = __toESM(require("path"), 1);
-console.log("### SERVER_CHECKPOINT: Starting Mr. Wu Delivery App...");
+console.log("### SERVER_CHECKPOINT: Starting Trends Electronics Delivery App...");
 var app = (0, import_express2.default)();
 var httpServer = (0, import_http.createServer)(app);
 var io2 = new Server(httpServer, {
@@ -125378,6 +125407,19 @@ app.use("/api", routes_default);
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
 if (process.env.NODE_ENV === "production" || process.env.RENDER) {
   const distPath = import_path3.default.resolve(process.cwd(), "dist");
+  if (import_fs.default.existsSync(distPath)) {
+    console.log(`### SERVER_CHECKPOINT: Serving static files from ${distPath}`);
+    const assetsDir = import_path3.default.join(distPath, "assets");
+    if (import_fs.default.existsSync(assetsDir)) {
+      const files = import_fs.default.readdirSync(assetsDir);
+      console.log(`### SERVER_CHECKPOINT: Assets found: ${files.length} items`);
+      console.log(`### SERVER_CHECKPOINT: Main Asset: ${files.find((f3) => f3.startsWith("index-") && f3.endsWith(".js"))}`);
+    } else {
+      console.warn("### SERVER_ERROR: assets directory not found in dist!");
+    }
+  } else {
+    console.error("### SERVER_ERROR: dist directory not found! Frontend build might have failed.");
+  }
   app.use(import_express2.default.static(distPath));
   app.use((req, res, next) => {
     if (req.method === "GET" && !req.path.startsWith("/api")) {
@@ -125398,11 +125440,11 @@ app.use((err, _req, res, _next) => {
   });
 });
 async function seedSuperAdmin() {
-  const email = "admin@mrwu.com";
+  const email = "admin@trendselectronics.com";
   const existing = await db.select().from(users).where(eq(users.email, email));
   if (existing.length > 0) {
     const user = existing[0];
-    const passwordHash2 = await bcryptjs_default.hash("mrwu-admin-2025", 10);
+    const passwordHash2 = await bcryptjs_default.hash("trends-admin-2025", 10);
     console.log(`### Updating existing admin account: ${email}`);
     await db.update(users).set({
       role: "admin",
@@ -125410,37 +125452,47 @@ async function seedSuperAdmin() {
     }).where(eq(users.id, user.id));
     return;
   }
-  const passwordHash = await bcryptjs_default.hash("mrwu-admin-2025", 10);
+  const passwordHash = await bcryptjs_default.hash("trends-admin-2025", 10);
   await db.insert(users).values({
     email,
     passwordHash,
-    name: "Super Admin",
+    name: "Trends Admin",
     role: "admin",
     createdAt: /* @__PURE__ */ new Date()
   });
-  console.log("Super Admin seeded: admin@mrwu.com / mrwu-admin-2025");
+  console.log("Super Admin seeded: admin@trendselectronics.com / trends-admin-2025");
 }
 async function initializeDatabase() {
   console.log("### DB_CHECKPOINT: Running self-healing migrations...");
   try {
     const sqlite2 = db.session.client;
-    const tableInfo = sqlite2.prepare("PRAGMA table_info(users)").all();
-    const columns = tableInfo.map((c) => c.name);
-    if (!columns.includes("points")) {
-      console.log("### DB_CHECKPOINT: Adding 'points' column to users...");
+    const userTableInfo = sqlite2.prepare("PRAGMA table_info(users)").all();
+    const userColumns = userTableInfo.map((c) => c.name);
+    if (!userColumns.includes("points")) {
       sqlite2.prepare("ALTER TABLE users ADD COLUMN points INTEGER DEFAULT 0").run();
     }
-    if (!columns.includes("allergies")) {
-      console.log("### DB_CHECKPOINT: Adding 'allergies' column to users...");
-      sqlite2.prepare("ALTER TABLE users ADD COLUMN allergies TEXT").run();
+    if (!userColumns.includes("interests")) {
+      if (userColumns.includes("allergies")) {
+        sqlite2.prepare("ALTER TABLE users RENAME COLUMN allergies TO interests").run();
+      } else {
+        sqlite2.prepare("ALTER TABLE users ADD COLUMN interests TEXT").run();
+      }
     }
-    if (!columns.includes("google_id")) {
-      console.log("### DB_CHECKPOINT: Adding 'google_id' column to users...");
+    if (!userColumns.includes("google_id")) {
       sqlite2.prepare("ALTER TABLE users ADD COLUMN google_id TEXT").run();
+    }
+    const menuTableInfo = sqlite2.prepare("PRAGMA table_info(menu_items)").all();
+    const menuColumns = menuTableInfo.map((c) => c.name);
+    if (!menuColumns.includes("specs")) {
+      if (menuColumns.includes("calories")) {
+        sqlite2.prepare("ALTER TABLE menu_items RENAME COLUMN calories TO specs").run();
+        sqlite2.prepare("UPDATE menu_items SET specs = CAST(specs AS TEXT)").run();
+      } else {
+        sqlite2.prepare("ALTER TABLE menu_items ADD COLUMN specs TEXT").run();
+      }
     }
     const favoritesTable = sqlite2.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='favorites'").get();
     if (!favoritesTable) {
-      console.log("### DB_CHECKPOINT: Creating 'favorites' table...");
       sqlite2.prepare(`
         CREATE TABLE favorites (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -125457,10 +125509,10 @@ async function initializeDatabase() {
 }
 async function seedStaffAccounts() {
   const staff = [
-    { email: "chef@mrwu.com", name: "Chef Wu", role: "kitchen" },
-    { email: "rider@mrwu.com", name: "Rider Wu", role: "rider" }
+    { email: "support@trendselectronics.com", name: "Trends Support", role: "warehouse" },
+    { email: "delivery@trendselectronics.com", name: "Trends Courier", role: "courier" }
   ];
-  const passwordHash = await bcryptjs_default.hash("mrwu-staff-2025", 10);
+  const passwordHash = await bcryptjs_default.hash("trends-staff-2025", 10);
   for (const s2 of staff) {
     const [existing] = await db.select().from(users).where(eq(users.email, s2.email));
     if (!existing) {
@@ -125479,16 +125531,16 @@ async function seedMenuItems() {
   const existing = await db.select().from(menuItems);
   if (existing.length > 0) return;
   await db.insert(menuItems).values([
-    { name: "General Tso's Chicken", description: "Crispy chicken chunks tossed in a sweet and spicy glaze with peppers", price: "16.50", imageUrl: "/assets/general-tsos.jpg", calories: 840, tags: JSON.stringify(["Spicy"]), category: "Mains", rating: "4.8", reviews: 250, isTop: 1, isAvailable: 1 },
-    { name: "Spicy Szechuan Beef", description: "Tender slices of premium beef wok-seared with Szechuan peppercorns and dried chilies", price: "14.50", imageUrl: "/assets/szechuan-beef.jpg", calories: 640, tags: JSON.stringify(["Spicy"]), category: "Mains", rating: "4.9", reviews: 250, isTop: 0, isAvailable: 1 },
-    { name: "Golden Pork Dumplings", description: "Pan-seared dumplings filled with seasoned ground pork and chives", price: "8.95", imageUrl: "/assets/golden-pork.jpg", calories: 420, category: "Appetizers", isTop: 0, isAvailable: 1 },
-    { name: "Peking Duck Bao", description: "Fluffy steamed bao buns with crispy duck and hoisin sauce", price: "12.50", imageUrl: "/assets/peking-duck.jpg", calories: 560, category: "Appetizers", isTop: 0, isAvailable: 1 },
-    { name: "Sichuan Beef Noodles", description: "Hand-pulled wheat noodles in a rich, numbing beef broth", price: "15.50", imageUrl: "/assets/sichuan-noodles.jpg", calories: 920, tags: JSON.stringify(["Spicy"]), category: "Mains", isTop: 0, isAvailable: 1 },
-    { name: "Mr Wu's Family Combo", description: "2 Mains, 2 Appetizers, and Large Rice. Perfect for 3-4 people.", price: "45.00", imageUrl: "/assets/family-combo.jpg", category: "Combos", isTop: 1, isAvailable: 1 },
-    { name: "Mapo Tofu (Silken)", description: "Soft tofu cubes set in a spicy sauce with fermented black beans", price: "12.00", imageUrl: "/assets/mapo-tofu.jpg", calories: 580, tags: JSON.stringify(["Spicy", "Veg"]), category: "Mains", isTop: 0, isAvailable: 1 },
-    { name: "Crispy Spring Rolls", description: "Golden fried spring rolls with vegetable filling", price: "5.95", imageUrl: "/assets/spring-rolls.jpg", calories: 320, category: "Appetizers", isTop: 0, isAvailable: 1 },
-    { name: "Pork Soup Dumplings (6pcs)", description: "Traditional ginger vinegar steamed xiaolongbao", price: "19.80", imageUrl: "/assets/soup-dumplings.jpg", calories: 480, category: "Appetizers", isTop: 0, isAvailable: 1 },
-    { name: "Whole Peking Duck", description: "Roasted whole duck with crispy skin, pancakes, and condiments", price: "52.00", imageUrl: "/assets/whole-peking-duck.jpg", calories: 1200, category: "Mains", isTop: 1, isAvailable: 1 }
+    { name: "iPhone 15 Pro", description: "Titanium design, A17 Pro chip, Action button, and a more versatile Pro camera system", price: "999.00", imageUrl: "/assets/iphone-15.jpg", specs: "A17 Pro Chip, 48MP Camera, USB-C", tags: JSON.stringify(["Apple", "New"]), category: "Smartphones", rating: "4.9", reviews: 1200, isTop: 1, isAvailable: 1 },
+    { name: "Samsung Galaxy S24 Ultra", description: "The ultimate Galaxy AI experience with a 200MP camera and built-in S Pen", price: "1299.00", imageUrl: "/assets/s24-ultra.jpg", specs: "Snapdragon 8 Gen 3, 200MP Zoom, S-Pen", tags: JSON.stringify(["Samsung", "AI"]), category: "Smartphones", rating: "4.8", reviews: 850, isTop: 1, isAvailable: 1 },
+    { name: "MacBook Air M3", description: "Strikingly thin and fast, so you can work, play, or create anything \u2014 anywhere", price: "1099.00", imageUrl: "/assets/macbook-air.jpg", specs: 'M3 Chip, 13.6" Liquid Retina, 18hr Battery', tags: JSON.stringify(["Apple", "Laptop"]), category: "Laptops", rating: "4.9", reviews: 450, isTop: 1, isAvailable: 1 },
+    { name: "Sony WH-1000XM5", description: "Industry-leading noise canceling headphones with exceptional sound quality", price: "399.00", imageUrl: "/assets/sony-xm5.jpg", specs: "30hr Battery, Multi-point Connection", tags: JSON.stringify(["Audio", "Noise Canceling"]), category: "Audio", rating: "4.7", reviews: 2100, isTop: 0, isAvailable: 1 },
+    { name: "iPad Pro M4", description: "The thinnest Apple product ever, featuring the world\u2019s most advanced display", price: "999.00", imageUrl: "/assets/ipad-pro.jpg", specs: "M4 Chip, Tandem OLED, Ultra-thin", tags: JSON.stringify(["Apple", "Tablet"]), category: "Tablets", rating: "4.8", reviews: 300, isTop: 0, isAvailable: 1 },
+    { name: "Home Entertainment Bundle", description: 'Sony 65" 4K TV + Soundbar + Subwoofer. Ultimate cinematic experience.', price: "1899.00", imageUrl: "/assets/tv-bundle.jpg", specs: "4K HDR, Dolby Atmos, Smart TV", category: "Bundles", isTop: 1, isAvailable: 1 },
+    { name: "AirPods Pro (2nd Gen)", description: "MagSafe Charging Case (USB-C) and twice the noise cancellation", price: "249.00", imageUrl: "/assets/airpods-pro.jpg", specs: "H2 Chip, Adaptive Audio, USB-C", tags: JSON.stringify(["Apple", "Audio"]), category: "Audio", isTop: 0, isAvailable: 1 },
+    { name: "Apple Watch Series 9", description: "Smarter, brighter, and mightier with the S9 SiP and double tap gesture", price: "399.00", imageUrl: "/assets/apple-watch.jpg", specs: "S9 SiP, Blood Oxygen, ECG", tags: JSON.stringify(["Apple", "Wearable"]), category: "Wearables", isTop: 0, isAvailable: 1 },
+    { name: "Logitech MX Master 3S", description: "Performance wireless mouse with quiet clicks and 8K DPI tracking", price: "99.00", imageUrl: "/assets/mx-master.jpg", specs: "8000 DPI, Quiet Clicks, MagSpeed", tags: JSON.stringify(["Accessories", "Logitech"]), category: "Accessories", isTop: 0, isAvailable: 1 },
+    { name: "Dell XPS 15", description: "Stunning 4K OLED display with high performance for creators", price: "1599.00", imageUrl: "/assets/dell-xps.jpg", specs: "i9 Processor, 32GB RAM, RTX 4060", tags: JSON.stringify(["Dell", "Laptop"]), category: "Laptops", isTop: 0, isAvailable: 1 }
   ]);
   console.log("Menu items seeded");
 }

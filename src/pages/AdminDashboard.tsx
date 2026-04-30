@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { 
   LayoutDashboard, 
-  UtensilsCrossed, 
   TrendingUp, 
   Plus, 
   Pencil, 
@@ -82,7 +81,7 @@ type MenuItem = {
   imageUrl: string;
 };
 
-type DishForm = {
+type ProductForm = {
   name: string;
   description: string;
   price: string;
@@ -91,7 +90,7 @@ type DishForm = {
   isAvailable: boolean;
 };
 
-const EMPTY_DISH_FORM: DishForm = {
+const EMPTY_PRODUCT_FORM: ProductForm = {
   name: "",
   description: "",
   price: "",
@@ -100,7 +99,7 @@ const EMPTY_DISH_FORM: DishForm = {
   isAvailable: true,
 };
 
-const CATEGORIES = ["Starters", "Mains", "Noodles", "Rice", "Combos", "Soups", "Desserts", "Drinks"];
+const CATEGORIES = ["Laptops", "Phones", "Tablets", "Audio", "Accessories", "Gaming", "Wearables", "Smart Home"];
 
 const CommandMap = ({ activeOrderId, status }: { activeOrderId: number | null, status: string }) => {
   const mapRef = useRef<HTMLDivElement>(null);
@@ -141,7 +140,7 @@ const CommandMap = ({ activeOrderId, status }: { activeOrderId: number | null, s
           import("leaflet").then(L => {
             if (!markerRef.current) {
               const icon = L.divIcon({
-                className: 'admin-rider-marker',
+                className: 'admin-courier-marker',
                 html: `<div style="width:12px;height:12px;background:#ea580c;border-radius:50%;border:2px solid white;box-shadow:0 0 15px rgba(234,88,12,0.6)"></div>`,
                 iconSize: [16, 16]
               });
@@ -173,7 +172,7 @@ const CommandMap = ({ activeOrderId, status }: { activeOrderId: number | null, s
     </div>
   );
 };
-function DishModal({
+function ProductModal({
   open,
   title,
   form,
@@ -184,8 +183,8 @@ function DishModal({
 }: {
   open: boolean;
   title: string;
-  form: DishForm;
-  onChange: (f: DishForm) => void;
+  form: ProductForm;
+  onChange: (f: ProductForm) => void;
   onSave: () => void;
   onClose: () => void;
   saving: boolean;
@@ -224,11 +223,11 @@ function DishModal({
         
         <div className="space-y-4">
           <div>
-            <label className="text-xs font-semibold text-neutral-500 uppercase tracking-widest block mb-1.5">Dish Name *</label>
+            <label className="text-xs font-semibold text-neutral-500 uppercase tracking-widest block mb-1.5">Product Name *</label>
             <input
               value={form.name}
               onChange={e => onChange({ ...form, name: e.target.value })}
-              placeholder="e.g. General Tso's Chicken"
+              placeholder="e.g. MacBook Air M3"
               className="w-full bg-neutral-800 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-neutral-500 focus:border-orange-500 focus:outline-none transition-colors"
             />
           </div>
@@ -238,7 +237,7 @@ function DishModal({
             <textarea
               value={form.description}
               onChange={e => onChange({ ...form, description: e.target.value })}
-              placeholder="Brief description of the dish..."
+              placeholder="Technical specifications and details..."
               rows={3}
               className="w-full bg-neutral-800 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-neutral-600 focus:border-orange-500 focus:outline-none transition-colors resize-none"
             />
@@ -270,7 +269,7 @@ function DishModal({
           </div>
 
           <div className="space-y-3">
-            <label className="text-xs font-semibold text-neutral-500 uppercase tracking-widest block">Dish Image</label>
+            <label className="text-xs font-semibold text-neutral-500 uppercase tracking-widest block">Product Image</label>
             <div 
               onClick={() => fileInputRef.current?.click()}
               className={cn(
@@ -306,7 +305,7 @@ function DishModal({
                     <Upload className="text-neutral-500 group-hover:text-orange-500" size={24} />
                   </div>
                   <div className="text-center">
-                    <p className="text-xs font-bold text-neutral-200">Select Dish Image</p>
+                    <p className="text-xs font-bold text-neutral-200">Select Product Image</p>
                     <p className="text-[10px] text-neutral-500 font-medium">PNG, JPG or WEBP up to 5MB</p>
                   </div>
                 </>
@@ -320,7 +319,7 @@ function DishModal({
                 <input
                   value={form.imageUrl}
                   onChange={e => onChange({ ...form, imageUrl: e.target.value })}
-                  placeholder="/assets/my-dish.jpg or https://..."
+                  placeholder="/assets/product-image.jpg or https://..."
                   className="w-full bg-neutral-800/40 border border-white/5 rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder:text-neutral-600 focus:border-orange-500 focus:outline-none transition-colors"
                 />
               </div>
@@ -334,7 +333,7 @@ function DishModal({
             >
               <div className="w-5 h-5 bg-white rounded-full mx-0.5 shadow" />
             </button>
-            <span className="text-sm text-white font-bold">{form.isAvailable ? "Available on menu" : "Hidden from menu"}</span>
+            <span className="text-sm text-white font-bold">{form.isAvailable ? "Available in store" : "Hidden from store"}</span>
           </div>
         </div>
 
@@ -358,8 +357,8 @@ function DishModal({
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<"overview" | "menu" | "staff" | "ai" | "users" | "insights">("overview");
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
-  const [showAddDish, setShowAddDish] = useState(false);
-  const [dishForm, setDishForm] = useState<DishForm>(EMPTY_DISH_FORM);
+  const [showAddProduct, setShowAddProduct] = useState(false);
+  const [productForm, setProductForm] = useState<ProductForm>(EMPTY_DISH_FORM);
   const [userSearch, setUserSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
   
@@ -449,7 +448,7 @@ export default function AdminDashboard() {
     
     setIsSimulating(false);
     setSimulatingOrderId(null);
-    toast({ title: "Simulation complete", description: "The rider has reached the destination." });
+    toast({ title: "Simulation complete", description: "The courier has reached the destination." });
   };
 
   const deleteMutation = useMutation({
@@ -461,42 +460,42 @@ export default function AdminDashboard() {
     }
   });
 
-  const createDishMutation = useMutation({
-    mutationFn: (data: Omit<DishForm, "isAvailable"> & { isAvailable: number }) =>
+  const createProductMutation = useMutation({
+    mutationFn: (data: Omit<ProductForm, "isAvailable"> & { isAvailable: number }) =>
       api.post("/admin/menu-items", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "menu"] });
       queryClient.invalidateQueries({ queryKey: ["/api/menu"] });
-      toast({ title: "Dish added to menu" });
-      setShowAddDish(false);
-      setDishForm(EMPTY_DISH_FORM);
+      toast({ title: "Product added to menu" });
+      setShowAddProduct(false);
+      setProductForm(EMPTY_DISH_FORM);
     },
     onError: (err: any) => {
-      toast({ title: "Failed to add dish", description: err.message, variant: "destructive" });
+      toast({ title: "Failed to add product", description: err.message, variant: "destructive" });
     }
   });
 
-  const updateDishMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: Omit<DishForm, "isAvailable"> & { isAvailable: number } }) =>
+  const updateProductMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Omit<ProductForm, "isAvailable"> & { isAvailable: number } }) =>
       api.patch(`/admin/menu-items/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "menu"] });
       queryClient.invalidateQueries({ queryKey: ["/api/menu"] });
-      toast({ title: "Dish updated" });
+      toast({ title: "Product updated" });
       setEditingItem(null);
     },
     onError: (err: any) => {
-      toast({ title: "Failed to update dish", description: err.message, variant: "destructive" });
+      toast({ title: "Failed to update product", description: err.message, variant: "destructive" });
     }
   });
 
-  const openAddDish = () => {
-    setDishForm(EMPTY_DISH_FORM);
-    setShowAddDish(true);
+  const openAddProduct = () => {
+    setProductForm(EMPTY_DISH_FORM);
+    setShowAddProduct(true);
   };
 
-  const openEditDish = (item: MenuItem) => {
-    setDishForm({
+  const openEditProduct = (item: MenuItem) => {
+    setProductForm({
       name: item.name,
       description: item.description,
       price: item.price,
@@ -507,13 +506,13 @@ export default function AdminDashboard() {
     setEditingItem(item);
   };
 
-  const handleCreateDish = () => {
-    createDishMutation.mutate({ ...dishForm, isAvailable: dishForm.isAvailable ? 1 : 0 });
+  const handleCreateProduct = () => {
+    createProductMutation.mutate({ ...productForm, isAvailable: productForm.isAvailable ? 1 : 0 });
   };
 
-  const handleUpdateDish = () => {
+  const handleUpdateProduct = () => {
     if (!editingItem) return;
-    updateDishMutation.mutate({ id: editingItem.id, data: { ...dishForm, isAvailable: dishForm.isAvailable ? 1 : 0 } });
+    updateProductMutation.mutate({ id: editingItem.id, data: { ...productForm, isAvailable: productForm.isAvailable ? 1 : 0 } });
   };
 
   if (statsLoading || menuLoading) {
@@ -565,41 +564,41 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-neutral-950 text-white flex pb-20 lg:pb-0 lg:pl-64">
-      {/* Add Dish Modal */}
-      <DishModal
-        open={showAddDish}
-        title="Add New Dish"
-        form={dishForm}
-        onChange={setDishForm}
-        onSave={handleCreateDish}
-        onClose={() => setShowAddDish(false)}
-        saving={createDishMutation.isPending}
+      {/* Add Product Modal */}
+      <ProductModal
+        open={showAddProduct}
+        title="Add New Product"
+        form={productForm}
+        onChange={setProductForm}
+        onSave={handleCreateProduct}
+        onClose={() => setShowAddProduct(false)}
+        saving={createProductMutation.isPending}
       />
 
-      {/* Edit Dish Modal */}
-      <DishModal
+      {/* Edit Product Modal */}
+      <ProductModal
         open={!!editingItem}
         title="Save Changes"
-        form={dishForm}
-        onChange={setDishForm}
-        onSave={handleUpdateDish}
+        form={productForm}
+        onChange={setProductForm}
+        onSave={handleUpdateProduct}
         onClose={() => setEditingItem(null)}
-        saving={updateDishMutation.isPending}
+        saving={updateProductMutation.isPending}
       />
 
       {/* Desktop Sidebar */}
       <aside className="fixed left-0 top-0 bottom-0 w-64 bg-neutral-900/60 backdrop-blur-xl border-r border-white/10 hidden lg:flex flex-col p-6 space-y-8 z-50">
         <div className="flex items-center gap-3">
-          <div className="w-14 h-14 flex items-center justify-center overflow-hidden">
-            <img src={logo} alt="Fishing Panda" className="w-full h-full object-contain" />
+          <div className="w-12 h-12 flex items-center justify-center overflow-hidden">
+            <img src={logo} alt="Trends Electronics" className="w-10 h-10 object-contain" />
           </div>
-          <span className="font-exrabold text-xl tracking-tighter text-white">WU-OS</span>
+          <span className="font-exrabold text-xl tracking-tighter text-white">Trends Electronics</span>
         </div>
 
         <nav className="flex-1 space-y-2">
           {[
             { id: "overview", label: "Oversight", icon: LayoutDashboard },
-            { id: "menu", label: "Menu Editor", icon: UtensilsCrossed },
+            { id: "menu", label: "Catalog Editor", icon: ShoppingBag },
             { id: "users", label: "Users Hub", icon: Users },
             { id: "insights", label: "Insights", icon: TrendingUp },
             { id: "staff", label: "Staff Control", icon: ShieldCheck },
@@ -639,7 +638,7 @@ export default function AdminDashboard() {
       <nav className="fixed bottom-0 left-0 right-0 bg-neutral-900/60 backdrop-blur-3xl border-t border-white/10 h-16 flex items-center justify-around px-2 lg:hidden z-50">
         {[
           { id: "overview", icon: LayoutDashboard, label: "Stats" },
-          { id: "menu", icon: UtensilsCrossed, label: "Menu" },
+          { id: "menu", icon: ShoppingBag, label: "Catalog" },
           { id: "users", icon: Users, label: "Users" },
           { id: "insights", icon: TrendingUp, label: "Data" },
           { id: "staff", icon: ShieldCheck, label: "Staff" },
@@ -668,7 +667,7 @@ export default function AdminDashboard() {
           <div>
             <h2 className="text-3xl font-black tracking-tighter text-white">
               {activeTab === "overview" && "Performance Oversight"}
-              {activeTab === "menu" && "Menu Management"}
+              {activeTab === "menu" && "Catalog Management"}
               {activeTab === "users" && "User Population"}
               {activeTab === "insights" && "Strategic Marketing Insights"}
               {activeTab === "staff" && "Administrative Control"}
@@ -676,9 +675,9 @@ export default function AdminDashboard() {
             </h2>
             <p className="text-neutral-300 mt-1 font-medium italic opacity-80">
               {activeTab === "staff" && "Manage and onboard authorized personnel"}
-              {activeTab === "users" && "Comprehensive database of customers and riders"}
+              {activeTab === "users" && "Comprehensive database of customers and couriers"}
               {activeTab === "insights" && "Data-driven behavioral tracking for business growth"}
-              {(activeTab === "overview" || activeTab === "ai" || activeTab === "menu") && "Real-time ресторан operations & growth data"}
+              {(activeTab === "overview" || activeTab === "ai" || activeTab === "menu") && "Real-time retail operations & growth data"}
             </p>
           </div>
           <div className="flex items-center gap-4">
@@ -705,11 +704,11 @@ export default function AdminDashboard() {
 
             {activeTab === "menu" && (
               <Button
-                onClick={openAddDish}
+                onClick={openAddProduct}
                 className="h-12 px-6 rounded-2xl bg-orange-600 hover:bg-orange-700 gap-2 shadow-lg shadow-orange-600/20 border-b-2 border-orange-800 transition-all active:translate-y-0.5 active:border-b-0"
               >
                 <PlusCircle size={20} />
-                <span className="font-bold">New Dish</span>
+                <span className="font-bold">New Product</span>
               </Button>
             )}
             <Button
@@ -794,7 +793,7 @@ export default function AdminDashboard() {
               {/* Popular Items */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <Card className="bg-neutral-900 border-white/5 p-6">
-                  <h3 className="text-xl font-bold mb-6">Popular Dishes</h3>
+                  <h3 className="text-xl font-bold mb-6">Popular Products</h3>
                   <div className="h-[300px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart layout="vertical" data={stats?.popularItems}>
@@ -1022,7 +1021,7 @@ export default function AdminDashboard() {
                         variant="secondary" 
                         size="sm" 
                         className="flex-1 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-xl font-bold transition-all active:scale-95 group-hover:shadow-[0_0_20px_rgba(255,255,255,0.05)]"
-                        onClick={() => openEditDish(item)}
+                        onClick={() => openEditProduct(item)}
                       >
                          <Pencil size={14} className="mr-2 opacity-70" /> Edit 
                       </Button>
@@ -1041,9 +1040,9 @@ export default function AdminDashboard() {
 
               {(!menuItems || menuItems.length === 0) && (
                 <div className="col-span-full py-20 text-center space-y-4">
-                  <UtensilsCrossed className="text-neutral-700 mx-auto" size={48} />
-                  <h4 className="font-bold text-neutral-400">No menu items yet</h4>
-                  <p className="text-sm text-neutral-600">Add your first dish to get started.</p>
+                  <ShoppingBag className="text-neutral-700 mx-auto" size={48} />
+                  <h4 className="font-bold text-neutral-400">No products in catalog yet</h4>
+                  <p className="text-sm text-neutral-600">Add your first product to get started.</p>
                 </div>
               )}
             </motion.div>
@@ -1069,7 +1068,7 @@ export default function AdminDashboard() {
                   />
                 </div>
                 <div className="flex gap-2 bg-neutral-900/40 p-1 rounded-xl border border-white/5 backdrop-blur-md">
-                   {["all", "customer", "rider"].map((r) => (
+                   {["all", "customer", "courier"].map((r) => (
                      <button
                        key={r}
                        onClick={() => setRoleFilter(r)}
@@ -1113,7 +1112,7 @@ export default function AdminDashboard() {
                           <td className="px-6 py-4">
                             <span className={cn(
                               "px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-tighter border",
-                              user.role === "rider" ? "bg-orange-500/10 text-orange-400 border-orange-500/20" : "bg-blue-500/10 text-blue-400 border-blue-500/20"
+                              user.role === "courier" ? "bg-orange-500/10 text-orange-400 border-orange-500/20" : "bg-blue-500/10 text-blue-400 border-blue-500/20"
                             )}>
                               {user.role}
                             </span>
@@ -1151,7 +1150,7 @@ export default function AdminDashboard() {
                           </div>
                           <span className={cn(
                             "px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-tighter border",
-                            user.role === "rider" ? "bg-orange-500/10 text-orange-400 border-orange-500/20" : "bg-blue-500/10 text-blue-400 border-blue-500/20"
+                            user.role === "courier" ? "bg-orange-500/10 text-orange-400 border-orange-500/20" : "bg-blue-500/10 text-blue-400 border-blue-500/20"
                           )}>
                             {user.role}
                           </span>

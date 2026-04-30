@@ -34,7 +34,7 @@ export interface IStorage {
   validatePassword(user: User, password: string): Promise<boolean>;
   getUsersByRole(role: string): Promise<User[]>;
   deleteUser(id: number): Promise<void>;
-  getAllRiders(): Promise<User[]>;
+  getAllCouriers(): Promise<User[]>;
 
   // Menu
   getMenuItems(includeUnavailable?: boolean): Promise<MenuItem[]>;
@@ -58,15 +58,15 @@ export interface IStorage {
   }): Promise<Order>;
   getOrderById(id: number): Promise<(Order & { items: OrderItem[] }) | null>;
   getOrdersByUser(userId: number): Promise<(Order & { items: OrderItem[] })[]>;
-  getAllOrders(): Promise<(Order & { items: OrderItem[]; customer: User; rider?: User | null })[]>;
-  getRiderOrders(riderId: number): Promise<(Order & { items: OrderItem[]; customer: User })[]>;
+  getAllOrders(): Promise<(Order & { items: OrderItem[]; customer: User; courier?: User | null })[]>;
+  getCourierOrders(courierId: number): Promise<(Order & { items: OrderItem[]; customer: User })[]>;
   updateOrderStatus(id: number, status: Order["status"]): Promise<Order>;
   updatePaymentStatus(id: number, status: string, transactionId?: string): Promise<Order>;
   updateMenuItemImage(id: number, imageUrl: string): Promise<MenuItem>;
-  assignRider(orderId: number, riderId: number): Promise<Order>;
-  updateRiderLocation(orderId: number, lat: number, lng: number): Promise<Order>;
+  assignCourier(orderId: number, courierId: number): Promise<Order>;
+  updateCourierLocation(orderId: number, lat: number, lng: number): Promise<Order>;
   updateCustomerLocation(orderId: number, lat: number, lng: number): Promise<Order>;
-  updateUserProfile(id: number, data: { name?: string; phone?: string; address?: string; allergies?: string }): Promise<User | null>;
+  updateUserProfile(id: number, data: { name?: string; phone?: string; address?: string; interests?: string }): Promise<User | null>;
 
   // Favorites
   getFavorites(userId: number): Promise<MenuItem[]>;
@@ -132,8 +132,8 @@ export class Storage implements IStorage {
     await db.delete(users).where(eq(users.id, id));
   }
 
-  async getAllRiders(): Promise<User[]> {
-    return db.select().from(users).where(eq(users.role, "rider"));
+  async getAllCouriers(): Promise<User[]> {
+    return db.select().from(users).where(eq(users.role, "courier"));
   }
 
   async getMenuItems(includeUnavailable?: boolean): Promise<MenuItem[]> {
@@ -220,16 +220,16 @@ export class Storage implements IStorage {
     return order;
   }
 
-  async getOrderById(id: number): Promise<(Order & { items: OrderItem[]; rider?: { id: number; name: string } | null }) | null> {
+  async getOrderById(id: number): Promise<(Order & { items: OrderItem[]; courier?: { id: number; name: string } | null }) | null> {
     const [order] = await db.select().from(orders).where(eq(orders.id, id));
     if (!order) return null;
     const items = await db.select().from(orderItems).where(eq(orderItems.orderId, id));
-    let rider: { id: number; name: string } | null = null;
-    if (order.riderId) {
-      const [r] = await db.select({ id: users.id, name: users.name }).from(users).where(eq(users.id, order.riderId));
-      rider = r ?? null;
+    let courier: { id: number; name: string } | null = null;
+    if (order.courierId) {
+      const [r] = await db.select({ id: users.id, name: users.name }).from(users).where(eq(users.id, order.courierId));
+      courier = r ?? null;
     }
-    return { ...order, items, rider };
+    return { ...order, items, courier };
   }
 
   async getOrdersByUser(userId: number): Promise<(Order & { items: OrderItem[] })[]> {
@@ -243,29 +243,29 @@ export class Storage implements IStorage {
     return result;
   }
 
-  async getAllOrders(): Promise<(Order & { items: OrderItem[]; customer: User; rider?: User | null })[]> {
+  async getAllOrders(): Promise<(Order & { items: OrderItem[]; customer: User; courier?: User | null })[]> {
     const allOrders = await db.select().from(orders).orderBy(desc(orders.createdAt));
     const result = await Promise.all(
       allOrders.map(async order => {
         const items = await db.select().from(orderItems).where(eq(orderItems.orderId, order.id));
         const [customer] = await db.select().from(users).where(eq(users.id, order.userId));
-        let rider: User | null = null;
-        if (order.riderId) {
-          const [r] = await db.select().from(users).where(eq(users.id, order.riderId));
-          rider = r ?? null;
+        let courier: User | null = null;
+        if (order.courierId) {
+          const [r] = await db.select().from(users).where(eq(users.id, order.courierId));
+          courier = r ?? null;
         }
-        return { ...order, items, customer, rider };
+        return { ...order, items, customer, courier };
       })
     );
     return result;
   }
 
-  async getRiderOrders(riderId: number): Promise<(Order & { items: OrderItem[]; customer: User })[]> {
-    const riderOrders = await db.select().from(orders).where(
-      eq(orders.riderId, riderId)
+  async getCourierOrders(courierId: number): Promise<(Order & { items: OrderItem[]; customer: User })[]> {
+    const courierOrders = await db.select().from(orders).where(
+      eq(orders.courierId, courierId)
     ).orderBy(desc(orders.createdAt));
     const result = await Promise.all(
-      riderOrders.map(async order => {
+      courierOrders.map(async order => {
         const items = await db.select().from(orderItems).where(eq(orderItems.orderId, order.id));
         const [customer] = await db.select().from(users).where(eq(users.id, order.userId));
         return { ...order, items, customer };
@@ -307,12 +307,12 @@ export class Storage implements IStorage {
     return item;
   }
 
-  async updateUserProfile(id: number, data: { name?: string; phone?: string; address?: string; allergies?: string }): Promise<User | null> {
+  async updateUserProfile(id: number, data: { name?: string; phone?: string; address?: string; interests?: string }): Promise<User | null> {
     const updates: Partial<typeof users.$inferInsert> = {};
     if (data.name !== undefined) updates.name = data.name;
     if (data.phone !== undefined) updates.phone = data.phone;
     if (data.address !== undefined) updates.address = data.address;
-    if (data.allergies !== undefined) updates.allergies = data.allergies;
+    if (data.interests !== undefined) updates.interests = data.interests;
     if (Object.keys(updates).length === 0) {
       return this.getUserById(id);
     }
@@ -344,17 +344,17 @@ export class Storage implements IStorage {
     );
   }
 
-  async assignRider(orderId: number, riderId: number): Promise<Order> {
+  async assignCourier(orderId: number, courierId: number): Promise<Order> {
     const [order] = await db.update(orders)
-      .set({ riderId, status: "assigned", updatedAt: new Date() })
+      .set({ courierId, status: "assigned", updatedAt: new Date() })
       .where(eq(orders.id, orderId))
       .returning();
     return order;
   }
 
-  async updateRiderLocation(orderId: number, lat: number, lng: number): Promise<Order> {
+  async updateCourierLocation(orderId: number, lat: number, lng: number): Promise<Order> {
     const [order] = await db.update(orders)
-      .set({ riderLat: lat, riderLng: lng, updatedAt: new Date() })
+      .set({ courierLat: lat, courierLng: lng, updatedAt: new Date() })
       .where(eq(orders.id, orderId))
       .returning();
     return order;
@@ -476,7 +476,7 @@ export class Storage implements IStorage {
 
   async getAdminUsers(): Promise<(User & { totalSpend: number; orderCount: number })[]> {
     const fetchedUsers = await db.select().from(users);
-    const filteredUsers = fetchedUsers.filter(u => u.role === "customer" || u.role === "rider");
+    const filteredUsers = fetchedUsers.filter(u => u.role === "customer" || u.role === "courier");
 
     const result = await Promise.all(
       filteredUsers.map(async user => {

@@ -164,7 +164,7 @@ const CheckoutPage = () => {
             {items.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <p>Your cart is empty</p>
-                <button onClick={() => navigate("/menu")} className="text-primary font-semibold mt-2">Browse Menu</button>
+                <button onClick={() => navigate("/menu")} className="text-primary font-semibold mt-2">Explore Store</button>
               </div>
             ) : (
               <div className="space-y-3">
@@ -182,7 +182,7 @@ const CheckoutPage = () => {
                         </button>
                       </div>
                       <div className="flex items-center justify-between mt-2">
-                        <span className="font-bold text-primary text-sm">${(item.price * quantity).toFixed(2)}</span>
+                        <span className="font-bold text-primary text-sm">GH₵{(item.price * quantity).toFixed(2)}</span>
                         <div className="flex items-center gap-2 border border-border rounded-lg">
                           <button data-testid={`button-decrease-${item.id}`} onClick={() => updateQuantity(item.id, quantity - 1)} className="p-1.5">
                             <Minus className="w-3.5 h-3.5 text-foreground" />

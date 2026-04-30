@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Share2, MapPin, Clock, Bike, Send, X, ChevronLeft, CheckCircle2, ChefHat, Package, Loader2 } from "lucide-react";
+import { Share2, MapPin, Clock, Truck, Send, X, ChevronLeft, CheckCircle2, Package, Loader2 } from "lucide-react";
 import AppHeader from "@/components/layout/AppHeader";
 import SplashScreen from "@/components/ui/SplashScreen";
 import { api } from "@/lib/api";
@@ -22,10 +22,10 @@ L.Icon.Default.mergeOptions({
   shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
 });
 
-const riderIcon = L.divIcon({
-  className: "custom-rider-icon",
-  html: `<div class="w-10 h-10 bg-orange-600 rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(234,88,12,0.8)] border-2 border-white animate-pulse">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="15" cy="5" r="1"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></svg>
+const courierIcon = L.divIcon({
+  className: "custom-courier-icon",
+  html: `<div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(37,99,235,0.8)] border-2 border-white animate-pulse">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="2" ry="2"/><line x1="16" y1="8" x2="20" y2="8"/><line x1="16" y1="12" x2="23" y2="12"/><line x1="1" y1="15" x2="16" y2="15"/></svg>
          </div>`,
   iconSize: [40, 40],
   iconAnchor: [20, 20],
@@ -40,7 +40,7 @@ const customerIcon = L.divIcon({
   iconAnchor: [20, 20],
 });
 
-type OrderStatus = "pending" | "confirmed" | "preparing" | "ready" | "assigned" | "picked_up" | "delivered" | "cancelled";
+type OrderStatus = "pending" | "confirmed" | "packaging" | "ready" | "assigned" | "picked_up" | "delivered" | "cancelled";
 
 interface OrderItem { id: number; name: string; quantity: number; price: string }
 interface OrderDetail {
@@ -50,12 +50,12 @@ interface OrderDetail {
   total: string;
   createdAt: string;
   notes?: string | null;
-  riderLat?: number | null;
-  riderLng?: number | null;
+  courierLat?: number | null;
+  courierLng?: number | null;
   customerLat?: number | null;
   customerLng?: number | null;
   items: OrderItem[];
-  rider?: { id: number; name: string } | null;
+  courier?: { id: number; name: string } | null;
 }
 
 interface AIEta { minutes: number; message: string }
@@ -70,15 +70,15 @@ interface ChatMessage {
 
 const STEPS: { status: OrderStatus; label: string; desc: string; icon: React.ReactNode }[] = [
   { status: "pending",   label: "Order Placed",    desc: "We received your order",           icon: <Package size={18} /> },
-  { status: "confirmed", label: "Confirmed",        desc: "Restaurant confirmed your order",  icon: <CheckCircle2 size={18} /> },
-  { status: "preparing", label: "Preparing",        desc: "Kitchen is cooking your food",     icon: <ChefHat size={18} /> },
-  { status: "ready",     label: "Ready",            desc: "Food is ready for pickup",         icon: <Package size={18} /> },
-  { status: "assigned",  label: "Rider Assigned",   desc: "Rider is heading to the restaurant", icon: <Bike size={18} /> },
-  { status: "picked_up", label: "Out for Delivery", desc: "Your food is on its way!",         icon: <Bike size={18} /> },
-  { status: "delivered", label: "Delivered",        desc: "Enjoy your meal!",                 icon: <CheckCircle2 size={18} /> },
+  { status: "confirmed", label: "Confirmed",        desc: "Inventory confirmed for your order", icon: <CheckCircle2 size={18} /> },
+  { status: "packaging", label: "Packaging",        desc: "Quality check and secure packaging", icon: <Package size={18} /> },
+  { status: "ready",     label: "Ready",            desc: "Package is ready for courier",     icon: <Package size={18} /> },
+  { status: "assigned",  label: "Courier Assigned", desc: "Courier is heading to the warehouse", icon: <Truck size={18} /> },
+  { status: "picked_up", label: "Out for Delivery", desc: "Your gadgets are on their way!",    icon: <Truck size={18} /> },
+  { status: "delivered", label: "Delivered",        desc: "Power on and enjoy!",              icon: <CheckCircle2 size={18} /> },
 ];
 
-const STATUS_ORDER: OrderStatus[] = ["pending", "confirmed", "preparing", "ready", "assigned", "picked_up", "delivered"];
+const STATUS_ORDER: OrderStatus[] = ["pending", "confirmed", "packaging", "ready", "assigned", "picked_up", "delivered"];
 
 const TrackingPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -102,14 +102,14 @@ const TrackingPage = () => {
     retry: 1,
   });
 
-  const [riderCoords, setRiderCoords] = useState<[number, number] | null>(null);
+  const [courierCoords, setRiderCoords] = useState<[number, number] | null>(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
   const chatBottomRef = useRef<HTMLDivElement>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
-  const riderMarkerRef = useRef<L.Marker | null>(null);
+  const courierMarkerRef = useRef<L.Marker | null>(null);
   const customerMarkerRef = useRef<L.Marker | null>(null);
 
   const isLiveTracking = order?.status === "picked_up";
@@ -122,13 +122,13 @@ const TrackingPage = () => {
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
-        riderMarkerRef.current = null;
+        courierMarkerRef.current = null;
         customerMarkerRef.current = null;
       }
       return;
     }
     if (mapContainerRef.current && !mapInstanceRef.current) {
-      const center: [number, number] = riderCoords || [order?.customerLat || 5.6037, order?.customerLng || -0.187];
+      const center: [number, number] = courierCoords || [order?.customerLat || 5.6037, order?.customerLng || -0.187];
       mapInstanceRef.current = L.map(mapContainerRef.current, {
         zoomControl: false,
         attributionControl: false,
@@ -141,24 +141,24 @@ const TrackingPage = () => {
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
-        riderMarkerRef.current = null;
+        courierMarkerRef.current = null;
         customerMarkerRef.current = null;
       }
     };
   }, [isLiveTracking, order?.id]);
 
-  // Update rider marker on map
+  // Update courier marker on map
   useEffect(() => {
-    if (!mapInstanceRef.current || !riderCoords || !isLiveTracking) return;
-    if (!riderMarkerRef.current) {
-      riderMarkerRef.current = L.marker(riderCoords, { icon: riderIcon })
+    if (!mapInstanceRef.current || !courierCoords || !isLiveTracking) return;
+    if (!courierMarkerRef.current) {
+      courierMarkerRef.current = L.marker(courierCoords, { icon: courierIcon })
         .addTo(mapInstanceRef.current)
-        .bindPopup(`<div class="font-bold text-orange-500">${order?.rider?.name || "Your Rider"}</div><div class="text-xs">Approaching...</div>`);
+        .bindPopup(`<div class="font-bold text-blue-500">${order?.courier?.name || "Your Courier"}</div><div class="text-xs">Approaching...</div>`);
     } else {
-      riderMarkerRef.current.setLatLng(riderCoords);
+      courierMarkerRef.current.setLatLng(courierCoords);
     }
-    mapInstanceRef.current.flyTo(riderCoords, 15, { duration: 1.5 });
-  }, [riderCoords, isLiveTracking]);
+    mapInstanceRef.current.flyTo(courierCoords, 15, { duration: 1.5 });
+  }, [courierCoords, isLiveTracking]);
 
   // Update customer marker on map
   useEffect(() => {
@@ -173,12 +173,12 @@ const TrackingPage = () => {
     }
   }, [order?.customerLat, order?.customerLng, isLiveTracking]);
 
-  // Init rider coords from order when tracking starts
+  // Init courier coords from order when tracking starts
   useEffect(() => {
-    if (isLiveTracking && order?.riderLat && order?.riderLng && !riderCoords) {
-      setRiderCoords([order.riderLat, order.riderLng]);
+    if (isLiveTracking && order?.courierLat && order?.courierLng && !courierCoords) {
+      setRiderCoords([order.courierLat, order.courierLng]);
     }
-  }, [isLiveTracking, order?.riderLat, order?.riderLng]);
+  }, [isLiveTracking, order?.courierLat, order?.courierLng]);
 
   // Socket: tracking + status + chat
   useEffect(() => {
@@ -186,7 +186,7 @@ const TrackingPage = () => {
 
     socket.emit("join_order_tracking", { orderId: Number(id) });
 
-    socket.on("rider:location_updated", (data: { lat: number; lng: number }) => {
+    socket.on("courier:location_updated", (data: { lat: number; lng: number }) => {
       setRiderCoords([data.lat, data.lng]);
       queryClient.invalidateQueries({ queryKey: ["/api/ai/eta", id] });
     });
@@ -198,7 +198,7 @@ const TrackingPage = () => {
     });
 
     return () => {
-      socket.off("rider:location_updated");
+      socket.off("courier:location_updated");
       socket.off("order_status");
     };
   }, [socket, id, queryClient]);
@@ -279,7 +279,7 @@ const TrackingPage = () => {
   }
 
   const currentStatusIdx = STATUS_ORDER.indexOf(order.status);
-  const riderName = order.rider?.name || "Your Rider";
+  const courierName = order.courier?.name || "Your Courier";
 
   return (
     <div className="min-h-screen bg-black flex flex-col">
@@ -295,8 +295,8 @@ const TrackingPage = () => {
             </div>
             <h2 className="text-2xl font-black text-white uppercase tracking-tighter">Order Cancelled</h2>
             <p className="text-neutral-400 mt-2">Your order has been cancelled.</p>
-            <Button onClick={() => navigate("/")} className="mt-8 bg-orange-600 hover:bg-orange-700 text-white rounded-2xl font-black uppercase tracking-wider">
-              Back to Menu
+            <Button onClick={() => navigate("/")} className="mt-8 bg-primary hover:bg-primary/90 text-primary-foreground rounded-2xl font-black uppercase tracking-wider">
+              Back to Store
             </Button>
           </div>
         )}
@@ -313,12 +313,12 @@ const TrackingPage = () => {
               <CheckCircle2 className="text-emerald-500" size={56} />
             </motion.div>
             <h2 className="text-3xl font-black text-white uppercase tracking-tighter">Delivered!</h2>
-            <p className="text-neutral-400 mt-2 font-medium">Hope you enjoy your Fishing Panda meal!</p>
+            <p className="text-neutral-400 mt-2 font-medium">Enjoy your new tech from Trends Electronics!</p>
             <div className="mt-6 px-6 py-4 bg-neutral-900 rounded-2xl border border-white/10 text-left w-full max-w-sm">
               <p className="text-[10px] font-black uppercase tracking-widest text-neutral-500 mb-1">Order Total</p>
               <p className="text-2xl font-black text-white">GH₵{parseFloat(order.total).toFixed(2)}</p>
             </div>
-            <Button onClick={() => navigate("/")} className="mt-6 w-full max-w-sm bg-orange-600 hover:bg-orange-700 text-white rounded-2xl font-black uppercase tracking-wider h-14">
+            <Button onClick={() => navigate("/")} className="mt-6 w-full max-w-sm bg-primary hover:bg-primary/90 text-primary-foreground rounded-2xl font-black uppercase tracking-wider h-14">
               Order Again
             </Button>
           </div>
@@ -338,7 +338,7 @@ const TrackingPage = () => {
                   {STEPS.find(s => s.status === order.status)?.desc}
                 </p>
               </div>
-              <div className="w-14 h-14 bg-orange-600/20 rounded-2xl flex items-center justify-center text-orange-500">
+              <div className="w-14 h-14 bg-primary/20 rounded-2xl flex items-center justify-center text-primary">
                 {STEPS.find(s => s.status === order.status)?.icon}
               </div>
             </div>
@@ -356,14 +356,14 @@ const TrackingPage = () => {
                     <div className="flex flex-col items-center">
                       <div className={cn(
                         "w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-all duration-500",
-                        isDone ? "bg-orange-600 text-white" :
-                        isCurrent ? "bg-orange-600/20 border-2 border-orange-600 text-orange-500" :
+                        isDone ? "bg-primary text-primary-foreground" :
+                        isCurrent ? "bg-primary/20 border-2 border-primary text-primary" :
                         "bg-neutral-800 text-neutral-600"
                       )}>
-                        {isDone ? <CheckCircle2 size={16} /> : <div className={cn("w-2 h-2 rounded-full", isCurrent ? "bg-orange-500 animate-pulse" : "bg-neutral-600")} />}
+                        {isDone ? <CheckCircle2 size={16} /> : <div className={cn("w-2 h-2 rounded-full", isCurrent ? "bg-primary animate-pulse" : "bg-neutral-600")} />}
                       </div>
                       {!isLast && (
-                        <div className={cn("w-0.5 flex-1 my-1 min-h-[20px]", isDone ? "bg-orange-600" : "bg-neutral-800")} />
+                        <div className={cn("w-0.5 flex-1 my-1 min-h-[20px]", isDone ? "bg-primary" : "bg-neutral-800")} />
                       )}
                     </div>
                     {/* Label */}
@@ -426,8 +426,8 @@ const TrackingPage = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <div className="w-2 h-2 rounded-full bg-orange-600 animate-ping" />
-                    <span className="text-[10px] font-black uppercase tracking-widest text-orange-500">Live Tracking</span>
+                    <div className="w-2 h-2 rounded-full bg-primary animate-ping" />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-primary">Live Tracking</span>
                   </div>
                   <h3 className="text-2xl font-black text-white tracking-tighter uppercase">Out for Delivery</h3>
                 </div>
@@ -447,24 +447,24 @@ const TrackingPage = () => {
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${(currentStatusIdx / (STEPS.length - 1)) * 100}%` }}
-                  className="h-full bg-orange-600 shadow-[0_0_12px_rgba(234,88,12,0.8)] rounded-full"
+                  className="h-full bg-primary shadow-[0_0_12px_rgba(37,99,235,0.8)] rounded-full"
                 />
               </div>
 
               {/* Rider + Chat */}
               <div className="flex items-center justify-between pt-1">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-orange-600/20 rounded-2xl border border-orange-600/30 flex items-center justify-center">
-                    <Bike className="text-orange-500" size={24} />
+                  <div className="w-12 h-12 bg-primary/20 rounded-2xl border border-primary/30 flex items-center justify-center">
+                    <Package className="text-primary" size={24} />
                   </div>
                   <div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-neutral-500">Your Rider</p>
-                    <p className="text-base font-black text-white tracking-tight">{riderName}</p>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-neutral-500">Your Courier</p>
+                    <p className="text-base font-black text-white tracking-tight">{courierName}</p>
                   </div>
                 </div>
                 <Button
                   onClick={() => setIsChatOpen(true)}
-                  className="rounded-2xl h-12 px-5 bg-orange-600 hover:bg-orange-700 text-white font-black uppercase tracking-widest text-[10px] transition-all"
+                  className="rounded-2xl h-12 px-5 bg-primary hover:bg-primary/90 text-primary-foreground font-black uppercase tracking-widest text-[10px] transition-all"
                 >
                   Message
                 </Button>
@@ -487,11 +487,11 @@ const TrackingPage = () => {
             {/* Chat Header */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-white/10 bg-neutral-900">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-orange-600/20 rounded-xl flex items-center justify-center">
-                  <Bike className="text-orange-500" size={20} />
+                <div className="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center">
+                  <Package className="text-primary" size={20} />
                 </div>
                 <div>
-                  <p className="font-black text-white text-sm tracking-tight">{riderName}</p>
+                  <p className="font-black text-white text-sm tracking-tight">{courierName}</p>
                   <div className="flex items-center gap-1.5">
                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                     <p className="text-[10px] text-emerald-400 font-semibold">On the way to you</p>
@@ -511,10 +511,10 @@ const TrackingPage = () => {
               {chatMessages.length === 0 && (
                 <div className="flex flex-col items-center justify-center h-full text-center py-20">
                   <div className="w-16 h-16 bg-neutral-800 rounded-2xl flex items-center justify-center mb-4">
-                    <Bike className="text-neutral-600" size={28} />
+                    <Truck className="text-neutral-600" size={28} />
                   </div>
                   <p className="text-neutral-500 text-sm font-medium">No messages yet</p>
-                  <p className="text-neutral-600 text-xs mt-1">Send a message to your rider</p>
+                  <p className="text-neutral-600 text-xs mt-1">Send a message to your courier</p>
                 </div>
               )}
               {chatMessages.map(msg => {
@@ -529,7 +529,7 @@ const TrackingPage = () => {
                     <div className={cn(
                       "max-w-[75%] px-4 py-2.5 rounded-2xl",
                       isMe
-                        ? "bg-orange-600 text-white rounded-br-sm"
+                        ? "bg-primary text-white rounded-br-sm"
                         : "bg-neutral-800 text-neutral-100 rounded-bl-sm"
                     )}>
                       {!isMe && (
@@ -552,13 +552,13 @@ const TrackingPage = () => {
                 value={chatInput}
                 onChange={e => setChatInput(e.target.value)}
                 onKeyDown={e => e.key === "Enter" && sendMessage()}
-                placeholder="Message your rider..."
+                placeholder="Message your courier..."
                 className="flex-1 bg-neutral-800 border-white/10 text-white placeholder:text-neutral-500 rounded-xl h-12 focus-visible:ring-orange-500"
               />
               <Button
                 onClick={sendMessage}
                 disabled={!chatInput.trim()}
-                className="w-12 h-12 rounded-xl bg-orange-600 hover:bg-orange-700 disabled:opacity-40 shrink-0 p-0 flex items-center justify-center"
+                className="w-12 h-12 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-40 shrink-0 p-0 flex items-center justify-center"
               >
                 <Send size={18} />
               </Button>

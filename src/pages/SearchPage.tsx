@@ -6,11 +6,11 @@ import type { MenuItem as CartMenuItem } from "@/data/menuData";
 import { api } from "@/lib/api";
 
 const aiSuggestions = [
-  "Something spicy without peanuts",
-  "Vegan options",
-  "Best sellers",
-  "Under $10",
-  "Quick to make",
+  "Laptops with high battery life",
+  "Noise canceling headphones",
+  "Latest iPhone models",
+  "Gaming accessories",
+  "Under GH₵500",
 ];
 
 interface MenuItem {
@@ -36,7 +36,7 @@ const SearchPage = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: "assistant",
-      content: "Hi! I'm Fishing Panda smart assistant. Ask me anything — spicy dishes, dietary needs, tonight's specials — and I'll find the perfect match for you.",
+      content: "Hi! I'm Trends Electronics smart assistant. Ask me anything — high-performance laptops, the latest phones, or premium audio — and I'll find the perfect tech for you.",
     },
   ]);
   const [loading, setLoading] = useState(false);
@@ -118,7 +118,7 @@ const SearchPage = () => {
                   {msg.loading ? (
                     <div className="flex items-center gap-2 text-muted-foreground">
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      <span className="text-sm">Searching the menu...</span>
+                      <span className="text-sm">Searching the store...</span>
                     </div>
                   ) : (
                     <>
@@ -133,7 +133,7 @@ const SearchPage = () => {
                               <div className="flex-1 min-w-0">
                                 <h4 className="text-sm font-semibold text-foreground truncate">{item.name}</h4>
                                 <p className="text-xs text-muted-foreground">{item.category}</p>
-                                <p className="text-sm font-bold text-primary">${parseFloat(item.price).toFixed(2)}</p>
+                                <p className="text-sm font-bold text-primary">GH₵{parseFloat(item.price).toFixed(2)}</p>
                               </div>
                               <button
                                 onClick={() => addItem({ id: String(item.id), name: item.name, price: parseFloat(item.price), image: item.imageUrl ?? "", description: item.description, category: item.category } as CartMenuItem)}
@@ -165,7 +165,7 @@ const SearchPage = () => {
               </div>
               <div>
                 <p className="text-xs opacity-70">Subtotal</p>
-                <p className="font-bold">${subtotal.toFixed(2)}</p>
+                <p className="font-bold">GH₵{subtotal.toFixed(2)}</p>
               </div>
             </div>
             <button onClick={() => navigate("/checkout")} className="bg-primary text-primary-foreground font-bold px-4 py-2 rounded-xl text-sm">View Cart</button>
@@ -180,7 +180,7 @@ const SearchPage = () => {
             value={query}
             onChange={e => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Ask Fishing Panda anything..."
+            placeholder="Ask Trends Electronics anything..."
             className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none"
             disabled={loading}
           />

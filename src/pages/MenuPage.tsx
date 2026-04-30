@@ -16,7 +16,7 @@ interface DBMenuItem {
   price: string;
   imageUrl: string | null;
   category: string;
-  calories: number | null;
+  specs: string | null;
   tags: string | null;
   rating: string | null;
   reviews: number | null;
@@ -31,7 +31,7 @@ function dbToCart(item: DBMenuItem): CartMenuItem {
     description: item.description,
     price: parseFloat(item.price),
     image: item.imageUrl || "",
-    calories: item.calories ?? undefined,
+    specs: item.specs ?? undefined,
     tags: item.tags ? JSON.parse(item.tags) : undefined,
     category: item.category,
     rating: item.rating ? parseFloat(item.rating) : undefined,
@@ -60,7 +60,7 @@ const MenuPage = () => {
   if (isLoading) {
     return (
       <div className="pb-4">
-        <AppHeader title="Menu - Midtown East" showBack />
+        <AppHeader title="Products - Trends Electronics" showBack />
         
         {/* Categories Skeleton */}
         <div className="flex gap-2 px-4 py-3 overflow-x-auto scrollbar-hide">
@@ -102,7 +102,7 @@ const MenuPage = () => {
 
   return (
     <div className="pb-4">
-      <AppHeader title="Menu - Midtown East" showBack />
+      <AppHeader title="Products - Trends Electronics" showBack />
 
       <div className="flex gap-2 px-4 py-3 overflow-x-auto scrollbar-hide">
         {categories.map(cat => (
@@ -123,7 +123,7 @@ const MenuPage = () => {
           <button className="flex items-center gap-1 border border-border rounded-lg px-3 py-1.5 text-xs font-medium text-foreground">
             <SlidersHorizontal className="w-3.5 h-3.5" /> Filter
           </button>
-          <button className="border border-border rounded-lg px-3 py-1.5 text-xs font-medium text-foreground">Dietary</button>
+          <button className="border border-border rounded-lg px-3 py-1.5 text-xs font-medium text-foreground">Brand</button>
         </div>
         <label className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase">
           AI Suggestions
@@ -178,7 +178,7 @@ const MenuPage = () => {
                 {item.image ? (
                   <img src={item.image} alt={item.name} className="w-20 h-20 rounded-lg object-cover" loading="lazy" />
                 ) : (
-                  <div className="w-20 h-20 rounded-lg bg-muted flex items-center justify-center text-2xl">🍜</div>
+                  <div className="w-20 h-20 rounded-lg bg-muted flex items-center justify-center text-2xl">📱</div>
                 )}
                 {item.isTop && (
                   <span className="absolute top-1 left-1 bg-primary text-primary-foreground text-[10px] font-bold px-1.5 py-0.5 rounded">⭐ TOP</span>
@@ -189,9 +189,9 @@ const MenuPage = () => {
                 <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{item.description}</p>
                 <div className="flex items-center gap-2 mt-1.5">
                   {item.tags?.map(tag => (
-                    <span key={tag} className="text-[10px] font-medium text-primary bg-primary/10 px-1.5 py-0.5 rounded">🔥 {tag}</span>
+                    <span key={tag} className="text-[10px] font-medium text-primary bg-primary/10 px-1.5 py-0.5 rounded">{tag}</span>
                   ))}
-                  {item.calories && <span className="text-[10px] text-muted-foreground">{item.calories} kcal</span>}
+                  {item.specs && <span className="text-[10px] text-muted-foreground truncate max-w-[120px]">{item.specs}</span>}
                 </div>
               </div>
               <div className="flex flex-col items-end gap-2 flex-shrink-0">
