@@ -62,7 +62,7 @@ const HomePage = () => {
   const { data: dbItems = [] } = useQuery<DBMenuItem[]>({
     queryKey: ["/api/menu"],
     queryFn: () => api.get("/menu"),
-    staleTime: 60000,
+    staleTime: 0,
   });
 
   const { data: aiRecs, isLoading: aiLoading } = useQuery<AIRecommendation[]>({

@@ -68,7 +68,7 @@ const ItemDetailPage = () => {
   const { data: dbItems = [], isLoading } = useQuery<DBMenuItem[]>({
     queryKey: ["/api/menu"],
     queryFn: () => api.get("/menu"),
-    staleTime: 60000,
+    staleTime: 0,
   });
 
   if (isLoading) {

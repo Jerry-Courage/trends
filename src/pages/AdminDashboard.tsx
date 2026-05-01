@@ -344,6 +344,7 @@ export default function AdminDashboard() {
   const { data: menuItems, isLoading: menuLoading } = useQuery<MenuItem[]>({
     queryKey: ["/api/admin/menu-items"],
     queryFn: () => api.get("/menu"),
+    staleTime: 0,
   });
 
   const { data: insightsData, isLoading: insightsLoading, refetch: getInsights } = useQuery({

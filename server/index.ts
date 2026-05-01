@@ -14,15 +14,11 @@ import cjRoutes from "./cj-routes";
 const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
-  cors: {
-    origin: true,
-    credentials: true,
-  },
+  cors: { origin: true, credentials: true },
   pingInterval: 10000,
   pingTimeout: 5000,
 });
 
-// In-memory chat history keyed by orderId (max 100 messages per order)
 const chatHistory = new Map<number, { id: string; senderRole: string; senderName: string; text: string; timestamp: number }[]>();
 
 const PORT = Number(process.env.PORT) || Number(process.env.SERVER_PORT) || 3001;
@@ -32,45 +28,33 @@ app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 app.use("/uploads", express.static("public/uploads"));
 
-// Simple health check endpoint for the container orchestration
 app.get("/api/health", (_req, res) => res.json({ status: "healthy", timestamp: new Date().toISOString() }));
 
 import fs from "fs";
 import path from "path";
 const uploadDir = path.join(process.cwd(), "public", "uploads");
 if (!fs.existsSync(uploadDir)) {
-  console.log("### SERVER_CHECKPOINT: Creating uploads directory...");
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-// Setup Socket.io rooms and basic events
 io.on("connection", (socket) => {
-  socket.on("join", (room: string) => {
-    socket.join(room);
-    console.log(`Socket ${socket.id} joined room: ${room}`);
-  });
+  socket.on("join", (room: string) => socket.join(room));
 
   socket.on("join_order_tracking", ({ orderId }) => {
-    const room = `order:${orderId}`;
-    socket.join(room);
-    console.log(`Socket ${socket.id} joined tracking room: ${room}`);
+    socket.join(`order:${orderId}`);
   });
 
-  // Chat: join a chat room and receive message history
   socket.on("chat:join", ({ orderId }: { orderId: number }) => {
-    const room = `order_chat:${orderId}`;
-    socket.join(room);
+    socket.join(`order_chat:${orderId}`);
     const history = chatHistory.get(orderId) || [];
     socket.emit("chat:history", history);
   });
 
-  // Chat: receive a message and broadcast to the chat room
   socket.on("chat:send", ({ orderId, text, senderRole, senderName }: { orderId: number; text: string; senderRole: string; senderName: string }) => {
-    if (!text || !text.trim()) return;
+    if (!text?.trim()) return;
     const message = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
-      senderRole,
-      senderName,
+      senderRole, senderName,
       text: text.trim(),
       timestamp: Date.now(),
     };
@@ -81,79 +65,57 @@ io.on("connection", (socket) => {
     io.to(`order_chat:${orderId}`).emit("chat:message", message);
   });
 
-  socket.on("disconnect", () => {
-    console.log(`Socket ${socket.id} disconnected`);
-  });
+  socket.on("disconnect", () => {});
 });
 
 app.use("/api", routes);
 app.use("/api/cj", cjRoutes);
 
-app.get("/api/health", (_req, res) => res.json({ ok: true }));
-
 // Serve frontend in production
 if (process.env.NODE_ENV === "production" || process.env.RENDER) {
   const distPath = path.resolve(process.cwd(), "dist");
-  
   if (fs.existsSync(distPath)) {
     console.log(`### SERVER_CHECKPOINT: Serving static files from ${distPath}`);
     const assetsDir = path.join(distPath, "assets");
     if (fs.existsSync(assetsDir)) {
       const files = fs.readdirSync(assetsDir);
       console.log(`### SERVER_CHECKPOINT: Assets found: ${files.length} items`);
-      console.log(`### SERVER_CHECKPOINT: Main Asset: ${files.find(f => f.startsWith("index-") && f.endsWith(".js"))}`);
-    } else {
-      console.warn("### SERVER_ERROR: assets directory not found in dist!");
     }
   } else {
-    console.error("### SERVER_ERROR: dist directory not found! Frontend build might have failed.");
+    console.error("### SERVER_ERROR: dist directory not found!");
   }
 
   app.use(express.static(distPath));
-  
-  // Custom SPA Fallback with strict asset protection
   app.use((req, res, next) => {
     if (req.method === "GET" && !req.path.startsWith("/api")) {
-      // If it looks like a file (has an extension), return 404 if not found by express.static
-      if (req.path.includes(".")) {
-        return res.status(404).send("Not Found");
-      }
-      // Otherwise, serve index.html for SPA routing
+      if (req.path.includes(".")) return res.status(404).send("Not Found");
       return res.sendFile(path.resolve(distPath, "index.html"));
     }
     next();
   });
 }
 
-// Global Error Handler
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error("### GLOBAL ERROR ###", err);
-  const status = err.status || err.statusCode || 500;
-  res.status(status).json({
-    error: err.message || "Internal Server Error",
-    status
-  });
+  res.status(err.status || 500).json({ error: err.message || "Internal Server Error" });
 });
+
+// ─── Seed Functions ───────────────────────────────────────────────────────────
 
 async function seedSuperAdmin() {
   const email = "admin@trendselectronics.com";
   const existing = await db.select().from(users).where(eq(users.email, email));
-  
   if (existing.length > 0) {
-    const user = existing[0];
-    const passwordHash = await bcrypt.hash("trends-admin-2025", 10);
-    console.log(`### Updating existing admin account: ${email}`);
-    await db.update(users).set({ 
+    await db.update(users).set({
       role: "admin",
-      passwordHash: passwordHash
-    }).where(eq(users.id, user.id));
+      passwordHash: await bcrypt.hash("trends-admin-2025", 10),
+    }).where(eq(users.id, existing[0].id));
+    console.log(`### Admin account verified: ${email}`);
     return;
   }
-
-  const passwordHash = await bcrypt.hash("trends-admin-2025", 10);
   await db.insert(users).values({
     email,
-    passwordHash,
+    passwordHash: await bcrypt.hash("trends-admin-2025", 10),
     name: "Trends Admin",
     role: "admin",
     createdAt: new Date(),
@@ -167,84 +129,47 @@ async function initializeDatabase() {
     // @ts-ignore
     const sqlite = db.session.client;
 
-    // 1. Check/Add columns to users table
-    const userTableInfo = sqlite.prepare("PRAGMA table_info(users)").all() as any[];
-    const userColumns = userTableInfo.map((c) => c.name);
-
-    if (!userColumns.includes("points")) {
-      sqlite.prepare("ALTER TABLE users ADD COLUMN points INTEGER DEFAULT 0").run();
-    }
-    if (!userColumns.includes("interests")) {
-      // If allergies exists but interests doesn't, we can try to rename or just add
-      if (userColumns.includes("allergies")) {
+    const userCols = (sqlite.prepare("PRAGMA table_info(users)").all() as any[]).map((c: any) => c.name);
+    if (!userCols.includes("points"))    sqlite.prepare("ALTER TABLE users ADD COLUMN points INTEGER DEFAULT 0").run();
+    if (!userCols.includes("google_id")) sqlite.prepare("ALTER TABLE users ADD COLUMN google_id TEXT").run();
+    if (!userCols.includes("interests")) {
+      if (userCols.includes("allergies")) {
         sqlite.prepare("ALTER TABLE users RENAME COLUMN allergies TO interests").run();
       } else {
         sqlite.prepare("ALTER TABLE users ADD COLUMN interests TEXT").run();
       }
     }
-    if (!userColumns.includes("google_id")) {
-      sqlite.prepare("ALTER TABLE users ADD COLUMN google_id TEXT").run();
-    }
 
-    // 2. Check/Add columns to menu_items table
-    const menuTableInfo = sqlite.prepare("PRAGMA table_info(menu_items)").all() as any[];
-    const menuColumns = menuTableInfo.map((c) => c.name);
-
-    if (!menuColumns.includes("specs")) {
-      if (menuColumns.includes("calories")) {
+    const menuCols = (sqlite.prepare("PRAGMA table_info(menu_items)").all() as any[]).map((c: any) => c.name);
+    if (!menuCols.includes("specs")) {
+      if (menuCols.includes("calories")) {
         sqlite.prepare("ALTER TABLE menu_items RENAME COLUMN calories TO specs").run();
-        sqlite.prepare("UPDATE menu_items SET specs = CAST(specs AS TEXT)").run();
       } else {
         sqlite.prepare("ALTER TABLE menu_items ADD COLUMN specs TEXT").run();
       }
     }
-    // CJ Dropshipping columns for menu_items
-    if (!menuColumns.includes("cj_pid")) {
-      sqlite.prepare("ALTER TABLE menu_items ADD COLUMN cj_pid TEXT").run();
-    }
-    if (!menuColumns.includes("cj_vid")) {
-      sqlite.prepare("ALTER TABLE menu_items ADD COLUMN cj_vid TEXT").run();
-    }
-    if (!menuColumns.includes("cj_cost")) {
-      sqlite.prepare("ALTER TABLE menu_items ADD COLUMN cj_cost TEXT").run();
+    if (!menuCols.includes("cj_pid"))  sqlite.prepare("ALTER TABLE menu_items ADD COLUMN cj_pid TEXT").run();
+    if (!menuCols.includes("cj_vid"))  sqlite.prepare("ALTER TABLE menu_items ADD COLUMN cj_vid TEXT").run();
+    if (!menuCols.includes("cj_cost")) sqlite.prepare("ALTER TABLE menu_items ADD COLUMN cj_cost TEXT").run();
+
+    const orderCols = (sqlite.prepare("PRAGMA table_info(orders)").all() as any[]).map((c: any) => c.name);
+    if (!orderCols.includes("cj_order_id"))      sqlite.prepare("ALTER TABLE orders ADD COLUMN cj_order_id TEXT").run();
+    if (!orderCols.includes("cj_order_num"))     sqlite.prepare("ALTER TABLE orders ADD COLUMN cj_order_num TEXT").run();
+    if (!orderCols.includes("cj_tracking_no"))   sqlite.prepare("ALTER TABLE orders ADD COLUMN cj_tracking_no TEXT").run();
+    if (!orderCols.includes("cj_logistic"))      sqlite.prepare("ALTER TABLE orders ADD COLUMN cj_logistic TEXT").run();
+    if (!orderCols.includes("shipping_country")) sqlite.prepare("ALTER TABLE orders ADD COLUMN shipping_country TEXT").run();
+    if (!orderCols.includes("currency"))         sqlite.prepare("ALTER TABLE orders ADD COLUMN currency TEXT DEFAULT 'USD'").run();
+
+    const favTable = sqlite.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='favorites'").get();
+    if (!favTable) {
+      sqlite.prepare(`CREATE TABLE favorites (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL REFERENCES users(id),
+        menu_item_id INTEGER NOT NULL REFERENCES menu_items(id),
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )`).run();
     }
 
-    // 3. Check/Add CJ columns to orders table
-    const ordersTableInfo = sqlite.prepare("PRAGMA table_info(orders)").all() as any[];
-    const ordersColumns = ordersTableInfo.map((c) => c.name);
-
-    if (!ordersColumns.includes("cj_order_id")) {
-      sqlite.prepare("ALTER TABLE orders ADD COLUMN cj_order_id TEXT").run();
-    }
-    if (!ordersColumns.includes("cj_order_num")) {
-      sqlite.prepare("ALTER TABLE orders ADD COLUMN cj_order_num TEXT").run();
-    }
-    if (!ordersColumns.includes("cj_tracking_no")) {
-      sqlite.prepare("ALTER TABLE orders ADD COLUMN cj_tracking_no TEXT").run();
-    }
-    if (!ordersColumns.includes("cj_logistic")) {
-      sqlite.prepare("ALTER TABLE orders ADD COLUMN cj_logistic TEXT").run();
-    }
-    if (!ordersColumns.includes("shipping_country")) {
-      sqlite.prepare("ALTER TABLE orders ADD COLUMN shipping_country TEXT").run();
-    }
-    if (!ordersColumns.includes("currency")) {
-      sqlite.prepare("ALTER TABLE orders ADD COLUMN currency TEXT DEFAULT 'USD'").run();
-    }
-
-    // 4. Check/Create favorites table
-    const favoritesTable = sqlite.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='favorites'").get();
-    if (!favoritesTable) {
-      sqlite.prepare(`
-        CREATE TABLE favorites (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          user_id INTEGER NOT NULL REFERENCES users(id),
-          menu_item_id INTEGER NOT NULL REFERENCES menu_items(id),
-          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )
-      `).run();
-    }
-    
     console.log("### DB_CHECKPOINT: Database structure verified");
   } catch (err) {
     console.error("### DB_ERROR: Self-healing migration failed:", err);
@@ -252,50 +177,53 @@ async function initializeDatabase() {
 }
 
 async function seedMenuItems() {
-  const existing = await db.select().from(menuItems);
-  if (existing.length > 0) return;
+  // Use raw SQLite COUNT so that admin-deleted products don't trigger a re-seed.
+  // The Drizzle select() only returns available items; COUNT(*) counts everything.
+  // @ts-ignore
+  const sqlite = db.session.client;
+  const row = sqlite.prepare("SELECT COUNT(*) as cnt FROM menu_items").get() as { cnt: number };
+  if (row.cnt > 0) {
+    console.log(`### Skipping menu seed — ${row.cnt} product(s) already in database`);
+    return;
+  }
 
   await db.insert(menuItems).values([
     { name: "iPhone 15 Pro", description: "Titanium design, A17 Pro chip, Action button, and a more versatile Pro camera system", price: "999.00", imageUrl: "/assets/iphone-15.jpg", specs: "A17 Pro Chip, 48MP Camera, USB-C", tags: JSON.stringify(["Apple", "New"]), category: "Smartphones", rating: "4.9", reviews: 1200, isTop: 1, isAvailable: 1 },
     { name: "Samsung Galaxy S24 Ultra", description: "The ultimate Galaxy AI experience with a 200MP camera and built-in S Pen", price: "1299.00", imageUrl: "/assets/s24-ultra.jpg", specs: "Snapdragon 8 Gen 3, 200MP Zoom, S-Pen", tags: JSON.stringify(["Samsung", "AI"]), category: "Smartphones", rating: "4.8", reviews: 850, isTop: 1, isAvailable: 1 },
     { name: "MacBook Air M3", description: "Strikingly thin and fast, so you can work, play, or create anything — anywhere", price: "1099.00", imageUrl: "/assets/macbook-air.jpg", specs: "M3 Chip, 13.6\" Liquid Retina, 18hr Battery", tags: JSON.stringify(["Apple", "Laptop"]), category: "Laptops", rating: "4.9", reviews: 450, isTop: 1, isAvailable: 1 },
     { name: "Sony WH-1000XM5", description: "Industry-leading noise canceling headphones with exceptional sound quality", price: "399.00", imageUrl: "/assets/sony-xm5.jpg", specs: "30hr Battery, Multi-point Connection", tags: JSON.stringify(["Audio", "Noise Canceling"]), category: "Audio", rating: "4.7", reviews: 2100, isTop: 0, isAvailable: 1 },
-    { name: "iPad Pro M4", description: "The thinnest Apple product ever, featuring the world’s most advanced display", price: "999.00", imageUrl: "/assets/ipad-pro.jpg", specs: "M4 Chip, Tandem OLED, Ultra-thin", tags: JSON.stringify(["Apple", "Tablet"]), category: "Tablets", rating: "4.8", reviews: 300, isTop: 0, isAvailable: 1 },
+    { name: "iPad Pro M4", description: "The thinnest Apple product ever, featuring the world's most advanced display", price: "999.00", imageUrl: "/assets/ipad-pro.jpg", specs: "M4 Chip, Tandem OLED, Ultra-thin", tags: JSON.stringify(["Apple", "Tablet"]), category: "Tablets", rating: "4.8", reviews: 300, isTop: 0, isAvailable: 1 },
     { name: "Home Entertainment Bundle", description: "Sony 65\" 4K TV + Soundbar + Subwoofer. Ultimate cinematic experience.", price: "1899.00", imageUrl: "/assets/tv-bundle.jpg", specs: "4K HDR, Dolby Atmos, Smart TV", category: "Bundles", isTop: 1, isAvailable: 1 },
     { name: "AirPods Pro (2nd Gen)", description: "MagSafe Charging Case (USB-C) and twice the noise cancellation", price: "249.00", imageUrl: "/assets/airpods-pro.jpg", specs: "H2 Chip, Adaptive Audio, USB-C", tags: JSON.stringify(["Apple", "Audio"]), category: "Audio", isTop: 0, isAvailable: 1 },
     { name: "Apple Watch Series 9", description: "Smarter, brighter, and mightier with the S9 SiP and double tap gesture", price: "399.00", imageUrl: "/assets/apple-watch.jpg", specs: "S9 SiP, Blood Oxygen, ECG", tags: JSON.stringify(["Apple", "Wearable"]), category: "Wearables", isTop: 0, isAvailable: 1 },
     { name: "Logitech MX Master 3S", description: "Performance wireless mouse with quiet clicks and 8K DPI tracking", price: "99.00", imageUrl: "/assets/mx-master.jpg", specs: "8000 DPI, Quiet Clicks, MagSpeed", tags: JSON.stringify(["Accessories", "Logitech"]), category: "Accessories", isTop: 0, isAvailable: 1 },
     { name: "Dell XPS 15", description: "Stunning 4K OLED display with high performance for creators", price: "1599.00", imageUrl: "/assets/dell-xps.jpg", specs: "i9 Processor, 32GB RAM, RTX 4060", tags: JSON.stringify(["Dell", "Laptop"]), category: "Laptops", isTop: 0, isAvailable: 1 },
   ]);
-  console.log("Menu items seeded");
+  console.log("### Menu items seeded (first run only)");
 }
 
 async function seedDemoCustomers() {
-  const demoCustomers = [
+  const demos = [
     { email: "kwame.asante@gmail.com", name: "Kwame Asante" },
     { email: "abena.mensah@outlook.com", name: "Abena Mensah" },
     { email: "kofi.boateng@yahoo.com", name: "Kofi Boateng" },
     { email: "akosua.darko@gmail.com", name: "Akosua Darko" },
     { email: "yaw.owusu@gmail.com", name: "Yaw Owusu" },
   ];
-
   const passwordHash = await bcrypt.hash("customer2025", 10);
-  for (const c of demoCustomers) {
+  for (const c of demos) {
     const [existing] = await db.select().from(users).where(eq(users.email, c.email));
     if (!existing) {
       await db.insert(users).values({
-        email: c.email,
-        passwordHash,
-        name: c.name,
-        role: "customer",
-        phone: "+233 20 000 0000",
-        address: "Accra, Ghana",
-        createdAt: new Date(),
+        email: c.email, passwordHash, name: c.name,
+        role: "customer", phone: "+233 20 000 0000",
+        address: "Accra, Ghana", createdAt: new Date(),
       });
     }
   }
-  console.log("Demo customers seeded");
 }
+
+// ─── Start Server ─────────────────────────────────────────────────────────────
 
 console.log("### SERVER_CHECKPOINT: Attempting to listen on PORT:", PORT);
 
@@ -303,12 +231,9 @@ httpServer.listen(PORT, "0.0.0.0", async () => {
   console.log(`### SERVER_SUCCESS: Backend running on 0.0.0.0:${PORT}`);
   try {
     const aiKey = process.env.GEMINI_API_KEY;
-    if (aiKey) {
-      console.log(`### AI_CHECK: Gemini key detected (Ends with ...${aiKey.slice(-4)})`);
-    } else {
-      console.error("### AI_CHECK: No GEMINI_API_KEY detected in environment!");
-    }
-    console.log("### SERVER_CHECKPOINT: Running initialization seeds...");
+    if (aiKey) console.log(`### AI_CHECK: Gemini key detected (...${aiKey.slice(-4)})`);
+    else console.error("### AI_CHECK: No GEMINI_API_KEY found!");
+
     await initializeDatabase();
     await seedSuperAdmin();
     await seedMenuItems();
@@ -319,14 +244,13 @@ httpServer.listen(PORT, "0.0.0.0", async () => {
   }
 });
 
-// Global error handler for uncaught exceptions
 process.on("uncaughtException", (err) => {
   console.error("### CRITICAL_ERROR: Uncaught Exception:", err);
   process.exit(1);
 });
 
-process.on("unhandledRejection", (reason, promise) => {
-  console.error("### CRITICAL_ERROR: Unhandled Rejection at:", promise, "reason:", reason);
+process.on("unhandledRejection", (reason) => {
+  console.error("### CRITICAL_ERROR: Unhandled Rejection:", reason);
   process.exit(1);
 });
 
