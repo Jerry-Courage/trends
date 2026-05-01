@@ -101,77 +101,7 @@ const EMPTY_PRODUCT_FORM: ProductForm = {
 
 const CATEGORIES = ["Laptops", "Phones", "Tablets", "Audio", "Accessories", "Gaming", "Wearables", "Smart Home"];
 
-const CommandMap = ({ activeOrderId, status }: { activeOrderId: number | null, status: string }) => {
-  const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<any>(null);
-  const markerRef = useRef<any>(null);
 
-  useEffect(() => {
-    if (!mapRef.current) return;
-
-    import("leaflet").then(L => {
-      const map = L.map(mapRef.current!, {
-        center: [5.6042, -0.1670],
-        zoom: 13,
-        zoomControl: false,
-        attributionControl: false,
-      });
-
-      L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png").addTo(map);
-      
-      mapInstanceRef.current = map;
-    });
-
-    return () => {
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
-        mapInstanceRef.current = null;
-      }
-    };
-  }, []);
-
-  // Poll for location of active order if any
-  useEffect(() => {
-    const fetchLocation = async () => {
-      if (!activeOrderId || !mapInstanceRef.current) return;
-      try {
-        const res = await api.get<{lat: number, lng: number}>(`/orders/${activeOrderId}/location`);
-        if (res.lat && res.lng) {
-          import("leaflet").then(L => {
-            if (!markerRef.current) {
-              const icon = L.divIcon({
-                className: 'admin-courier-marker',
-                html: `<div style="width:12px;height:12px;background:#06b6d4;border-radius:50%;border:2px solid white;box-shadow:0 0 15px rgba(6,182,212,0.6)"></div>`,
-                iconSize: [16, 16]
-              });
-              markerRef.current = L.marker([res.lat, res.lng], { icon }).addTo(mapInstanceRef.current);
-              mapInstanceRef.current.setView([res.lat, res.lng], 15);
-            } else {
-              markerRef.current.setLatLng([res.lat, res.lng]);
-            }
-          });
-        }
-      } catch (err) {
-        console.error("Location fetch failed", err);
-      }
-    };
-
-    const interval = setInterval(fetchLocation, 3000);
-    return () => clearInterval(interval);
-  }, [activeOrderId]);
-
-  return (
-    <div className="relative w-full h-[300px] rounded-3xl overflow-hidden border border-white/5">
-      <div ref={mapRef} className="w-full h-full" />
-      <div className="absolute top-4 left-4 z-[1000] bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10 flex items-center gap-2">
-        <div className={cn("w-2 h-2 rounded-full", activeOrderId ? "bg-cyan-500 animate-pulse" : "bg-slate-500")} />
-        <span className="text-[10px] text-white font-black uppercase tracking-widest">
-          {activeOrderId ? `Tracking #${activeOrderId}` : "Idle Readiness"}
-        </span>
-      </div>
-    </div>
-  );
-};
 function ProductModal({
   open,
   title,
@@ -419,37 +349,7 @@ export default function AdminDashboard() {
     }
   });
 
-  const [isSimulating, setIsSimulating] = useState(false);
-  const [simulatingOrderId, setSimulatingOrderId] = useState<number | null>(null);
 
-  const startSimulation = async (orderId: number) => {
-    setIsSimulating(true);
-    setSimulatingOrderId(orderId);
-    
-    // Path: Accra Mall to Circle
-    const path = [
-      [5.6201, -0.1740], [5.6150, -0.1800], [5.6100, -0.1850], 
-      [5.6050, -0.1900], [5.6000, -0.1950], [5.5950, -0.2000],
-      [5.5900, -0.2050], [5.5850, -0.2100], [5.5800, -0.2150]
-    ];
-
-    for (const point of path) {
-      if (!isSimulating) break;
-      await fetch(`/api/orders/${orderId}/location`, {
-        method: "PATCH",
-        headers: { 
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem("trends_token")}`
-        },
-        body: JSON.stringify({ lat: point[0], lng: point[1] })
-      });
-      await new Promise(r => setTimeout(r, 3000));
-    }
-    
-    setIsSimulating(false);
-    setSimulatingOrderId(null);
-    toast({ title: "Simulation complete", description: "The courier has reached the destination." });
-  };
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) => api.delete(`/admin/menu-items/${id}`),
@@ -681,21 +581,7 @@ export default function AdminDashboard() {
             </p>
           </div>
           <div className="flex items-center gap-4">
-            <Button 
-               variant="outline"
-               onClick={() => {
-                 // Pick the most recent order from stats or a fallback
-                 const lastOrder = stats?.recentOrders?.[0]?.id || 1;
-                 startSimulation(Number(lastOrder));
-               }}
-               className={cn(
-                 "bg-cyan-500/10 border-cyan-500/20 text-cyan-400 hover:bg-cyan-500 hover:text-white rounded-3xl hidden md:flex",
-                 isSimulating && "animate-pulse border-cyan-500/50"
-               )}
-            >
-               {isSimulating ? <Loader2 className="animate-spin mr-2" size={16} /> : <PlayCircle className="mr-2" size={16} />}
-               {isSimulating ? `Tracing Order #${simulatingOrderId}` : "Simulate Tracking"}
-            </Button>
+
             
             <div className="p-1 px-4 bg-white/5 rounded-3xl border border-white/10 flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)] animate-pulse" />
@@ -755,8 +641,7 @@ export default function AdminDashboard() {
                 ))}
               </div>
 
-              {/* Live Operations Command Map */}
-              <CommandMap activeOrderId={simulatingOrderId} status={isSimulating ? "Live" : "Idle"} />
+
 
               {/* Revenue Chart */}
               <Card className="bg-slate-900 border-white/5 p-6 lg:p-8">
