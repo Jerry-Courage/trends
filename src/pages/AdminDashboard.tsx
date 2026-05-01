@@ -27,7 +27,15 @@ import {
   Package,
   Search,
   Download,
-  ExternalLink
+  ExternalLink,
+  RefreshCw,
+  Truck,
+  CheckCircle2,
+  AlertCircle,
+  Clock,
+  MapPin,
+  ChevronDown,
+  ChevronUp
 } from "lucide-react";
 import { 
   AreaChart, 
@@ -290,7 +298,7 @@ function ProductModal({
 }
 
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState<"overview" | "menu" | "staff" | "ai" | "users" | "insights" | "cj">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "menu" | "orders" | "staff" | "ai" | "users" | "insights" | "cj">("overview");
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [showAddProduct, setShowAddProduct] = useState(false);
   const [productForm, setProductForm] = useState<ProductForm>(EMPTY_PRODUCT_FORM);
@@ -307,6 +315,14 @@ export default function AdminDashboard() {
   const [cjImporting, setCjImporting] = useState<string | null>(null);
   const [cjMarkup, setCjMarkup] = useState(30);
   const [cjConfigured, setCjConfigured] = useState<boolean | null>(null);
+
+  // Orders state
+  const [orderSearch, setOrderSearch] = useState("");
+  const [orderStatusFilter, setOrderStatusFilter] = useState("all");
+  const [fulfillModal, setFulfillModal] = useState<any | null>(null);
+  const [fulfillAddress, setFulfillAddress] = useState({ consignee: "", phone: "", country: "", province: "", city: "", address: "", zip: "" });
+  const [fulfilling, setFulfilling] = useState(false);
+  const [syncing, setSyncing] = useState<number | null>(null);
 
   const { logout } = useAuth();
   const { fmt } = useCurrency();
@@ -344,6 +360,63 @@ export default function AdminDashboard() {
         .catch(() => setCjConfigured(false));
     }
   }, [activeTab, cjConfigured]);
+
+  // Orders data
+  const { data: allOrders = [], isLoading: ordersLoading, refetch: refetchOrders } = useQuery<any[]>({
+    queryKey: ["/api/admin/orders"],
+    queryFn: () => api.get("/admin/orders"),
+    enabled: activeTab === "orders",
+    refetchInterval: 15000,
+  });
+
+  const updateOrderStatusMutation = useMutation({
+    mutationFn: ({ id, status }: { id: number; status: string }) =>
+      api.patch(`/admin/orders/${id}/status`, { status }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
+      toast({ title: "Order status updated" });
+    },
+    onError: (err: any) => toast({ title: "Failed to update status", description: err.message, variant: "destructive" }),
+  });
+
+  const cancelOrderMutation = useMutation({
+    mutationFn: (id: number) => api.patch(`/orders/${id}/cancel`, {}),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/orders"] });
+      toast({ title: "Order cancelled" });
+    },
+    onError: (err: any) => toast({ title: "Failed to cancel", description: err.message, variant: "destructive" }),
+  });
+
+  const handleFulfillOrder = async () => {
+    if (!fulfillModal) return;
+    setFulfilling(true);
+    try {
+      await api.post(`/cj/orders/${fulfillModal.id}/fulfill`, { shippingAddress: fulfillAddress });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/orders"] });
+      toast({ title: "Order submitted to CJ!", description: "CJ will process and ship the order." });
+      setFulfillModal(null);
+      setFulfillAddress({ consignee: "", phone: "", country: "", province: "", city: "", address: "", zip: "" });
+    } catch (err: any) {
+      toast({ title: "Fulfillment failed", description: err.message, variant: "destructive" });
+    } finally {
+      setFulfilling(false);
+    }
+  };
+
+  const handleSyncTracking = async (orderId: number) => {
+    setSyncing(orderId);
+    try {
+      const result = await api.post<any>(`/cj/orders/${orderId}/sync-tracking`, {});
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/orders"] });
+      toast({ title: "Tracking synced!", description: result.trackingNumber ? `Tracking: ${result.trackingNumber}` : "No tracking number yet" });
+    } catch (err: any) {
+      toast({ title: "Sync failed", description: err.message, variant: "destructive" });
+    } finally {
+      setSyncing(null);
+    }
+  };
 
   const handleCJSearch = async () => {
     if (!cjQuery.trim()) return;
@@ -558,7 +631,8 @@ export default function AdminDashboard() {
         <nav className="flex-1 space-y-2">
           {[
             { id: "overview", label: "Oversight", icon: LayoutDashboard },
-            { id: "menu", label: "Catalog Editor", icon: ShoppingBag },
+            { id: "orders", label: "Orders", icon: ShoppingBag },
+            { id: "menu", label: "Catalog Editor", icon: Package },
             { id: "cj", label: "CJ Import", icon: Download },
             { id: "users", label: "Users Hub", icon: Users },
             { id: "insights", label: "Insights", icon: TrendingUp },
@@ -599,7 +673,8 @@ export default function AdminDashboard() {
       <nav className="fixed bottom-0 left-0 right-0 bg-card  border-t border-border h-16 flex items-center justify-around px-2 lg:hidden z-50 safe-bottom">
         {[
           { id: "overview", icon: LayoutDashboard, label: "Stats" },
-          { id: "menu", icon: ShoppingBag, label: "Catalog" },
+          { id: "orders", icon: ShoppingBag, label: "Orders" },
+          { id: "menu", icon: Package, label: "Catalog" },
           { id: "cj", icon: Download, label: "CJ" },
           { id: "users", icon: Users, label: "Users" },
           { id: "insights", icon: TrendingUp, label: "Data" },
@@ -629,6 +704,7 @@ export default function AdminDashboard() {
           <div>
             <h2 className="text-3xl font-black tracking-tighter text-foreground">
               {activeTab === "overview" && "Performance Oversight"}
+              {activeTab === "orders" && "Order Management"}
               {activeTab === "menu" && "Catalog Management"}
               {activeTab === "cj" && "CJ Dropshipping Import"}
               {activeTab === "users" && "User Population"}
@@ -639,6 +715,7 @@ export default function AdminDashboard() {
             <p className="text-muted-foreground mt-1 font-medium italic opacity-80">
               {activeTab === "staff" && "Manage and onboard authorized personnel"}
               {activeTab === "users" && "Comprehensive database of customers and couriers"}
+              {activeTab === "orders" && "Fulfill, track and manage all customer orders"}
               {activeTab === "cj" && "Search CJ Dropshipping catalog and import products"}
               {activeTab === "insights" && "Data-driven behavioral tracking for business growth"}
               {(activeTab === "overview" || activeTab === "ai" || activeTab === "menu") && "Real-time retail operations & growth data"}
@@ -659,6 +736,11 @@ export default function AdminDashboard() {
               >
                 <PlusCircle size={20} />
                 <span className="font-bold">New Product</span>
+              </Button>
+            )}
+            {activeTab === "orders" && (
+              <Button onClick={() => refetchOrders()} variant="outline" className="h-12 px-5 rounded-3xl border-border gap-2">
+                <RefreshCw size={16} /> Refresh
               </Button>
             )}
             <Button
@@ -778,6 +860,268 @@ export default function AdminDashboard() {
                   </Button>
                 </Card>
               </div>
+            </motion.div>
+          )}
+
+          {activeTab === "orders" && (
+            <motion.div key="orders" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-6">
+
+              {/* Fulfill Modal */}
+              <AnimatePresence>
+                {fulfillModal && (
+                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                    className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[200] flex items-center justify-center p-4"
+                    onClick={() => setFulfillModal(null)}
+                  >
+                    <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
+                      className="bg-card border border-border rounded-3xl p-6 w-full max-w-md shadow-2xl"
+                      onClick={e => e.stopPropagation()}
+                    >
+                      <div className="flex items-center justify-between mb-5">
+                        <div>
+                          <h3 className="text-xl font-bold text-foreground">Fulfill via CJ</h3>
+                          <p className="text-xs text-muted-foreground mt-0.5">Order #{String(fulfillModal.id).padStart(5, "0")} · {fulfillModal.items?.length} item(s)</p>
+                        </div>
+                        <button onClick={() => setFulfillModal(null)} className="text-muted-foreground hover:text-foreground"><X size={20} /></button>
+                      </div>
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="text-xs text-muted-foreground font-semibold">Full Name *</label>
+                            <input value={fulfillAddress.consignee} onChange={e => setFulfillAddress(p => ({...p, consignee: e.target.value}))}
+                              placeholder="John Doe" className="w-full mt-1 bg-muted rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary" />
+                          </div>
+                          <div>
+                            <label className="text-xs text-muted-foreground font-semibold">Phone *</label>
+                            <input value={fulfillAddress.phone} onChange={e => setFulfillAddress(p => ({...p, phone: e.target.value}))}
+                              placeholder="+1 555 000 0000" className="w-full mt-1 bg-muted rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary" />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="text-xs text-muted-foreground font-semibold">Street Address *</label>
+                          <input value={fulfillAddress.address} onChange={e => setFulfillAddress(p => ({...p, address: e.target.value}))}
+                            placeholder="123 Main St" className="w-full mt-1 bg-muted rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary" />
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="text-xs text-muted-foreground font-semibold">City *</label>
+                            <input value={fulfillAddress.city} onChange={e => setFulfillAddress(p => ({...p, city: e.target.value}))}
+                              placeholder="New York" className="w-full mt-1 bg-muted rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary" />
+                          </div>
+                          <div>
+                            <label className="text-xs text-muted-foreground font-semibold">State/Province</label>
+                            <input value={fulfillAddress.province} onChange={e => setFulfillAddress(p => ({...p, province: e.target.value}))}
+                              placeholder="NY" className="w-full mt-1 bg-muted rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary" />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="text-xs text-muted-foreground font-semibold">ZIP Code</label>
+                            <input value={fulfillAddress.zip} onChange={e => setFulfillAddress(p => ({...p, zip: e.target.value}))}
+                              placeholder="10001" className="w-full mt-1 bg-muted rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary" />
+                          </div>
+                          <div>
+                            <label className="text-xs text-muted-foreground font-semibold">Country Code *</label>
+                            <input value={fulfillAddress.country} onChange={e => setFulfillAddress(p => ({...p, country: e.target.value.toUpperCase()}))}
+                              placeholder="US" maxLength={2} className="w-full mt-1 bg-muted rounded-xl px-3 py-2 text-sm text-foreground uppercase focus:outline-none focus:ring-1 focus:ring-primary" />
+                          </div>
+                        </div>
+                        {/* Pre-fill from order address */}
+                        {fulfillModal.deliveryAddress && (
+                          <p className="text-xs text-muted-foreground bg-muted/50 rounded-lg px-3 py-2">
+                            <span className="font-semibold">Customer address:</span> {fulfillModal.deliveryAddress}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex gap-3 mt-5">
+                        <Button variant="ghost" onClick={() => setFulfillModal(null)} className="flex-1 rounded-2xl">Cancel</Button>
+                        <Button
+                          onClick={handleFulfillOrder}
+                          disabled={fulfilling || !fulfillAddress.consignee || !fulfillAddress.address || !fulfillAddress.city || !fulfillAddress.country}
+                          className="flex-1 rounded-2xl bg-primary hover:bg-primary/90 font-bold gap-2"
+                        >
+                          {fulfilling ? <><Loader2 size={16} className="animate-spin" /> Submitting...</> : <><Truck size={16} /> Submit to CJ</>}
+                        </Button>
+                      </div>
+                    </motion.div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Filters */}
+              <div className="flex flex-col sm:flex-row gap-3">
+                <input
+                  type="text"
+                  placeholder="Search by order ID, customer name or email..."
+                  value={orderSearch}
+                  onChange={e => setOrderSearch(e.target.value)}
+                  className="flex-1 bg-card border border-border rounded-2xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50"
+                />
+                <select
+                  value={orderStatusFilter}
+                  onChange={e => setOrderStatusFilter(e.target.value)}
+                  className="bg-card border border-border rounded-2xl px-4 py-3 text-sm text-foreground focus:outline-none focus:border-primary/50"
+                >
+                  <option value="all">All Orders</option>
+                  <option value="pending">Pending</option>
+                  <option value="confirmed">Confirmed</option>
+                  <option value="packaging">Packaging</option>
+                  <option value="ready">Ready</option>
+                  <option value="picked_up">Shipped</option>
+                  <option value="delivered">Delivered</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+              </div>
+
+              {/* Orders Table */}
+              {ordersLoading ? (
+                <div className="space-y-3">{[1,2,3,4].map(i => <div key={i} className="h-24 bg-card border border-border rounded-2xl animate-pulse" />)}</div>
+              ) : (
+                <div className="space-y-3">
+                  {allOrders
+                    .filter(o => {
+                      const matchSearch = !orderSearch ||
+                        String(o.id).includes(orderSearch) ||
+                        o.customer?.name?.toLowerCase().includes(orderSearch.toLowerCase()) ||
+                        o.customer?.email?.toLowerCase().includes(orderSearch.toLowerCase());
+                      const matchStatus = orderStatusFilter === "all" || o.status === orderStatusFilter;
+                      return matchSearch && matchStatus;
+                    })
+                    .map((order: any) => {
+                      const hasCJ = !!order.cjOrderId;
+                      const hasTracking = !!order.cjTrackingNo;
+                      const statusColors: Record<string, string> = {
+                        pending: "text-amber-500 bg-amber-500/10 border-amber-500/20",
+                        confirmed: "text-blue-500 bg-blue-500/10 border-blue-500/20",
+                        packaging: "text-orange-500 bg-orange-500/10 border-orange-500/20",
+                        ready: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20",
+                        picked_up: "text-indigo-500 bg-indigo-500/10 border-indigo-500/20",
+                        delivered: "text-slate-400 bg-slate-500/10 border-slate-500/20",
+                        cancelled: "text-red-500 bg-red-500/10 border-red-500/20",
+                        assigned: "text-violet-500 bg-violet-500/10 border-violet-500/20",
+                      };
+                      return (
+                        <Card key={order.id} className="bg-card border-border p-4 hover:border-primary/20 transition-all">
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                            {/* Order Info */}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-black text-foreground">#{String(order.id).padStart(5, "0")}</span>
+                                <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-lg border ${statusColors[order.status] || "text-muted-foreground bg-muted border-border"}`}>
+                                  {order.status.replace("_", " ")}
+                                </span>
+                                {hasCJ && <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-lg">CJ Submitted</span>}
+                                {hasTracking && <span className="text-[10px] font-bold text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-lg">Tracked</span>}
+                              </div>
+                              <p className="text-sm text-muted-foreground mt-1 truncate">
+                                <span className="font-semibold text-foreground">{order.customer?.name}</span> · {order.customer?.email}
+                              </p>
+                              <p className="text-xs text-muted-foreground truncate mt-0.5">
+                                <MapPin className="inline w-3 h-3 mr-1" />{order.deliveryAddress}
+                              </p>
+                              <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                                <span>{order.items?.length} item(s)</span>
+                                <span className="font-bold text-primary">{fmt(parseFloat(order.total))}</span>
+                                <span><Clock className="inline w-3 h-3 mr-1" />{new Date(order.createdAt).toLocaleDateString()}</span>
+                              </div>
+                              {hasTracking && (
+                                <div className="flex items-center gap-2 mt-1">
+                                  <span className="text-xs text-muted-foreground">Tracking:</span>
+                                  <a href={`https://t.17track.net/en#nums=${order.cjTrackingNo}`} target="_blank" rel="noopener noreferrer"
+                                    className="text-xs text-primary font-mono hover:underline flex items-center gap-1">
+                                    {order.cjTrackingNo} <ExternalLink size={10} />
+                                  </a>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Actions */}
+                            <div className="flex flex-wrap gap-2 sm:flex-col sm:items-end">
+                              {/* Status update */}
+                              {!["delivered", "cancelled"].includes(order.status) && (
+                                <select
+                                  defaultValue={order.status}
+                                  onChange={e => updateOrderStatusMutation.mutate({ id: order.id, status: e.target.value })}
+                                  className="text-xs bg-muted border border-border rounded-xl px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                                >
+                                  {["pending","confirmed","packaging","ready","picked_up","delivered"].map(s => (
+                                    <option key={s} value={s}>{s.replace("_"," ")}</option>
+                                  ))}
+                                </select>
+                              )}
+
+                              {/* Fulfill via CJ */}
+                              {!hasCJ && !["cancelled", "delivered"].includes(order.status) && (
+                                <Button
+                                  size="sm"
+                                  onClick={() => {
+                                    // Pre-fill address from order if possible
+                                    const addr = order.deliveryAddress || "";
+                                    setFulfillAddress({ consignee: order.customer?.name || "", phone: order.customer?.phone || "", address: addr, city: "", province: "", zip: "", country: "" });
+                                    setFulfillModal(order);
+                                  }}
+                                  className="h-8 px-3 rounded-xl bg-primary hover:bg-primary/90 text-xs font-bold gap-1"
+                                >
+                                  <Truck size={12} /> Fulfill via CJ
+                                </Button>
+                              )}
+
+                              {/* Sync Tracking */}
+                              {hasCJ && !hasTracking && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleSyncTracking(order.id)}
+                                  disabled={syncing === order.id}
+                                  className="h-8 px-3 rounded-xl text-xs font-bold gap-1 border-primary/30 text-primary hover:bg-primary/10"
+                                >
+                                  {syncing === order.id ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
+                                  Sync Tracking
+                                </Button>
+                              )}
+
+                              {/* Re-sync if already has tracking */}
+                              {hasTracking && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => handleSyncTracking(order.id)}
+                                  disabled={syncing === order.id}
+                                  className="h-8 px-3 rounded-xl text-xs gap-1 text-muted-foreground hover:text-foreground"
+                                >
+                                  {syncing === order.id ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
+                                  Re-sync
+                                </Button>
+                              )}
+
+                              {/* Cancel */}
+                              {["pending", "confirmed"].includes(order.status) && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => { if (confirm(`Cancel order #${String(order.id).padStart(5,"0")}?`)) cancelOrderMutation.mutate(order.id); }}
+                                  className="h-8 px-3 rounded-xl text-xs text-red-500 hover:bg-red-500/10 hover:text-red-400 gap-1"
+                                >
+                                  <X size={12} /> Cancel
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        </Card>
+                      );
+                    })}
+                  {allOrders.filter(o => {
+                    const matchSearch = !orderSearch || String(o.id).includes(orderSearch) || (o as any).customer?.name?.toLowerCase().includes(orderSearch.toLowerCase());
+                    const matchStatus = orderStatusFilter === "all" || o.status === orderStatusFilter;
+                    return matchSearch && matchStatus;
+                  }).length === 0 && (
+                    <div className="py-20 text-center">
+                      <Package className="text-muted-foreground mx-auto mb-4" size={48} />
+                      <p className="text-muted-foreground font-semibold">No orders found</p>
+                    </div>
+                  )}
+                </div>
+              )}
             </motion.div>
           )}
 

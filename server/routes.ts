@@ -366,6 +366,11 @@ router.post("/payments/verify", auth, async (req: AuthRequest, res) => {
     }
 
     const order = await storage.updatePaymentStatus(Number(orderId), "completed", reference);
+
+    // Auto-advance order status to confirmed
+    await storage.updateOrderStatus(Number(orderId), "confirmed");
+    io.to(`user:${order.userId}`).emit("order_status", { orderId: order.id, status: "confirmed" });
+
     res.json({ success: true, reference, order });
   } catch (err) {
     console.error("Paystack verify error:", err);
@@ -517,6 +522,40 @@ router.get("/admin/stats", auth, requireRole("admin"), async (req, res) => {
   const days = Number(req.query.days) || 30;
   const stats = await storage.getAdminStats(days);
   res.json(stats);
+});
+
+// Admin: get all orders with full detail
+router.get("/admin/orders", auth, requireRole("admin"), async (_req, res) => {
+  const allOrders = await storage.getAllOrders();
+  res.json(allOrders);
+});
+
+// Admin: update any order status
+router.patch("/admin/orders/:id/status", auth, requireRole("admin"), async (req, res) => {
+  const { status } = req.body;
+  const validStatuses = ["pending", "confirmed", "packaging", "ready", "assigned", "picked_up", "delivered", "cancelled"] as const;
+  if (!validStatuses.includes(status)) return res.status(400).json({ error: "Invalid status" });
+  const order = await storage.updateOrderStatus(Number(req.params.id), status);
+  io.to(`user:${order.userId}`).emit("order_status", { orderId: order.id, status });
+  res.json(order);
+});
+
+// Admin/Customer: cancel an order
+router.patch("/orders/:id/cancel", auth, async (req: AuthRequest, res) => {
+  const order = await storage.getOrderById(Number(req.params.id));
+  if (!order) return res.status(404).json({ error: "Order not found" });
+
+  // Customers can only cancel their own pending orders
+  if (req.user!.role === "customer") {
+    if (order.userId !== req.user!.id) return res.status(403).json({ error: "Forbidden" });
+    if (!["pending", "confirmed"].includes(order.status)) {
+      return res.status(400).json({ error: "Order can no longer be cancelled" });
+    }
+  }
+
+  const updated = await storage.updateOrderStatus(Number(req.params.id), "cancelled");
+  io.to(`user:${updated.userId}`).emit("order_status", { orderId: updated.id, status: "cancelled" });
+  res.json(updated);
 });
 
 router.get("/admin/menu-items", auth, requireRole("admin", "warehouse"), async (_req, res) => {

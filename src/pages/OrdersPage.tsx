@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { Heart, ChevronDown, RotateCcw, Package } from "lucide-react";
+import { Heart, ChevronDown, RotateCcw, Package, X } from "lucide-react";
 import AppHeader from "@/components/layout/AppHeader";
 import { api } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { useCurrency } from "@/context/CurrencyContext";
+import { useToast } from "@/hooks/use-toast";
 
 type OrderStatus = "pending" | "confirmed" | "packaging" | "ready" | "assigned" | "picked_up" | "delivered" | "cancelled";
 
@@ -57,6 +58,8 @@ const ACTIVE_STATUSES: OrderStatus[] = ["pending", "confirmed", "packaging", "re
 const OrdersPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [expandedId, setExpandedId] = useState<number | null>(null);
 
   const { data: orders = [], isLoading } = useQuery<Order[]>({
@@ -64,6 +67,15 @@ const OrdersPage = () => {
     queryFn: () => api.get("/orders/my"),
     enabled: !!user,
     refetchInterval: 15000,
+  });
+
+  const cancelMutation = useMutation({
+    mutationFn: (id: number) => api.patch(`/orders/${id}/cancel`, {}),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/orders/my"] });
+      toast({ title: "Order cancelled" });
+    },
+    onError: (err: any) => toast({ title: "Cannot cancel", description: err.message, variant: "destructive" }),
   });
 
   if (!user) {
@@ -113,6 +125,9 @@ const OrdersPage = () => {
                     expanded={expandedId === order.id}
                     onToggle={() => setExpandedId(expandedId === order.id ? null : order.id)}
                     onTrack={() => navigate(`/tracking/${order.id}`)}
+                    onCancel={["pending","confirmed"].includes(order.status) ? () => {
+                      if (confirm("Cancel this order?")) cancelMutation.mutate(order.id);
+                    } : undefined}
                   />
                 ))}
               </div>
@@ -141,12 +156,13 @@ const OrdersPage = () => {
   );
 };
 
-function OrderCard({ order, expanded, onToggle, onTrack, onReorder }: {
+function OrderCard({ order, expanded, onToggle, onTrack, onReorder, onCancel }: {
   order: Order;
   expanded: boolean;
   onToggle: () => void;
   onTrack?: () => void;
   onReorder?: () => void;
+  onCancel?: () => void;
 }) {
   const { fmt } = useCurrency();
   const displayName = order.items.length > 0
@@ -204,7 +220,7 @@ function OrderCard({ order, expanded, onToggle, onTrack, onReorder }: {
         )}
       </div>
 
-      {(onTrack || onReorder) && (
+      {(onTrack || onReorder || onCancel) && (
         <div className="p-3 bg-black/40 border-t border-white/5">
           <div className="flex gap-2">
             {onTrack && (
@@ -221,6 +237,14 @@ function OrderCard({ order, expanded, onToggle, onTrack, onReorder }: {
                 className="flex-1 flex items-center justify-center gap-2 py-3.5 bg-white/10 text-white border border-white/10 rounded-xl text-sm font-black uppercase tracking-widest hover:bg-white/20 active:scale-[0.98] transition-all"
               >
                 <RotateCcw className="w-4 h-4" /> Reorder
+              </button>
+            )}
+            {onCancel && (
+              <button
+                onClick={onCancel}
+                className="flex items-center justify-center gap-1 py-3.5 px-4 bg-red-500/10 text-red-400 border border-red-500/20 rounded-xl text-sm font-black uppercase tracking-widest hover:bg-red-500/20 active:scale-[0.98] transition-all"
+              >
+                <X className="w-4 h-4" /> Cancel
               </button>
             )}
           </div>
