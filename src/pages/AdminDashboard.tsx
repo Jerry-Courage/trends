@@ -94,7 +94,7 @@ const EMPTY_PRODUCT_FORM: ProductForm = {
   name: "",
   description: "",
   price: "",
-  category: "Mains",
+  category: "Laptops",
   imageUrl: "",
   isAvailable: true,
 };
@@ -358,7 +358,7 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<"overview" | "menu" | "staff" | "ai" | "users" | "insights">("overview");
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [showAddProduct, setShowAddProduct] = useState(false);
-  const [productForm, setProductForm] = useState<ProductForm>(EMPTY_DISH_FORM);
+  const [productForm, setProductForm] = useState<ProductForm>(EMPTY_PRODUCT_FORM);
   const [userSearch, setUserSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
   
@@ -439,7 +439,7 @@ export default function AdminDashboard() {
         method: "PATCH",
         headers: { 
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem("mrwu_token")}`
+          "Authorization": `Bearer ${localStorage.getItem("trends_token")}`
         },
         body: JSON.stringify({ lat: point[0], lng: point[1] })
       });
@@ -468,7 +468,7 @@ export default function AdminDashboard() {
       queryClient.invalidateQueries({ queryKey: ["/api/menu"] });
       toast({ title: "Product added to menu" });
       setShowAddProduct(false);
-      setProductForm(EMPTY_DISH_FORM);
+      setProductForm(EMPTY_PRODUCT_FORM);
     },
     onError: (err: any) => {
       toast({ title: "Failed to add product", description: err.message, variant: "destructive" });
@@ -490,7 +490,7 @@ export default function AdminDashboard() {
   });
 
   const openAddProduct = () => {
-    setProductForm(EMPTY_DISH_FORM);
+    setProductForm(EMPTY_PRODUCT_FORM);
     setShowAddProduct(true);
   };
 
@@ -592,7 +592,7 @@ export default function AdminDashboard() {
           <div className="w-12 h-12 flex items-center justify-center overflow-hidden">
             <img src={logo} alt="Trends Electronics" className="w-10 h-10 object-contain" />
           </div>
-          <span className="font-exrabold text-xl tracking-tighter text-white">Trends Electronics</span>
+          <span className="font-extrabold text-xl tracking-tighter text-white">Trends Electronics</span>
         </div>
 
         <nav className="flex-1 space-y-2">
@@ -733,9 +733,9 @@ export default function AdminDashboard() {
               {/* Stat Cards */}
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4 lg:gap-6">
                 {[
-                  { label: "Total Revenue", value: `GH₵${stats?.totalRevenue.toFixed(2)}`, icon: DollarSign, color: "text-emerald-400", trend: "+12.5%" },
-                  { label: "Total Orders", value: stats?.totalOrders, icon: ShoppingBag, color: "text-blue-400", trend: "+8.2%" },
-                  { label: "Active Customers", value: stats?.activeUsers ?? 0, icon: Users, color: "text-purple-400", trend: "+5.1%" },
+                  { label: "Total Revenue", value: `GH₵${(stats?.totalRevenue || 0).toFixed(2)}`, icon: DollarSign, color: "text-emerald-400", trend: "+12.5%" },
+                  { label: "Total Orders", value: stats?.totalOrders || 0, icon: ShoppingBag, color: "text-blue-400", trend: "+8.2%" },
+                  { label: "Active Customers", value: stats?.activeUsers || 0, icon: Users, color: "text-purple-400", trend: "+5.1%" },
                 ].map((stat, i) => (
                   <Card key={i} className={cn(
                     "bg-neutral-900/40 backdrop-blur-md border-white/5 p-4 lg:p-6 space-y-4 hover:border-orange-500/30 transition-all duration-500 group hover:shadow-[0_0_30px_rgba(234,88,12,0.05)]",
@@ -900,7 +900,7 @@ export default function AdminDashboard() {
                                 value={newStaff.email}
                                 onChange={e => setNewStaff({...newStaff, email: e.target.value})}
                                 type="email" 
-                                placeholder="chef@mrwu.com" 
+                                placeholder="admin@trendselectronics.com" 
                                 className="w-full bg-neutral-800 border-white/10 rounded-xl pl-10 pr-4 py-2 text-sm text-white placeholder:text-neutral-500 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none transition-all"
                               />
                             </div>
