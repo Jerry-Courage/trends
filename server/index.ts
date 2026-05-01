@@ -193,13 +193,46 @@ async function initializeDatabase() {
     if (!menuColumns.includes("specs")) {
       if (menuColumns.includes("calories")) {
         sqlite.prepare("ALTER TABLE menu_items RENAME COLUMN calories TO specs").run();
-        sqlite.prepare("UPDATE menu_items SET specs = CAST(specs AS TEXT)").run(); // Convert type if needed
+        sqlite.prepare("UPDATE menu_items SET specs = CAST(specs AS TEXT)").run();
       } else {
         sqlite.prepare("ALTER TABLE menu_items ADD COLUMN specs TEXT").run();
       }
     }
+    // CJ Dropshipping columns for menu_items
+    if (!menuColumns.includes("cj_pid")) {
+      sqlite.prepare("ALTER TABLE menu_items ADD COLUMN cj_pid TEXT").run();
+    }
+    if (!menuColumns.includes("cj_vid")) {
+      sqlite.prepare("ALTER TABLE menu_items ADD COLUMN cj_vid TEXT").run();
+    }
+    if (!menuColumns.includes("cj_cost")) {
+      sqlite.prepare("ALTER TABLE menu_items ADD COLUMN cj_cost TEXT").run();
+    }
 
-    // 3. Check/Create favorites table
+    // 3. Check/Add CJ columns to orders table
+    const ordersTableInfo = sqlite.prepare("PRAGMA table_info(orders)").all() as any[];
+    const ordersColumns = ordersTableInfo.map((c) => c.name);
+
+    if (!ordersColumns.includes("cj_order_id")) {
+      sqlite.prepare("ALTER TABLE orders ADD COLUMN cj_order_id TEXT").run();
+    }
+    if (!ordersColumns.includes("cj_order_num")) {
+      sqlite.prepare("ALTER TABLE orders ADD COLUMN cj_order_num TEXT").run();
+    }
+    if (!ordersColumns.includes("cj_tracking_no")) {
+      sqlite.prepare("ALTER TABLE orders ADD COLUMN cj_tracking_no TEXT").run();
+    }
+    if (!ordersColumns.includes("cj_logistic")) {
+      sqlite.prepare("ALTER TABLE orders ADD COLUMN cj_logistic TEXT").run();
+    }
+    if (!ordersColumns.includes("shipping_country")) {
+      sqlite.prepare("ALTER TABLE orders ADD COLUMN shipping_country TEXT").run();
+    }
+    if (!ordersColumns.includes("currency")) {
+      sqlite.prepare("ALTER TABLE orders ADD COLUMN currency TEXT DEFAULT 'USD'").run();
+    }
+
+    // 4. Check/Create favorites table
     const favoritesTable = sqlite.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='favorites'").get();
     if (!favoritesTable) {
       sqlite.prepare(`
@@ -215,28 +248,6 @@ async function initializeDatabase() {
     console.log("### DB_CHECKPOINT: Database structure verified");
   } catch (err) {
     console.error("### DB_ERROR: Self-healing migration failed:", err);
-  }
-}
-
-async function seedStaffAccounts() {
-  const staff = [
-    { email: "support@trendselectronics.com", name: "Trends Support", role: "warehouse" as const },
-    { email: "delivery@trendselectronics.com", name: "Trends Courier", role: "courier" as const }
-  ];
-
-  const passwordHash = await bcrypt.hash("trends-staff-2025", 10);
-  for (const s of staff) {
-    const [existing] = await db.select().from(users).where(eq(users.email, s.email));
-    if (!existing) {
-      await db.insert(users).values({
-        email: s.email,
-        passwordHash,
-        name: s.name,
-        role: s.role,
-        createdAt: new Date(),
-      });
-      console.log(`Staff seeded: ${s.email}`);
-    }
   }
 }
 
@@ -300,7 +311,6 @@ httpServer.listen(PORT, "0.0.0.0", async () => {
     console.log("### SERVER_CHECKPOINT: Running initialization seeds...");
     await initializeDatabase();
     await seedSuperAdmin();
-    await seedStaffAccounts();
     await seedMenuItems();
     await seedDemoCustomers();
     console.log("### SERVER_CHECKPOINT: Startup complete");
