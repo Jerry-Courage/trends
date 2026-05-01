@@ -362,12 +362,14 @@ export default function AdminDashboard() {
     }
   }, [activeTab, cjConfigured]);
 
-  // Orders data
+  // Profit data — computed from orders + menu item CJ costs
+  // Profit data + Orders data — shared query, used by both overview and orders tab
   const { data: allOrders = [], isLoading: ordersLoading, refetch: refetchOrders } = useQuery<any[]>({
     queryKey: ["/api/admin/orders"],
     queryFn: () => api.get("/admin/orders"),
-    enabled: activeTab === "orders",
-    refetchInterval: 15000,
+    staleTime: 30000,
+    enabled: activeTab === "overview" || activeTab === "orders",
+    refetchInterval: activeTab === "orders" ? 15000 : false,
   });
 
   const updateOrderStatusMutation = useMutation({
@@ -787,6 +789,63 @@ export default function AdminDashboard() {
                   </Card>
                 ))}
               </div>
+
+              {/* Profit Tracker */}
+              {(() => {
+                const delivered = allOrders.filter((o: any) => o.status === "delivered");
+                const totalRevenue = delivered.reduce((s: number, o: any) => s + parseFloat(o.total || "0"), 0);
+                const totalCost = delivered.reduce((s: number, o: any) => {
+                  return s + (o.items || []).reduce((is: number, item: any) => {
+                    const cost = parseFloat(item.cjCost || item.price || "0");
+                    return is + cost * item.quantity;
+                  }, 0);
+                }, 0);
+                const totalProfit = totalRevenue - totalCost;
+                const margin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
+                const pending = allOrders.filter((o: any) => !["delivered","cancelled"].includes(o.status));
+                const pendingRevenue = pending.reduce((s: number, o: any) => s + parseFloat(o.total || "0"), 0);
+
+                return (
+                  <Card className="bg-card border-border p-5 lg:p-6">
+                    <div className="flex items-center justify-between mb-5">
+                      <h3 className="text-base font-bold text-foreground">Profit Tracker</h3>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground bg-white/5 px-3 py-1 rounded-full border border-border">
+                        Delivered orders only
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {[
+                        { label: "Revenue Collected", value: fmt(totalRevenue), color: "text-emerald-400", sub: `${delivered.length} orders` },
+                        { label: "CJ Cost", value: fmt(totalCost), color: "text-red-400", sub: "Wholesale paid to CJ" },
+                        { label: "Net Profit", value: fmt(totalProfit), color: totalProfit >= 0 ? "text-primary" : "text-red-400", sub: `${margin.toFixed(1)}% margin` },
+                        { label: "Pending Revenue", value: fmt(pendingRevenue), color: "text-amber-400", sub: `${pending.length} active orders` },
+                      ].map(item => (
+                        <div key={item.label} className="bg-white/[0.03] border border-white/5 rounded-2xl p-4">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">{item.label}</p>
+                          <p className={`text-xl font-black tabular-nums ${item.color}`}>{item.value}</p>
+                          <p className="text-[10px] text-muted-foreground mt-1">{item.sub}</p>
+                        </div>
+                      ))}
+                    </div>
+                    {/* Margin bar */}
+                    <div className="mt-4">
+                      <div className="flex justify-between text-[10px] text-muted-foreground font-semibold mb-1.5">
+                        <span>Profit margin</span>
+                        <span>{margin.toFixed(1)}%</span>
+                      </div>
+                      <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all duration-700"
+                          style={{
+                            width: `${Math.min(Math.max(margin, 0), 100)}%`,
+                            background: margin > 30 ? "#06b6d4" : margin > 10 ? "#f59e0b" : "#ef4444",
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </Card>
+                );
+              })()}
 
 
 

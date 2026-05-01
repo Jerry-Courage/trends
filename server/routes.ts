@@ -524,10 +524,27 @@ router.get("/admin/stats", auth, requireRole("admin"), async (req, res) => {
   res.json(stats);
 });
 
-// Admin: get all orders with full detail
+// Admin: get all orders with full detail + CJ cost per item for profit tracking
 router.get("/admin/orders", auth, requireRole("admin"), async (_req, res) => {
   const allOrders = await storage.getAllOrders();
-  res.json(allOrders);
+
+  // Enrich each order item with the CJ cost from the menu item
+  const enriched = await Promise.all(
+    allOrders.map(async (order) => {
+      const items = await Promise.all(
+        order.items.map(async (item: any) => {
+          if (item.menuItemId) {
+            const menuItem = await storage.getMenuItem(item.menuItemId);
+            return { ...item, cjCost: menuItem?.cjCost || null };
+          }
+          return { ...item, cjCost: null };
+        })
+      );
+      return { ...order, items };
+    })
+  );
+
+  res.json(enriched);
 });
 
 // Admin: update any order status
