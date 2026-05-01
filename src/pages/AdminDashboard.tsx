@@ -968,26 +968,46 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              <Card className="bg-card  border-border overflow-hidden">
+              <Card className="bg-card border-border overflow-hidden">
+                {usersLoading ? (
+                  <div className="p-8 space-y-4">
+                    {[1,2,3,4,5].map(i => <Skeleton key={i} className="h-14 w-full rounded-xl" />)}
+                  </div>
+                ) : (
+                <>
                 {/* Desktop Table View */}
                 <div className="hidden md:block overflow-x-auto">
                   <table className="w-full border-collapse">
                     <thead>
-                      <tr className="border-b border-border bg-white/5">
-                        <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-muted-foreground">User Identification</th>
+                      <tr className="border-b border-border">
+                        <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-muted-foreground">User</th>
                         <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-muted-foreground">Role</th>
-                        <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-muted-foreground">Order Volume</th>
-                        <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-muted-foreground">Total Yield</th>
+                        <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-muted-foreground">Orders</th>
+                        <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-muted-foreground">Total Spend</th>
                         <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-muted-foreground">Status</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-white/5">
-                      {usersData?.filter(u => {
+                    <tbody className="divide-y divide-border">
+                      {(usersData?.filter(u => {
+                        const matchesSearch = u.name.toLowerCase().includes(userSearch.toLowerCase()) || u.email.toLowerCase().includes(userSearch.toLowerCase());
+                        const matchesRole = roleFilter === "all" || u.role === roleFilter;
+                        return matchesSearch && matchesRole;
+                      }) ?? []).length === 0 ? (
+                        <tr>
+                          <td colSpan={5} className="px-6 py-16 text-center">
+                            <div className="flex flex-col items-center gap-2">
+                              <Users size={40} className="text-muted-foreground opacity-30" />
+                              <p className="text-muted-foreground font-semibold">No users found</p>
+                              <p className="text-xs text-muted-foreground opacity-70">Try adjusting your search or filter</p>
+                            </div>
+                          </td>
+                        </tr>
+                      ) : usersData?.filter(u => {
                         const matchesSearch = u.name.toLowerCase().includes(userSearch.toLowerCase()) || u.email.toLowerCase().includes(userSearch.toLowerCase());
                         const matchesRole = roleFilter === "all" || u.role === roleFilter;
                         return matchesSearch && matchesRole;
                       }).map((user) => (
-                        <tr key={user.id} className="group hover:bg-white/5 transition-colors">
+                        <tr key={user.id} className="group hover:bg-muted/50 transition-colors">
                           <td className="px-6 py-4">
                             <div className="flex flex-col">
                               <span className="text-foreground font-bold">{user.name}</span>
@@ -1021,8 +1041,17 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* Mobile Card View */}
-                <div className="md:hidden divide-y divide-white/5">
-                  {usersData?.filter(u => {
+                <div className="md:hidden divide-y divide-border">
+                  {(usersData?.filter(u => {
+                    const matchesSearch = u.name.toLowerCase().includes(userSearch.toLowerCase()) || u.email.toLowerCase().includes(userSearch.toLowerCase());
+                    const matchesRole = roleFilter === "all" || u.role === roleFilter;
+                    return matchesSearch && matchesRole;
+                  }) ?? []).length === 0 ? (
+                    <div className="px-6 py-16 flex flex-col items-center gap-2">
+                      <Users size={40} className="text-muted-foreground opacity-30" />
+                      <p className="text-muted-foreground font-semibold">No users found</p>
+                    </div>
+                  ) : usersData?.filter(u => {
                     const matchesSearch = u.name.toLowerCase().includes(userSearch.toLowerCase()) || u.email.toLowerCase().includes(userSearch.toLowerCase());
                     const matchesRole = roleFilter === "all" || u.role === roleFilter;
                     return matchesSearch && matchesRole;
@@ -1057,6 +1086,8 @@ export default function AdminDashboard() {
                     </div>
                   ))}
                 </div>
+                </>
+                )}
               </Card>
             </motion.div>
           )}

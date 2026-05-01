@@ -257,6 +257,33 @@ async function seedMenuItems() {
   console.log("Menu items seeded");
 }
 
+async function seedDemoCustomers() {
+  const demoCustomers = [
+    { email: "kwame.asante@gmail.com", name: "Kwame Asante" },
+    { email: "abena.mensah@outlook.com", name: "Abena Mensah" },
+    { email: "kofi.boateng@yahoo.com", name: "Kofi Boateng" },
+    { email: "akosua.darko@gmail.com", name: "Akosua Darko" },
+    { email: "yaw.owusu@gmail.com", name: "Yaw Owusu" },
+  ];
+
+  const passwordHash = await bcrypt.hash("customer2025", 10);
+  for (const c of demoCustomers) {
+    const [existing] = await db.select().from(users).where(eq(users.email, c.email));
+    if (!existing) {
+      await db.insert(users).values({
+        email: c.email,
+        passwordHash,
+        name: c.name,
+        role: "customer",
+        phone: "+233 20 000 0000",
+        address: "Accra, Ghana",
+        createdAt: new Date(),
+      });
+    }
+  }
+  console.log("Demo customers seeded");
+}
+
 console.log("### SERVER_CHECKPOINT: Attempting to listen on PORT:", PORT);
 
 httpServer.listen(PORT, "0.0.0.0", async () => {
@@ -273,6 +300,7 @@ httpServer.listen(PORT, "0.0.0.0", async () => {
     await seedSuperAdmin();
     await seedStaffAccounts();
     await seedMenuItems();
+    await seedDemoCustomers();
     console.log("### SERVER_CHECKPOINT: Startup complete");
   } catch (err) {
     console.error("### SERVER_ERROR: Seed error:", err);
