@@ -7,6 +7,7 @@ import { CartProvider } from "@/context/CartContext";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { SocketProvider } from "@/context/SocketContext";
 import { ThemeProvider } from "@/context/ThemeContext";
+import { CurrencyProvider } from "@/context/CurrencyContext";
 import AppShell from "@/components/layout/AppShell";
 import HomePage from "./pages/HomePage";
 import MenuPage from "./pages/MenuPage";
@@ -14,7 +15,7 @@ import ItemDetailPage from "./pages/ItemDetailPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import OrdersPage from "./pages/OrdersPage";
 import TrackingPage from "./pages/TrackingPage";
-import NearbyPage from "./pages/NearbyPage";
+import ShippingInfoPage from "./pages/ShippingInfoPage";
 import ProfilePage from "./pages/ProfilePage";
 import HelpPage from "./pages/HelpPage";
 import SearchPage from "./pages/SearchPage";
@@ -80,15 +81,12 @@ function RootRoute() {
     admin: "/admin",
   };
 
-  // If we're at the root and logged in, go to our role's home
   if (location.pathname === "/") {
     return <Navigate to={roleHome[user.role] || "/home"} replace />;
   }
 
   return <Navigate to={roleHome[user.role] || "/home"} replace />;
 }
-
-
 
 function AppRoutes() {
   const customerOnly = ["customer"];
@@ -107,7 +105,9 @@ function AppRoutes() {
       <Route path="/checkout" element={<ProtectedRoute allowedRoles={customerOnly}><AppShell><CheckoutPage /></AppShell></ProtectedRoute>} />
       <Route path="/orders" element={<ProtectedRoute allowedRoles={customerOnly}><AppShell><OrdersPage /></AppShell></ProtectedRoute>} />
       <Route path="/tracking/:id" element={<ProtectedRoute allowedRoles={customerOnly}><AppShell><TrackingPage /></AppShell></ProtectedRoute>} />
-      <Route path="/nearby" element={<ProtectedRoute allowedRoles={["customer", "warehouse", "courier"]}><AppShell><NearbyPage /></AppShell></ProtectedRoute>} />
+      {/* Replaced NearbyPage with ShippingInfoPage */}
+      <Route path="/nearby" element={<ProtectedRoute allowedRoles={customerOnly}><AppShell><ShippingInfoPage /></AppShell></ProtectedRoute>} />
+      <Route path="/shipping" element={<ProtectedRoute allowedRoles={customerOnly}><AppShell><ShippingInfoPage /></AppShell></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute allowedRoles={customerOnly}><AppShell><ProfilePage /></AppShell></ProtectedRoute>} />
       <Route path="/favorites" element={<ProtectedRoute allowedRoles={customerOnly}><AppShell><FavoritesPage /></AppShell></ProtectedRoute>} />
       <Route path="/payment-methods" element={<ProtectedRoute allowedRoles={customerOnly}><AppShell><PaymentMethodsPage /></AppShell></ProtectedRoute>} />
@@ -115,34 +115,13 @@ function AppRoutes() {
       <Route path="/search" element={<ProtectedRoute allowedRoles={customerOnly}><AppShell><SearchPage /></AppShell></ProtectedRoute>} />
       
       {/* Warehouse Routes */}
-      <Route
-        path="/management"
-        element={
-          <ProtectedRoute allowedRoles={["warehouse"]}>
-            <ManagementPage />
-          </ProtectedRoute>
-        }
-      />
+      <Route path="/management" element={<ProtectedRoute allowedRoles={["warehouse"]}><ManagementPage /></ProtectedRoute>} />
 
       {/* Courier Routes */}
-      <Route
-        path="/courier"
-        element={
-          <ProtectedRoute allowedRoles={["courier"]}>
-            <CourierPage />
-          </ProtectedRoute>
-        }
-      />
+      <Route path="/courier" element={<ProtectedRoute allowedRoles={["courier"]}><CourierPage /></ProtectedRoute>} />
 
       {/* Admin Routes */}
-      <Route
-        path="/admin"
-        element={
-          <ProtectedRoute allowedRoles={["admin"]}>
-            <AdminDashboard />
-          </ProtectedRoute>
-        }
-      />
+      <Route path="/admin" element={<ProtectedRoute allowedRoles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
 
       <Route path="*" element={<NotFound />} />
     </Routes>
@@ -156,44 +135,44 @@ const App = () => {
   const [initialSplash, setInitialSplash] = useState(true);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setInitialSplash(false);
-    }, 2200); // 2.2s for good measure
+    const timer = setTimeout(() => setInitialSplash(false), 2200);
     return () => clearTimeout(timer);
   }, []);
 
   return (
-    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || "PASTE_YOUR_GOOGLE_CLIENT_ID_HERE"}>
+    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || ""}>
       <ThemeProvider>
-        <QueryClientProvider client={queryClient}>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <AuthProvider>
-              <SocketProvider>
-                <CartProvider>
-                  <AnimatePresence mode="wait">
-                    {initialSplash && (
-                      <motion.div
-                        key="splash"
-                        initial={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.5 }}
-                        className="fixed inset-0 z-[9999]"
-                      >
-                        <SplashScreen />
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                  
-                  <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-                    <AppRoutes />
-                  </BrowserRouter>
-                </CartProvider>
-              </SocketProvider>
-            </AuthProvider>
-          </TooltipProvider>
-        </QueryClientProvider>
+        <CurrencyProvider>
+          <QueryClientProvider client={queryClient}>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <AuthProvider>
+                <SocketProvider>
+                  <CartProvider>
+                    <AnimatePresence mode="wait">
+                      {initialSplash && (
+                        <motion.div
+                          key="splash"
+                          initial={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          transition={{ duration: 0.5 }}
+                          className="fixed inset-0 z-[9999]"
+                        >
+                          <SplashScreen />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                    
+                    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+                      <AppRoutes />
+                    </BrowserRouter>
+                  </CartProvider>
+                </SocketProvider>
+              </AuthProvider>
+            </TooltipProvider>
+          </QueryClientProvider>
+        </CurrencyProvider>
       </ThemeProvider>
     </GoogleOAuthProvider>
   );

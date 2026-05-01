@@ -43,6 +43,10 @@ export const menuItems = sqliteTable("menu_items", {
   reviews: integer("reviews"),
   isTop: integer("is_top").default(0),
   isAvailable: integer("is_available").default(1),
+  // CJ Dropshipping fields
+  cjPid: text("cj_pid"),       // CJ product ID
+  cjVid: text("cj_vid"),       // CJ default variant ID
+  cjCost: text("cj_cost"),     // CJ wholesale cost (for margin tracking)
   createdAt: integer("created_at", { mode: 'timestamp' }).default(sql`(unixepoch())`).notNull(),
   updatedAt: integer("updated_at", { mode: 'timestamp' }).default(sql`(unixepoch())`).notNull(),
 });
@@ -57,6 +61,7 @@ export const orders = sqliteTable("orders", {
   tax: text("tax").notNull(),
   tip: text("tip").notNull(),
   total: text("total").notNull(),
+  currency: text("currency").notNull().default("USD"),
   paymentMethod: text("payment_method").notNull().default("card"),
   paymentStatus: text("payment_status").notNull().default("pending"),
   transactionId: text("transaction_id"),
@@ -66,6 +71,12 @@ export const orders = sqliteTable("orders", {
   customerLat: real("customer_lat"),
   customerLng: real("customer_lng"),
   notes: text("notes"),
+  // CJ Dropshipping fulfillment fields
+  cjOrderId: text("cj_order_id"),       // CJ's internal order ID
+  cjOrderNum: text("cj_order_num"),     // CJ's order number
+  cjTrackingNo: text("cj_tracking_no"), // Shipping tracking number
+  cjLogistic: text("cj_logistic"),      // Shipping carrier name
+  shippingCountry: text("shipping_country"),
   createdAt: integer("created_at", { mode: 'timestamp' }).default(sql`(unixepoch())`).notNull(),
   updatedAt: integer("updated_at", { mode: 'timestamp' }).default(sql`(unixepoch())`).notNull(),
 });

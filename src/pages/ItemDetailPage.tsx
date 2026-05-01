@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { ChevronLeft, ShoppingCart, Star, Zap, Leaf, AlertTriangle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useCart } from "@/context/CartContext";
+import { useCurrency } from "@/context/CurrencyContext";
 import { api } from "@/lib/api";
 import SplashScreen from "@/components/ui/SplashScreen";
 import type { MenuItem as CartMenuItem } from "@/data/menuData";
@@ -56,6 +57,7 @@ const ItemDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addItem, totalItems } = useCart();
+  const { fmt } = useCurrency();
 
   const [selectedSize, setSelectedSize] = useState(0);
   const [warrantyYears, setWarrantyYears] = useState(2);
@@ -123,7 +125,7 @@ const ItemDetailPage = () => {
         <div className="px-4 pt-4 md:w-1/2 md:px-0 md:pt-0">
           <div className="flex items-start justify-between">
             <h1 className="text-xl font-bold text-foreground">{item.name}</h1>
-            <span className="text-xl font-bold text-primary">GH₵{item.price.toFixed(2)}</span>
+            <span className="text-xl font-bold text-primary">{fmt(item.price)}</span>
           </div>
           {item.rating && (
             <div className="flex items-center gap-1 mt-1">
@@ -179,7 +181,7 @@ const ItemDetailPage = () => {
                     <span className={`text-sm ${selectedSize === i ? "font-semibold text-primary" : "text-foreground"}`}>{config.label}</span>
                   </div>
                   {config.price !== 0 && (
-                    <span className="text-sm text-muted-foreground">{config.price > 0 ? "+" : ""}GH₵{Math.abs(config.price).toFixed(2)}</span>
+                    <span className="text-sm text-muted-foreground">{config.price > 0 ? "+" : ""}{fmt(Math.abs(config.price))}</span>
                   )}
                 </button>
               ))}
@@ -226,7 +228,7 @@ const ItemDetailPage = () => {
                     </div>
                     <span className="text-sm text-foreground">{plan.label}</span>
                   </div>
-                  <span className="text-sm text-muted-foreground">+GH₵{plan.price.toFixed(2)}</span>
+                  <span className="text-sm text-muted-foreground">+{fmt(plan.price)}</span>
                 </button>
               ))}
             </div>
@@ -262,7 +264,7 @@ const ItemDetailPage = () => {
               </div>
               <p className="text-xs font-semibold text-foreground mt-1.5">{side.name}</p>
               <div className="flex items-center justify-between mt-0.5">
-                <span className="text-xs font-bold text-primary">GH₵{side.price.toFixed(2)}</span>
+                <span className="text-xs font-bold text-primary">{fmt(side.price)}</span>
                 <button className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center">
                   <span className="text-sm leading-none">+</span>
                 </button>
@@ -297,7 +299,7 @@ const ItemDetailPage = () => {
         <div className="max-w-5xl mx-auto flex items-center justify-between gap-3">
           <div>
             <p className="text-xs text-primary font-semibold uppercase">Total Price</p>
-            <p className="text-xl font-bold text-foreground">GH₵{totalPrice.toFixed(2)}</p>
+            <p className="text-xl font-bold text-foreground">{fmt(totalPrice)}</p>
           </div>
           <div className="flex gap-2">
             <button onClick={() => navigate(-1)} className="px-5 py-2.5 border border-border rounded-xl text-sm font-semibold text-foreground">Cancel</button>

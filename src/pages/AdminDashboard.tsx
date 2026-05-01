@@ -23,7 +23,11 @@ import {
   Image as ImageLucide,
   Play,
   PlayCircle,
-  PlusCircle
+  PlusCircle,
+  Package,
+  Search,
+  Download,
+  ExternalLink
 } from "lucide-react";
 import { 
   AreaChart, 
@@ -44,6 +48,7 @@ import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
+import { useCurrency } from "@/context/CurrencyContext";
 import logo from "@/assets/logo.png";
 
 import { Skeleton } from "@/components/ui/skeleton";
@@ -285,7 +290,7 @@ function ProductModal({
 }
 
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState<"overview" | "menu" | "staff" | "ai" | "users" | "insights">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "menu" | "staff" | "ai" | "users" | "insights" | "cj">("overview");
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [showAddProduct, setShowAddProduct] = useState(false);
   const [productForm, setProductForm] = useState<ProductForm>(EMPTY_PRODUCT_FORM);
@@ -295,7 +300,16 @@ export default function AdminDashboard() {
   const [isAddingStaff, setIsAddingStaff] = useState(false);
   const [newStaff, setNewStaff] = useState({ name: "", email: "", password: "" });
 
+  // CJ Import state
+  const [cjQuery, setCjQuery] = useState("");
+  const [cjResults, setCjResults] = useState<any[]>([]);
+  const [cjSearching, setCjSearching] = useState(false);
+  const [cjImporting, setCjImporting] = useState<string | null>(null);
+  const [cjMarkup, setCjMarkup] = useState(30);
+  const [cjConfigured, setCjConfigured] = useState<boolean | null>(null);
+
   const { logout } = useAuth();
+  const { fmt } = useCurrency();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -321,6 +335,52 @@ export default function AdminDashboard() {
     queryFn: () => api.post("/ai/admin-insights", { days: 30 }),
     enabled: false
   });
+
+  // Check CJ configuration status when CJ tab is opened
+  useEffect(() => {
+    if (activeTab === "cj" && cjConfigured === null) {
+      api.get<{ configured: boolean }>("/cj/status")
+        .then(r => setCjConfigured(r.configured))
+        .catch(() => setCjConfigured(false));
+    }
+  }, [activeTab, cjConfigured]);
+
+  const handleCJSearch = async () => {
+    if (!cjQuery.trim()) return;
+    setCjSearching(true);
+    setCjResults([]);
+    try {
+      const res = await api.get<{ list: any[]; total: number }>(`/cj/products/search?q=${encodeURIComponent(cjQuery)}`);
+      setCjResults(res.list || []);
+    } catch (err: any) {
+      toast({ title: "CJ Search Failed", description: err.message, variant: "destructive" });
+    } finally {
+      setCjSearching(false);
+    }
+  };
+
+  const handleCJImport = async (product: any) => {
+    setCjImporting(product.pid);
+    try {
+      const vid = product.variants?.[0]?.vid || null;
+      await api.post("/cj/products/import", {
+        pid: product.pid,
+        vid,
+        name: product.productNameEn,
+        description: product.description || product.productNameEn,
+        price: product.sellPrice,
+        category: "Electronics",
+        imageUrl: product.productImage,
+        markup: cjMarkup,
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/menu"] });
+      toast({ title: "Product imported!", description: `${product.productNameEn} added to your catalog.` });
+    } catch (err: any) {
+      toast({ title: "Import failed", description: err.message, variant: "destructive" });
+    } finally {
+      setCjImporting(null);
+    }
+  };
 
   const { data: staff, isLoading: staffLoading } = useQuery<{id: number, email: string, name: string, createdAt: string}[]>({
     queryKey: ["admin", "staff"],
@@ -499,6 +559,7 @@ export default function AdminDashboard() {
           {[
             { id: "overview", label: "Oversight", icon: LayoutDashboard },
             { id: "menu", label: "Catalog Editor", icon: ShoppingBag },
+            { id: "cj", label: "CJ Import", icon: Download },
             { id: "users", label: "Users Hub", icon: Users },
             { id: "insights", label: "Insights", icon: TrendingUp },
             { id: "staff", label: "Staff Control", icon: ShieldCheck },
@@ -539,6 +600,7 @@ export default function AdminDashboard() {
         {[
           { id: "overview", icon: LayoutDashboard, label: "Stats" },
           { id: "menu", icon: ShoppingBag, label: "Catalog" },
+          { id: "cj", icon: Download, label: "CJ" },
           { id: "users", icon: Users, label: "Users" },
           { id: "insights", icon: TrendingUp, label: "Data" },
           { id: "staff", icon: ShieldCheck, label: "Staff" },
@@ -568,6 +630,7 @@ export default function AdminDashboard() {
             <h2 className="text-3xl font-black tracking-tighter text-foreground">
               {activeTab === "overview" && "Performance Oversight"}
               {activeTab === "menu" && "Catalog Management"}
+              {activeTab === "cj" && "CJ Dropshipping Import"}
               {activeTab === "users" && "User Population"}
               {activeTab === "insights" && "Strategic Marketing Insights"}
               {activeTab === "staff" && "Administrative Control"}
@@ -576,6 +639,7 @@ export default function AdminDashboard() {
             <p className="text-muted-foreground mt-1 font-medium italic opacity-80">
               {activeTab === "staff" && "Manage and onboard authorized personnel"}
               {activeTab === "users" && "Comprehensive database of customers and couriers"}
+              {activeTab === "cj" && "Search CJ Dropshipping catalog and import products"}
               {activeTab === "insights" && "Data-driven behavioral tracking for business growth"}
               {(activeTab === "overview" || activeTab === "ai" || activeTab === "menu") && "Real-time retail operations & growth data"}
             </p>
@@ -619,7 +683,7 @@ export default function AdminDashboard() {
               {/* Stat Cards */}
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4 lg:gap-6">
                 {[
-                  { label: "Total Revenue", value: `GH₵${(stats?.totalRevenue || 0).toFixed(2)}`, icon: DollarSign, color: "text-emerald-400", trend: "+12.5%" },
+                  { label: "Total Revenue", value: fmt(stats?.totalRevenue || 0), icon: DollarSign, color: "text-emerald-400", trend: "+12.5%" },
                   { label: "Total Orders", value: stats?.totalOrders || 0, icon: ShoppingBag, color: "text-blue-400", trend: "+8.2%" },
                   { label: "Active Customers", value: stats?.activeUsers || 0, icon: Users, color: "text-purple-400", trend: "+5.1%" },
                 ].map((stat, i) => (
@@ -664,7 +728,7 @@ export default function AdminDashboard() {
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke="#262626" vertical={false} />
                       <XAxis dataKey="date" stroke="#525252" fontSize={12} tickLine={false} axisLine={false} />
-                      <YAxis stroke="#525252" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `GH₵${value}`} />
+                      <YAxis stroke="#525252" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => fmt(value)} />
                       <Tooltip 
                         contentStyle={{ backgroundColor: "#171717", border: "1px solid #404040", borderRadius: "12px" }}
                         itemStyle={{ color: "#fff" }}
@@ -714,6 +778,176 @@ export default function AdminDashboard() {
                   </Button>
                 </Card>
               </div>
+            </motion.div>
+          )}
+
+          {activeTab === "cj" && (
+            <motion.div
+              key="cj"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="space-y-6"
+            >
+              {/* CJ Status Banner */}
+              {cjConfigured === false && (
+                <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-5 flex items-start gap-4">
+                  <div className="w-10 h-10 bg-amber-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <Package className="text-amber-500" size={20} />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-amber-400">CJ API Keys Not Configured</h4>
+                    <p className="text-sm text-amber-400/70 mt-1">
+                      Add <code className="bg-amber-500/20 px-1 rounded">CJ_API_EMAIL</code> and <code className="bg-amber-500/20 px-1 rounded">CJ_API_KEY</code> to your <code className="bg-amber-500/20 px-1 rounded">.env</code> file, then restart the server.
+                    </p>
+                    <a href="https://cjdropshipping.com" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-amber-400 font-bold mt-2 hover:underline">
+                      Get keys at cjdropshipping.com <ExternalLink size={12} />
+                    </a>
+                  </div>
+                </div>
+              )}
+
+              {cjConfigured === true && (
+                <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-4 flex items-center gap-3">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-sm font-bold text-emerald-400">CJ Dropshipping API Connected</span>
+                </div>
+              )}
+
+              {/* Search + Markup Controls */}
+              <div className="flex flex-col sm:flex-row gap-3">
+                <div className="flex flex-1 gap-2">
+                  <input
+                    type="text"
+                    value={cjQuery}
+                    onChange={e => setCjQuery(e.target.value)}
+                    onKeyDown={e => e.key === "Enter" && handleCJSearch()}
+                    placeholder="Search CJ catalog (e.g. iPhone case, wireless earbuds...)"
+                    className="flex-1 bg-card border border-border rounded-2xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50"
+                  />
+                  <Button
+                    onClick={handleCJSearch}
+                    disabled={cjSearching || !cjQuery.trim()}
+                    className="h-12 px-5 rounded-2xl bg-primary hover:bg-primary/90 gap-2"
+                  >
+                    {cjSearching ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />}
+                    Search
+                  </Button>
+                </div>
+                <div className="flex items-center gap-2 bg-card border border-border rounded-2xl px-4 py-2">
+                  <span className="text-xs text-muted-foreground font-semibold whitespace-nowrap">Markup %</span>
+                  <input
+                    type="number"
+                    min={0}
+                    max={500}
+                    value={cjMarkup}
+                    onChange={e => setCjMarkup(Number(e.target.value))}
+                    className="w-16 bg-transparent text-foreground text-sm font-bold focus:outline-none text-center"
+                  />
+                </div>
+              </div>
+
+              {/* Results */}
+              {cjSearching && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {[1,2,3,4,5,6].map(i => (
+                    <div key={i} className="bg-card border border-border rounded-2xl overflow-hidden animate-pulse">
+                      <div className="h-40 bg-muted" />
+                      <div className="p-4 space-y-2">
+                        <div className="h-4 bg-muted rounded w-3/4" />
+                        <div className="h-3 bg-muted rounded w-1/2" />
+                        <div className="h-8 bg-muted rounded mt-3" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {!cjSearching && cjResults.length > 0 && (
+                <>
+                  <p className="text-xs text-muted-foreground font-semibold">{cjResults.length} products found · Sell price = CJ cost + {cjMarkup}% markup</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {cjResults.map(product => {
+                      const sellPrice = (product.sellPrice * (1 + cjMarkup / 100)).toFixed(2);
+                      return (
+                        <Card key={product.pid} className="bg-card border-border overflow-hidden group hover:border-primary/30 transition-all duration-300">
+                          <div className="relative h-40 overflow-hidden bg-muted">
+                            {product.productImage ? (
+                              <img
+                                src={product.productImage}
+                                alt={product.productNameEn}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-4xl">📦</div>
+                            )}
+                            <div className="absolute top-2 left-2 bg-black/60 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-1 rounded-lg">
+                              {product.categoryName || "Electronics"}
+                            </div>
+                          </div>
+                          <div className="p-4 space-y-2">
+                            <h4 className="font-bold text-sm text-foreground line-clamp-2 leading-tight">{product.productNameEn}</h4>
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="text-[10px] text-muted-foreground">CJ Cost</p>
+                                <p className="text-xs font-semibold text-muted-foreground">${product.sellPrice}</p>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-[10px] text-muted-foreground">Your Price</p>
+                                <p className="text-sm font-black text-primary">${sellPrice}</p>
+                              </div>
+                            </div>
+                            <Button
+                              onClick={() => handleCJImport(product)}
+                              disabled={cjImporting === product.pid}
+                              className="w-full h-9 rounded-xl bg-primary hover:bg-primary/90 text-xs font-bold gap-2"
+                            >
+                              {cjImporting === product.pid ? (
+                                <><Loader2 size={14} className="animate-spin" /> Importing...</>
+                              ) : (
+                                <><Download size={14} /> Import to Store</>
+                              )}
+                            </Button>
+                          </div>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+
+              {!cjSearching && cjResults.length === 0 && cjQuery && (
+                <div className="py-20 text-center space-y-3">
+                  <Package className="text-muted-foreground mx-auto" size={48} />
+                  <p className="text-muted-foreground font-semibold">No results yet</p>
+                  <p className="text-sm text-muted-foreground">Search for a product above to browse the CJ catalog</p>
+                </div>
+              )}
+
+              {!cjSearching && cjResults.length === 0 && !cjQuery && (
+                <div className="py-16 text-center space-y-4 border border-dashed border-border rounded-3xl">
+                  <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
+                    <Download className="text-primary" size={28} />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-foreground">Import from CJ Dropshipping</h4>
+                    <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto">
+                      Search millions of products from CJ's catalog. Set your markup and import directly to your store.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap justify-center gap-2 text-xs text-muted-foreground">
+                    {["iPhone cases", "wireless earbuds", "smartwatch", "laptop stand", "USB hub"].map(s => (
+                      <button
+                        key={s}
+                        onClick={() => { setCjQuery(s); }}
+                        className="px-3 py-1.5 bg-card border border-border rounded-full hover:border-primary/50 hover:text-primary transition-colors"
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </motion.div>
           )}
 
@@ -896,7 +1130,7 @@ export default function AdminDashboard() {
                   <div className="p-5 flex-1 flex flex-col">
                     <div className="flex justify-between items-start mb-1">
                       <h4 className="font-extrabold text-foreground text-lg tracking-tight group-hover:text-primary transition-colors uppercase">{item.name}</h4>
-                      <span className="text-primary font-black text-lg tabular-nums shadow-[0_0_10px_rgba(6,182,212,0.1)]">GH₵{item.price}</span>
+                      <span className="text-primary font-black text-lg tabular-nums shadow-[0_0_10px_rgba(6,182,212,0.1)]">{fmt(parseFloat(item.price))}</span>
                     </div>
                     <p className="text-[10px] text-muted-foreground font-black uppercase tracking-[0.15em] mb-2 px-1.5 py-0.5 bg-white/5 rounded w-fit border border-border">{item.category}</p>
                     <p className="text-xs text-muted-foreground italic line-clamp-2 mb-6 font-medium leading-relaxed">{item.description}</p>
@@ -1026,7 +1260,7 @@ export default function AdminDashboard() {
                             <span className="text-muted-foreground font-bold tabular-nums">{user.orderCount} Orders</span>
                           </td>
                           <td className="px-6 py-4">
-                            <span className="text-emerald-400 font-black tabular-nums">GH₵{user.totalSpend.toFixed(2)}</span>
+                            <span className="text-emerald-400 font-black tabular-nums">{fmt(user.totalSpend)}</span>
                           </td>
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-2">
@@ -1076,7 +1310,7 @@ export default function AdminDashboard() {
                           </div>
                           <div>
                              <p className="text-[8px] font-black uppercase text-muted-foreground tracking-widest">Total Yield</p>
-                             <p className="text-xs font-black text-emerald-400">GH₵{user.totalSpend.toFixed(2)}</p>
+                             <p className="text-xs font-black text-emerald-400">{fmt(user.totalSpend)}</p>
                           </div>
                        </div>
                        <div className="flex items-center gap-2">

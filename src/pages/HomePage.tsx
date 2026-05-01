@@ -1,15 +1,15 @@
 import React, { useState } from "react";
-import { Search, Bell, ChevronRight, Plus, Zap, Sparkles } from "lucide-react";
+import { Search, Bell, ChevronRight, Plus, Sparkles, Globe } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
+import { useCurrency } from "@/context/CurrencyContext";
 import promoCombo from "@/assets/sony_tv_bundle_1777553396955.png";
 import logo from "@/assets/logo.png";
 import ThemeToggle from "@/components/ThemeToggle";
 import { useToast } from "@/hooks/use-toast";
-import { useGeolocation } from "@/hooks/useGeolocation";
 
 const categories = [
   { icon: "📱", label: "Phones" },
@@ -55,14 +55,9 @@ const HomePage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { addItem } = useCart();
+  const { fmt, currency } = useCurrency();
   const { toast } = useToast();
-  const location = useGeolocation();
-  const [isEditingAddress, setIsEditingAddress] = useState(false);
-  const [tempAddress, setTempAddress] = useState("");
-  const [manualAddress, setManualAddress] = useState<string | null>(null);
   const [isAIChatOpen, setIsAIChatOpen] = useState(false);
-
-  const displayAddress = manualAddress || location.address || "Main St, 123";
 
   const { data: dbItems = [] } = useQuery<DBMenuItem[]>({
     queryKey: ["/api/menu"],
@@ -115,37 +110,11 @@ const HomePage = () => {
             <img src={logo} alt="Trends Electronics" className="w-10 h-10 object-contain" />
           </div>
           <div className="flex flex-col min-w-0">
-            <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Deliver to</span>
-            {isEditingAddress ? (
-              <div className="flex items-center gap-1 mt-0.5">
-                <input
-                  autoFocus
-                  type="text"
-                  value={tempAddress}
-                  onChange={(e) => setTempAddress(e.target.value)}
-                  onBlur={() => setIsEditingAddress(false)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      setManualAddress(tempAddress);
-                      setIsEditingAddress(false);
-                      toast({ title: "Address updated manually" });
-                    }
-                  }}
-                  className="bg-secondary/20 border-none text-foreground font-bold text-sm h-6 px-2 rounded-md focus:ring-1 focus:ring-primary w-full outline-none"
-                />
-              </div>
-            ) : (
-              <span 
-                onClick={() => {
-                  setTempAddress(displayAddress);
-                  setIsEditingAddress(true);
-                }}
-                className="font-bold text-foreground truncate animate-in slide-in-from-left-2 duration-700 cursor-pointer hover:text-primary transition-colors flex items-center gap-1"
-              >
-                {displayAddress}
-                <ChevronRight className="w-3 h-3 text-muted-foreground" />
-              </span>
-            )}
+            <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Ship to</span>
+            <span className="font-bold text-foreground truncate animate-in slide-in-from-left-2 duration-700 flex items-center gap-1">
+              <Globe className="w-3 h-3 text-primary" />
+              {currency.name} ({currency.code})
+            </span>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -175,28 +144,21 @@ const HomePage = () => {
       <div className="md:grid md:grid-cols-2 md:gap-6 md:px-4">
         <div>
           <div 
-            onClick={() => {
-              console.log("### NAV: Redirecting to NearbyPage");
-              navigate("/nearby");
-            }}
+            onClick={() => navigate("/shipping")}
             className="mx-4 md:mx-0 mb-4 bg-card border border-border rounded-xl p-3 flex items-center gap-3 shadow-sm hover:border-primary/30 active:scale-[0.98] transition-all cursor-pointer group"
           >
             <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center group-hover:bg-primary/20 transition-colors overflow-hidden">
-              <img src={logo} alt="Trends Electronics" className="w-6 h-6 object-contain" />
+              <Globe className="w-5 h-5 text-primary" />
             </div>
             <div className="flex-1">
-              <p className="text-xs font-semibold text-primary uppercase">Fastest Delivery</p>
-              <p className="text-sm text-foreground">Trends Electronics Express • 25 mins</p>
+              <p className="text-xs font-semibold text-primary uppercase">Worldwide Shipping</p>
+              <p className="text-sm text-foreground">CJ Dropshipping · 7–15 days</p>
             </div>
             <button 
-              onClick={(e) => {
-                e.stopPropagation();
-                console.log("### NAV: Button Clicked - Redirecting to NearbyPage");
-                navigate("/nearby");
-              }}
+              onClick={(e) => { e.stopPropagation(); navigate("/shipping"); }}
               className="text-primary text-sm font-semibold flex items-center hover:translate-x-0.5 transition-transform"
             >
-              Change <ChevronRight className="w-4 h-4" />
+              Info <ChevronRight className="w-4 h-4" />
             </button>
           </div>
 
@@ -254,7 +216,7 @@ const HomePage = () => {
                         {"aiReason" in item && item.aiReason && (
                           <p className="text-xs text-primary truncate">{String(item.aiReason)}</p>
                         )}
-                        <p className="text-sm font-bold text-foreground">GH₵{item.price.toFixed(2)}</p>
+                        <p className="text-sm font-bold text-foreground">{fmt(item.price)}</p>
                       </div>
                       <button
                         data-testid={`button-add-${item.id}`}
@@ -309,7 +271,7 @@ const HomePage = () => {
                       {lastOrder.items?.map(i => `${i.name}${i.quantity > 1 ? ` x${i.quantity}` : ""}`).join(", ") || "Previous order"}
                     </p>
                     <p className="text-xs text-primary mt-0.5">
-                      {new Date(lastOrder.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })} • GH₵{parseFloat(lastOrder.total).toFixed(2)}
+                      {new Date(lastOrder.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })} • {fmt(parseFloat(lastOrder.total))}
                     </p>
                   </div>
                   <button onClick={() => navigate("/orders")} className="border border-primary text-primary text-xs font-bold px-3 py-1.5 rounded-lg flex-shrink-0">Reorder</button>

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
+import { useCurrency } from "@/context/CurrencyContext";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Heart, ChevronLeft, ShoppingBag, Trash2 } from "lucide-react";
@@ -24,6 +25,7 @@ const FavoritesPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { addItem } = useCart();
+  const { fmt } = useCurrency();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -129,7 +131,7 @@ const FavoritesPage = () => {
                     </div>
                     
                     <div className="flex items-center justify-between mt-2">
-                       <span className="font-bold text-primary">GH₵{item.price}</span>
+                       <span className="font-bold text-primary">{fmt(parseFloat(item.price))}</span>
                        <Button 
                         size="sm" 
                         className="rounded-full gap-2 px-4 shadow-luxury hover:translate-y-[-2px] transition-all"

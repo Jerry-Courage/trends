@@ -5,6 +5,7 @@ import { Heart, ChevronDown, RotateCcw, Package } from "lucide-react";
 import AppHeader from "@/components/layout/AppHeader";
 import { api } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
+import { useCurrency } from "@/context/CurrencyContext";
 
 type OrderStatus = "pending" | "confirmed" | "packaging" | "ready" | "assigned" | "picked_up" | "delivered" | "cancelled";
 
@@ -147,6 +148,7 @@ function OrderCard({ order, expanded, onToggle, onTrack, onReorder }: {
   onTrack?: () => void;
   onReorder?: () => void;
 }) {
+  const { fmt } = useCurrency();
   const displayName = order.items.length > 0
     ? `${order.items[0].name}${order.items.length > 1 ? ` +${order.items.length - 1}` : ""}`
     : "Order";
@@ -177,7 +179,7 @@ function OrderCard({ order, expanded, onToggle, onTrack, onReorder }: {
             {STATUS_LABELS[order.status]}
           </span>
           <span className="text-xs text-muted-foreground font-medium">{new Date(order.createdAt).toLocaleDateString()}</span>
-          <span className="text-sm font-black text-primary ml-auto tracking-tight">GH₵{parseFloat(order.total).toFixed(2)}</span>
+          <span className="text-sm font-black text-primary ml-auto tracking-tight">{fmt(parseFloat(order.total))}</span>
         </div>
       </div>
 
@@ -191,7 +193,7 @@ function OrderCard({ order, expanded, onToggle, onTrack, onReorder }: {
             {order.items.map(item => (
               <div key={item.id} className="flex justify-between text-sm text-neutral-300 font-medium">
                 <span><span className="text-primary font-bold">{item.quantity}×</span> {item.name}</span>
-                <span>GH₵{(parseFloat(item.price) * item.quantity).toFixed(2)}</span>
+                <span>{fmt(parseFloat(item.price) * item.quantity)}</span>
               </div>
             ))}
             <div className="pt-3 mt-3 border-t border-white/5 flex items-start gap-2">

@@ -1,4 +1,4 @@
-import { Home, ClipboardList, MapPin, User, LayoutDashboard, Warehouse, Bike } from "lucide-react";
+import { Home, ClipboardList, Truck, User, LayoutDashboard, Warehouse, Bike } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 
@@ -30,7 +30,7 @@ const BottomNav = () => {
     return [
       { icon: Home, label: "Home", path: "/home" },
       { icon: ClipboardList, label: "Orders", path: "/orders" },
-      { icon: MapPin, label: "Nearby", path: "/nearby" },
+      { icon: Truck, label: "Shipping", path: "/shipping" },
       { icon: User, label: "Profile", path: "/profile" },
     ];
   };

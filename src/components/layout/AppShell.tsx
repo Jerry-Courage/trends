@@ -1,5 +1,6 @@
 import BottomNav from "./BottomNav";
 import { useCart } from "@/context/CartContext";
+import { useCurrency } from "@/context/CurrencyContext";
 import { ShoppingCart } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 
@@ -7,6 +8,7 @@ const hideNavPaths = ["/item/", "/checkout", "/tracking", "/search", "/help"];
 
 const AppShell = ({ children }: { children: React.ReactNode }) => {
   const { totalItems, subtotal } = useCart();
+  const { fmt } = useCurrency();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -32,7 +34,7 @@ const AppShell = ({ children }: { children: React.ReactNode }) => {
                 </div>
                 <span className="font-semibold">View Cart</span>
               </div>
-              <span className="font-bold text-lg">GH₵{subtotal.toFixed(2)}</span>
+              <span className="font-bold text-lg">{fmt(subtotal)}</span>
             </button>
           </div>
         </div>

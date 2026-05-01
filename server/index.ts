@@ -9,6 +9,7 @@ import { menuItems, users } from "../shared/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import routes from "./routes";
+import cjRoutes from "./cj-routes";
 
 const app = express();
 const httpServer = createServer(app);
@@ -86,6 +87,7 @@ io.on("connection", (socket) => {
 });
 
 app.use("/api", routes);
+app.use("/api/cj", cjRoutes);
 
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
 

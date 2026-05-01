@@ -1,12 +1,13 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Share2, MapPin, Clock, Truck, Send, X, ChevronLeft, CheckCircle2, Package, Loader2 } from "lucide-react";
+import { Share2, MapPin, Clock, Truck, Send, X, ChevronLeft, CheckCircle2, Package, Loader2, ExternalLink } from "lucide-react";
 import AppHeader from "@/components/layout/AppHeader";
 import SplashScreen from "@/components/ui/SplashScreen";
 import { api } from "@/lib/api";
 import { useSocket } from "@/context/SocketContext";
 import { useAuth } from "@/context/AuthContext";
+import { useCurrency } from "@/context/CurrencyContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -60,6 +61,14 @@ interface OrderDetail {
 
 interface AIEta { minutes: number; message: string }
 
+interface CJTracking {
+  cjOrderId: string | null;
+  cjOrderNum: string | null;
+  trackingNumber: string | null;
+  carrier: string | null;
+  shippingCountry: string | null;
+}
+
 interface ChatMessage {
   id: string;
   senderRole: string;
@@ -85,6 +94,7 @@ const TrackingPage = () => {
   const navigate = useNavigate();
   const { socket } = useSocket();
   const { user } = useAuth();
+  const { fmt } = useCurrency();
   const queryClient = useQueryClient();
 
   const { data: order, isLoading } = useQuery<OrderDetail>({
@@ -99,6 +109,14 @@ const TrackingPage = () => {
     queryFn: () => api.get(`/ai/eta/${id}`),
     enabled: !!id && !!order && order.status === "picked_up",
     refetchInterval: 60000,
+    retry: 1,
+  });
+
+  const { data: cjTracking } = useQuery<CJTracking>({
+    queryKey: ["/api/cj/tracking", id],
+    queryFn: () => api.get(`/cj/orders/${id}/tracking`),
+    enabled: !!id && !!order,
+    staleTime: 5 * 60 * 1000,
     retry: 1,
   });
 
@@ -316,7 +334,7 @@ const TrackingPage = () => {
             <p className="text-neutral-400 mt-2 font-medium">Enjoy your new tech from Trends Electronics!</p>
             <div className="mt-6 px-6 py-4 bg-neutral-900 rounded-2xl border border-white/10 text-left w-full max-w-sm">
               <p className="text-[10px] font-black uppercase tracking-widest text-neutral-500 mb-1">Order Total</p>
-              <p className="text-2xl font-black text-white">GH₵{parseFloat(order.total).toFixed(2)}</p>
+              <p className="text-2xl font-black text-white">{fmt(parseFloat(order.total))}</p>
             </div>
             <Button onClick={() => navigate("/")} className="mt-6 w-full max-w-sm bg-primary hover:bg-primary/90 text-primary-foreground rounded-2xl font-black uppercase tracking-wider h-14">
               Order Again
@@ -385,15 +403,46 @@ const TrackingPage = () => {
                 {order.items.map(item => (
                   <div key={item.id} className="flex justify-between text-sm">
                     <span className="text-neutral-300">{item.quantity}× {item.name}</span>
-                    <span className="text-neutral-400">GH₵{parseFloat(item.price).toFixed(2)}</span>
+                    <span className="text-neutral-400">{fmt(parseFloat(item.price))}</span>
                   </div>
                 ))}
                 <div className="border-t border-white/10 pt-2 mt-2 flex justify-between font-black text-white">
                   <span>Total</span>
-                  <span>GH₵{parseFloat(order.total).toFixed(2)}</span>
+                  <span>{fmt(parseFloat(order.total))}</span>
                 </div>
               </div>
             </div>
+
+            {/* CJ Tracking Card */}
+            {cjTracking && (
+              <div className="bg-neutral-900 rounded-3xl border border-white/10 p-5">
+                <p className="text-[10px] font-black uppercase tracking-widest text-neutral-500 mb-3">Shipment Info</p>
+                {cjTracking.trackingNumber ? (
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-neutral-400">Carrier</span>
+                      <span className="text-white font-semibold">{cjTracking.carrier || "CJ Logistics"}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-neutral-400">Tracking #</span>
+                      <span className="text-primary font-mono font-bold">{cjTracking.trackingNumber}</span>
+                    </div>
+                    <a
+                      href={`https://t.17track.net/en#nums=${cjTracking.trackingNumber}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-3 flex items-center justify-center gap-2 w-full py-2.5 bg-primary/10 border border-primary/20 rounded-2xl text-primary text-xs font-black uppercase tracking-widest"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" /> Track on 17track
+                    </a>
+                  </div>
+                ) : cjTracking.cjOrderId ? (
+                  <p className="text-sm text-neutral-400">Order submitted to CJ — tracking number will appear once shipped.</p>
+                ) : (
+                  <p className="text-sm text-neutral-400">Awaiting fulfillment submission to CJ Dropshipping.</p>
+                )}
+              </div>
+            )}
           </div>
         )}
 
