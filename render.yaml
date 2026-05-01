@@ -30,3 +30,7 @@ services:
         sync: false
       - key: VITE_GOOGLE_CLIENT_ID
         sync: false
+      - key: CJ_API_EMAIL
+        sync: false
+      - key: CJ_API_KEY
+        sync: false

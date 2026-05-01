@@ -34,14 +34,6 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     newSocket.on("connect", () => {
       setConnected(true);
       console.log("Socket connected:", newSocket.id);
-      
-      // Join general rooms based on role
-      if (user.role === "kitchen") {
-        newSocket.emit("join", "kitchen");
-      } else if (user.role === "rider") {
-        newSocket.emit("join", `rider:${user.id}`);
-      }
-      
       // Always join own user room for order updates
       newSocket.emit("join", `user:${user.id}`);
     });

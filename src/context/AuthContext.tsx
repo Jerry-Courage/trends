@@ -5,11 +5,11 @@ export interface AuthUser {
   id: number;
   email: string;
   name: string;
-  role: "customer" | "kitchen" | "rider" | "admin";
+  role: "customer" | "admin";
   phone?: string | null;
   address?: string | null;
   points?: number | null;
-  allergies?: string | null;
+  interests?: string | null;
 }
 
 interface AuthContextType {
@@ -20,7 +20,7 @@ interface AuthContextType {
   loginWithGoogle: (credential: string) => Promise<AuthUser>;
   register: (data: { email: string; password: string; name: string; phone?: string; role?: string; address?: string; adminSecret?: string }) => Promise<AuthUser>;
   logout: () => void;
-  updateUser: (data: { name?: string; phone?: string; address?: string; allergies?: string }) => Promise<AuthUser>;
+  updateUser: (data: { name?: string; phone?: string; address?: string; interests?: string }) => Promise<AuthUser>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -81,7 +81,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setUser(null);
   };
 
-  const updateUser = async (data: { name?: string; phone?: string; address?: string; allergies?: string }) => {
+  const updateUser = async (data: { name?: string; phone?: string; address?: string; interests?: string }) => {
     const updated = await api.patch<AuthUser>("/auth/profile", data);
     setUser(updated);
     return updated;
