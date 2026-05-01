@@ -99,6 +99,20 @@ router.post("/products/import", auth, requireRole("admin"), async (req, res) => 
     const costPrice = parseFloat(price);
     const sellPrice = (costPrice * (1 + Number(markup) / 100)).toFixed(2);
 
+    // If no vid provided, fetch product detail to get the first variant's vid
+    let resolvedVid = vid || null;
+    if (!resolvedVid) {
+      try {
+        const detail = await getCJProductDetail(pid);
+        if (detail.variants && detail.variants.length > 0) {
+          resolvedVid = detail.variants[0].vid;
+        }
+      } catch {
+        // If we can't fetch variants, continue without vid — user can still manually fulfill
+        console.warn(`Could not fetch variants for CJ product ${pid}`);
+      }
+    }
+
     const item = await storage.createMenuItem({
       name,
       description: description || `${name} — sourced via CJ Dropshipping`,
@@ -106,7 +120,7 @@ router.post("/products/import", auth, requireRole("admin"), async (req, res) => 
       imageUrl: imageUrl || null,
       category,
       cjPid: pid,
-      cjVid: vid || null,
+      cjVid: resolvedVid,
       cjCost: costPrice.toFixed(2),
       isAvailable: 1,
       isTop: 0,
@@ -166,22 +180,46 @@ router.post("/orders/:orderId/fulfill", auth, requireRole("admin", "warehouse"),
   }
 
   try {
-    // Build CJ order items from order items that have CJ variant IDs
+    // Build CJ order items — try cjVid first, fall back to fetching variants from CJ
     const cjItems: { vid: string; quantity: number }[] = [];
+    const missingVid: string[] = [];
 
     for (const item of order.items) {
       if (item.menuItemId) {
         const menuItem = await storage.getMenuItem(item.menuItemId);
         if (menuItem?.cjVid) {
           cjItems.push({ vid: menuItem.cjVid, quantity: item.quantity });
+        } else if (menuItem?.cjPid) {
+          // Try to fetch the variant ID from CJ now
+          try {
+            const detail = await getCJProductDetail(menuItem.cjPid);
+            if (detail.variants && detail.variants.length > 0) {
+              const vid = detail.variants[0].vid;
+              // Save it for future orders
+              await db.update(menuItems)
+                .set({ cjVid: vid, updatedAt: new Date() })
+                .where(eq(menuItems.id, menuItem.id));
+              cjItems.push({ vid, quantity: item.quantity });
+            } else {
+              missingVid.push(item.name);
+            }
+          } catch {
+            missingVid.push(item.name);
+          }
+        } else {
+          missingVid.push(item.name);
         }
       }
     }
 
     if (cjItems.length === 0) {
       return res.status(400).json({
-        error: "No CJ-linked products found in this order. Make sure products were imported from CJ with a variant ID.",
+        error: `Cannot fulfill: none of the products in this order are linked to CJ. Products without CJ link: ${missingVid.join(", ")}. Re-import these products from the CJ Import tab.`,
       });
+    }
+
+    if (missingVid.length > 0) {
+      console.warn(`Partial CJ fulfill for order ${orderId} — skipping non-CJ items: ${missingVid.join(", ")}`);
     }
 
     const referenceNo = `TRENDS-${orderId}-${Date.now()}`;
@@ -197,7 +235,12 @@ router.post("/orders/:orderId/fulfill", auth, requireRole("admin", "warehouse"),
       })
       .where(eq(orders.id, orderId));
 
-    res.json({ success: true, cjOrderId: result.orderId, cjOrderNum: result.orderNum });
+    res.json({
+      success: true,
+      cjOrderId: result.orderId,
+      cjOrderNum: result.orderNum,
+      skippedItems: missingVid.length > 0 ? missingVid : undefined,
+    });
   } catch (err: any) {
     console.error("CJ order fulfillment error:", err);
     res.status(500).json({ error: err.message || "CJ order fulfillment failed" });
