@@ -2,12 +2,12 @@
  * CJ Dropshipping API Service
  * Docs: https://developers.cjdropshipping.com/
  *
- * Set these in your .env:
- *   CJ_API_EMAIL=your@email.com
+ * Set these in your .env / Render environment:
+ *   CJ_API_EMAIL=your@email.com   (used as fallback)
  *   CJ_API_KEY=your_cj_api_key
  */
 
-const CJ_BASE = "https://developers.cjdropshipping.com/api2.0";
+const CJ_BASE = "https://developers.cjdropshipping.com/api2.0/v1";
 
 let _accessToken: string | null = null;
 let _tokenExpiry = 0;
@@ -17,24 +17,29 @@ let _tokenExpiry = 0;
 async function getAccessToken(): Promise<string> {
   if (_accessToken && Date.now() < _tokenExpiry) return _accessToken;
 
-  const email = process.env.CJ_API_EMAIL;
-  const key = process.env.CJ_API_KEY;
-
-  if (!email || !key) {
-    throw new Error("CJ_API_EMAIL and CJ_API_KEY must be set in .env");
-  }
+  const apiKey = process.env.CJ_API_KEY;
+  if (!apiKey) throw new Error("CJ_API_KEY must be set in environment variables");
 
   const res = await fetch(`${CJ_BASE}/authentication/getAccessToken`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password: key }),
+    body: JSON.stringify({ apiKey }),
   });
+
+  if (!res.ok) {
+    throw new Error(`CJ Auth HTTP error: ${res.status} ${res.statusText}`);
+  }
 
   const data = (await res.json()) as {
     code: number;
     result: boolean;
     message: string;
-    data?: { accessToken: string; accessTokenExpiryDate: string; refreshToken: string };
+    data?: {
+      accessToken: string;
+      accessTokenExpiryDate: string;
+      refreshToken: string;
+      refreshTokenExpiryDate: string;
+    };
   };
 
   if (!data.result || !data.data?.accessToken) {
@@ -42,17 +47,28 @@ async function getAccessToken(): Promise<string> {
   }
 
   _accessToken = data.data.accessToken;
-  // Expire 5 minutes before actual expiry to be safe
-  _tokenExpiry = new Date(data.data.accessTokenExpiryDate).getTime() - 5 * 60 * 1000;
+  // Expire 10 minutes before actual expiry to be safe
+  _tokenExpiry = new Date(data.data.accessTokenExpiryDate).getTime() - 10 * 60 * 1000;
   return _accessToken;
 }
 
 async function cjFetch<T>(
   path: string,
-  options: { method?: string; body?: unknown } = {}
+  options: { method?: string; body?: unknown; params?: Record<string, string | number | boolean> } = {}
 ): Promise<T> {
   const token = await getAccessToken();
-  const res = await fetch(`${CJ_BASE}${path}`, {
+
+  let url = `${CJ_BASE}${path}`;
+  if (options.params) {
+    const qs = new URLSearchParams(
+      Object.entries(options.params)
+        .filter(([, v]) => v !== undefined && v !== null && v !== "")
+        .map(([k, v]) => [k, String(v)])
+    ).toString();
+    if (qs) url += `?${qs}`;
+  }
+
+  const res = await fetch(url, {
     method: options.method || "GET",
     headers: {
       "Content-Type": "application/json",
@@ -61,11 +77,15 @@ async function cjFetch<T>(
     body: options.body ? JSON.stringify(options.body) : undefined,
   });
 
-  const data = await res.json();
-  if (!data.result) {
-    throw new Error(`CJ API error: ${data.message || JSON.stringify(data)}`);
+  if (!res.ok) {
+    throw new Error(`CJ API HTTP error: ${res.status} ${res.statusText}`);
   }
-  return data.data as T;
+
+  const data = await res.json() as { result: boolean; message: string; data: T };
+  if (!data.result) {
+    throw new Error(`CJ API error: ${data.message}`);
+  }
+  return data.data;
 }
 
 // ─── Product Search ───────────────────────────────────────────────────────────
@@ -74,17 +94,28 @@ export interface CJProduct {
   pid: string;
   productNameEn: string;
   productImage: string;
-  sellPrice: number;
+  sellPrice: string;
   categoryName: string;
-  description?: string;
-  variants?: CJVariant[];
+  categoryId: string;
+  productSku: string;
+  listedNum: number;
+  addMarkStatus: number; // 1 = free shipping
+}
+
+export interface CJProductDetail extends CJProduct {
+  description: string;
+  variants: CJVariant[];
+  productImageSet: string[];
+  suggestSellPrice: string;
 }
 
 export interface CJVariant {
   vid: string;
   variantNameEn: string;
   variantSellPrice: number;
-  variantImage?: string;
+  variantImage: string;
+  variantSku: string;
+  variantKey: string;
 }
 
 export async function searchCJProducts(
@@ -92,28 +123,61 @@ export async function searchCJProducts(
   page = 1,
   pageSize = 20
 ): Promise<{ list: CJProduct[]; total: number }> {
-  const data = await cjFetch<{ list: CJProduct[]; total: number }>(
-    `/product/list?productNameEn=${encodeURIComponent(keyword)}&pageNum=${page}&pageSize=${pageSize}`
+  const data = await cjFetch<{ list: CJProduct[]; total: number; pageNum: number; pageSize: number }>(
+    "/product/list",
+    {
+      params: {
+        productNameEn: keyword,
+        pageNum: page,
+        pageSize: Math.min(pageSize, 200),
+      },
+    }
   );
+  return { list: data.list || [], total: data.total || 0 };
+}
+
+export async function getCJProductDetail(pid: string): Promise<CJProductDetail> {
+  const data = await cjFetch<CJProductDetail>("/product/query", {
+    params: { pid },
+  });
   return data;
 }
 
-export async function getCJProductDetail(pid: string): Promise<CJProduct> {
-  const data = await cjFetch<CJProduct>(`/product/query?pid=${pid}`);
-  return data;
+// ─── Shipping Rates ───────────────────────────────────────────────────────────
+
+export interface CJShippingRate {
+  logisticName: string;
+  logisticAbbreviation: string;
+  logisticPrice: number;
+  estimateDeliveryDays: string;
+}
+
+export async function getCJShippingRates(
+  vid: string,
+  country: string,
+  quantity = 1
+): Promise<CJShippingRate[]> {
+  try {
+    const data = await cjFetch<CJShippingRate[]>("/logistic/freightCalculate", {
+      params: { vid, country, quantity },
+    });
+    return Array.isArray(data) ? data : [];
+  } catch {
+    return [];
+  }
 }
 
 // ─── Order Fulfillment ────────────────────────────────────────────────────────
 
 export interface CJOrderItem {
-  vid: string;       // CJ variant ID
+  vid: string;
   quantity: number;
 }
 
 export interface CJShippingAddress {
   consignee: string;
   phone: string;
-  country: string;   // ISO 2-letter code e.g. "US", "GB"
+  country: string;
   province: string;
   city: string;
   address: string;
@@ -123,7 +187,6 @@ export interface CJShippingAddress {
 export interface CJOrderResult {
   orderId: string;
   orderNum: string;
-  status: string;
 }
 
 export async function createCJOrder(
@@ -150,44 +213,25 @@ export async function createCJOrder(
   return data;
 }
 
-// ─── Shipping Rates ───────────────────────────────────────────────────────────
-
-export interface CJShippingRate {
-  logisticName: string;
-  logisticAbbreviation: string;
-  logisticPrice: number;
-  estimateDeliveryDays: string;
-}
-
-export async function getCJShippingRates(
-  pid: string,
-  country: string,
-  quantity = 1
-): Promise<CJShippingRate[]> {
-  const data = await cjFetch<CJShippingRate[]>(
-    `/logistic/freightCalculate?pid=${pid}&country=${country}&quantity=${quantity}`
-  );
-  return Array.isArray(data) ? data : [];
-}
-
 // ─── Order Tracking ───────────────────────────────────────────────────────────
 
 export interface CJTrackingInfo {
   orderNum: string;
   trackNumber: string;
   logisticName: string;
-  status: string;
+  orderStatus: string;
   trackingDetails?: { time: string; content: string }[];
 }
 
 export async function getCJOrderTracking(cjOrderId: string): Promise<CJTrackingInfo> {
-  const data = await cjFetch<CJTrackingInfo>(`/shopping/order/getOrderDetail?orderId=${cjOrderId}`);
+  const data = await cjFetch<CJTrackingInfo>("/shopping/order/getOrderDetail", {
+    params: { orderId: cjOrderId },
+  });
   return data;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-/** Check if CJ keys are configured */
 export function isCJConfigured(): boolean {
-  return !!(process.env.CJ_API_EMAIL && process.env.CJ_API_KEY);
+  return !!(process.env.CJ_API_KEY);
 }

@@ -55,7 +55,7 @@ router.get("/status", (_req, res) => {
 
 router.get("/products/search", auth, requireRole("admin"), async (req, res) => {
   if (!isCJConfigured()) {
-    return res.status(503).json({ error: "CJ Dropshipping API keys not configured. Add CJ_API_EMAIL and CJ_API_KEY to your environment variables." });
+    return res.status(503).json({ error: "CJ Dropshipping API key not configured. Add CJ_API_KEY to your environment variables." });
   }
 
   const { q, page = "1", pageSize = "20" } = req.query as Record<string, string>;
@@ -86,7 +86,7 @@ router.get("/products/:pid", auth, requireRole("admin"), async (req, res) => {
 
 router.post("/products/import", auth, requireRole("admin"), async (req, res) => {
   if (!isCJConfigured()) {
-    return res.status(503).json({ error: "CJ API keys not configured" });
+    return res.status(503).json({ error: "CJ API key not configured" });
   }
 
   const { pid, vid, name, description, price, category, imageUrl, markup = 30 } = req.body;
@@ -96,7 +96,6 @@ router.post("/products/import", auth, requireRole("admin"), async (req, res) => 
   }
 
   try {
-    // Calculate sell price with markup
     const costPrice = parseFloat(price);
     const sellPrice = (costPrice * (1 + Number(markup) / 100)).toFixed(2);
 

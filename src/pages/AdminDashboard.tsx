@@ -367,9 +367,9 @@ export default function AdminDashboard() {
         pid: product.pid,
         vid,
         name: product.productNameEn,
-        description: product.description || product.productNameEn,
+        description: `${product.productNameEn} — ${product.categoryName || "Electronics"}`,
         price: product.sellPrice,
-        category: "Electronics",
+        category: product.categoryName || "Electronics",
         imageUrl: product.productImage,
         markup: cjMarkup,
       });
