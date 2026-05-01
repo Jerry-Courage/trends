@@ -4,7 +4,7 @@ import { z } from "zod";
 import { sql } from "drizzle-orm";
 
 // SQLite doesn't have native enums, so we'll use text with Zod validation
-export const roles = ["customer", "warehouse", "courier", "admin"] as const;
+export const roles = ["customer", "admin"] as const;
 export const orderStatuses = [
   "pending",
   "confirmed",

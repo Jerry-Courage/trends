@@ -86,9 +86,9 @@ router.post("/auth/register", async (req, res) => {
   const { role, adminSecret, email } = result.data;
   const lowerEmail = email.toLowerCase();
 
-  // Role-based protection: Only Customers and Couriers can register publicly
-  if (role === "admin" || role === "warehouse") {
-    return res.status(403).json({ error: "Administrative accounts must be created by the Super Admin" });
+  // Only customers can self-register; admin accounts are seeded
+  if (role === "admin") {
+    return res.status(403).json({ error: "Admin accounts are managed by the super admin" });
   }
 
   // Prevent hijacking the Super Admin email

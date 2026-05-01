@@ -5,15 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { 
   ShoppingBag, 
-  Truck, 
-  Package, 
   LayoutDashboard, 
   ArrowRight, 
   ArrowLeft,
   CheckCircle2,
   Sparkles,
-  MapPin,
-  Clock,
   ShieldCheck
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -23,39 +19,20 @@ const roles = [
   {
     id: "customer",
     title: "Customer",
-    description: "Shop high-end gadgets from Trends Electronics and get them delivered.",
+    description: "Shop high-end gadgets from Trends Electronics, shipped worldwide via CJ Dropshipping.",
     icon: ShoppingBag,
     color: "from-blue-500 to-blue-600",
     shadow: "shadow-blue-500/20",
-    features: ["Real-time tracking", "AI recommendations", "Express delivery"]
-  },
-  {
-    id: "courier",
-    title: "Premium Courier",
-    description: "Join our elite fleet and deliver high-end electronics securely.",
-    icon: Truck,
-    color: "from-cyan-500 to-cyan-600",
-    shadow: "shadow-cyan-500/20",
-    features: ["Flexible hours", "High-value payouts", "Logistics assistance"]
-  },
-  {
-    id: "warehouse",
-    title: "Warehouse Tech",
-    description: "Handle high-value inventory and ensure premium quality control.",
-    icon: Package,
-    color: "from-zinc-500 to-zinc-700",
-    shadow: "shadow-zinc-500/20",
-    features: ["Inventory management", "Stock control", "Security analytics"],
-    isPrivate: true
+    features: ["Worldwide shipping", "AI recommendations", "Real-time order tracking"]
   },
   {
     id: "admin",
     title: "Operations",
-    description: "Complete retail management and AI business insights.",
+    description: "Complete store management, CJ product imports, and AI business insights.",
     icon: LayoutDashboard,
     color: "from-emerald-500 to-emerald-700",
     shadow: "shadow-emerald-500/20",
-    features: ["Full analytics", "Catalog management", "AI Consultant"],
+    features: ["Full analytics", "CJ catalog import", "AI Consultant"],
     isPrivate: true
   }
 ];
@@ -74,11 +51,7 @@ export default function OnboardingPage() {
 
   const handleNext = () => {
     if (step === 1 && selectedRole) {
-      if (selectedRole === "courier") {
-        navigate("/courier-onboarding");
-      } else {
-        setStep(2);
-      }
+      setStep(2);
     }
     else if (step === 2) navigate(`/login?role=${selectedRole}&signup=true`);
   };

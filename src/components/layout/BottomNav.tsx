@@ -1,4 +1,4 @@
-import { Home, ClipboardList, Truck, User, LayoutDashboard, Warehouse, Bike } from "lucide-react";
+import { Home, ClipboardList, Truck, User, LayoutDashboard } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 
@@ -14,19 +14,7 @@ const BottomNav = () => {
         { icon: User, label: "Profile", path: "/profile" },
       ];
     }
-    if (user?.role === "warehouse") {
-      return [
-        { icon: Warehouse, label: "Orders", path: "/management" },
-        { icon: User, label: "Profile", path: "/profile" },
-      ];
-    }
-    if (user?.role === "courier") {
-      return [
-        { icon: Bike, label: "Deliveries", path: "/courier" },
-        { icon: User, label: "Profile", path: "/profile" },
-      ];
-    }
-    // Default Customer Tabs
+    // Customer tabs
     return [
       { icon: Home, label: "Home", path: "/home" },
       { icon: ClipboardList, label: "Orders", path: "/orders" },
