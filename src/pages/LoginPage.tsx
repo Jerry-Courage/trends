@@ -43,9 +43,7 @@ const LoginPage = () => {
   const from = (location.state as { from?: string })?.from || "/";
 
   const roleHome: Record<string, string> = {
-    customer: "/",
-    warehouse: "/management",
-    courier: "/courier",
+    customer: "/home",
     admin: "/admin",
   };
 
@@ -220,26 +218,13 @@ const LoginPage = () => {
                     }
                   />
 
-                  {(registerData.role === "warehouse" || registerData.role === "admin" || isStaffMode) && (
+                  {registerData.role === "admin" && (
                     <div className="pt-4 space-y-4 border-t border-white/5">
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-medium text-muted-foreground ml-1">Staff Role</label>
-                        <select
-                          value={registerData.role}
-                          onChange={e => setRegisterData(p => ({ ...p, role: e.target.value as any }))}
-                          className="w-full px-5 py-4 bg-[#161616] rounded-2xl text-white font-medium border border-white/5 focus:outline-none focus:border-primary/50 transition-all appearance-none"
-                        >
-                          <option value="customer" className="bg-[#111]">Customer</option>
-                          <option value="courier" className="bg-[#111]">Delivery Courier</option>
-                          <option value="warehouse" className="bg-[#111]">Warehouse Staff</option>
-                          <option value="admin" className="bg-[#111]">Admin</option>
-                        </select>
-                      </div>
                       <AuthInput 
                         id="reg-secret"
-                        label="Security Clearance"
+                        label="Admin Secret Key"
                         type="password"
-                        placeholder="Admin Secret Key"
+                        placeholder="Contact admin for access"
                         value={registerData.adminSecret}
                         onChange={v => setRegisterData(p => ({ ...p, adminSecret: v }))}
                       />
@@ -280,13 +265,6 @@ const LoginPage = () => {
 
         {/* Footer */}
         <div className="mt-12 flex flex-col items-center gap-8">
-          <button 
-            onClick={() => navigate("/courier-onboarding")}
-            className="group flex items-center gap-3 text-sm font-semibold text-white/50 hover:text-white transition-all duration-300"
-          >
-            Looking for delivery work? <span className="text-primary group-hover:translate-x-1 transition-transform">Get started</span>
-          </button>
-          
           <p className="text-center text-[10px] text-muted-foreground tracking-wide leading-loose max-w-[280px]">
             By continuing, you agree to Trends Electronics' <span className="text-white border-b border-white/20 cursor-pointer">Terms of Service</span> and <span className="text-white border-b border-white/20 cursor-pointer">Privacy Policy</span>.
           </p>
