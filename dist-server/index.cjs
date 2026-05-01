@@ -121572,7 +121572,7 @@ var insertFavoriteSchema = external_exports.object({
 
 // server/db.ts
 var import_path = __toESM(require("path"), 1);
-var dbPath = import_path.default.resolve("sqlite_v2.db");
+var dbPath = import_path.default.resolve(process.cwd(), "sqlite_v2.db");
 console.log("### DB_CHECKPOINT: Initializing database at", dbPath);
 var sqlite;
 try {
@@ -125548,11 +125548,11 @@ console.log("### SERVER_CHECKPOINT: Attempting to listen on PORT:", PORT);
 httpServer.listen(PORT, "0.0.0.0", async () => {
   console.log(`### SERVER_SUCCESS: Backend running on 0.0.0.0:${PORT}`);
   try {
-    const aiKey = process.env.OPENROUTER_API_KEY;
+    const aiKey = process.env.GEMINI_API_KEY;
     if (aiKey) {
-      console.log(`### AI_CHECK: Key detected (Ends with ...${aiKey.slice(-4)})`);
+      console.log(`### AI_CHECK: Gemini key detected (Ends with ...${aiKey.slice(-4)})`);
     } else {
-      console.error("### AI_CHECK: No OPENROUTER_API_KEY detected in environment!");
+      console.error("### AI_CHECK: No GEMINI_API_KEY detected in environment!");
     }
     console.log("### SERVER_CHECKPOINT: Running initialization seeds...");
     await initializeDatabase();

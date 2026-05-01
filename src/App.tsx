@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { CartProvider } from "@/context/CartContext";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { SocketProvider } from "@/context/SocketContext";
+import { ThemeProvider } from "@/context/ThemeContext";
 import AppShell from "@/components/layout/AppShell";
 import HomePage from "./pages/HomePage";
 import MenuPage from "./pages/MenuPage";
@@ -163,35 +164,37 @@ const App = () => {
 
   return (
     <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || "PASTE_YOUR_GOOGLE_CLIENT_ID_HERE"}>
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <AuthProvider>
-            <SocketProvider>
-              <CartProvider>
-                <AnimatePresence mode="wait">
-                  {initialSplash && (
-                    <motion.div
-                      key="splash"
-                      initial={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.5 }}
-                      className="fixed inset-0 z-[9999]"
-                    >
-                      <SplashScreen />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-                
-                <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-                  <AppRoutes />
-                </BrowserRouter>
-              </CartProvider>
-            </SocketProvider>
-          </AuthProvider>
-        </TooltipProvider>
-      </QueryClientProvider>
+      <ThemeProvider>
+        <QueryClientProvider client={queryClient}>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <AuthProvider>
+              <SocketProvider>
+                <CartProvider>
+                  <AnimatePresence mode="wait">
+                    {initialSplash && (
+                      <motion.div
+                        key="splash"
+                        initial={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.5 }}
+                        className="fixed inset-0 z-[9999]"
+                      >
+                        <SplashScreen />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                  
+                  <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+                    <AppRoutes />
+                  </BrowserRouter>
+                </CartProvider>
+              </SocketProvider>
+            </AuthProvider>
+          </TooltipProvider>
+        </QueryClientProvider>
+      </ThemeProvider>
     </GoogleOAuthProvider>
   );
 };

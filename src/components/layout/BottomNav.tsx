@@ -1,4 +1,4 @@
-import { Home, ClipboardList, MapPin, User, LayoutDashboard, ChefHat, Bike } from "lucide-react";
+import { Home, ClipboardList, MapPin, User, LayoutDashboard, Warehouse, Bike } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 
@@ -14,21 +14,21 @@ const BottomNav = () => {
         { icon: User, label: "Profile", path: "/profile" },
       ];
     }
-    if (user?.role === "kitchen") {
+    if (user?.role === "warehouse") {
       return [
-        { icon: ChefHat, label: "Orders", path: "/management" },
+        { icon: Warehouse, label: "Orders", path: "/management" },
         { icon: User, label: "Profile", path: "/profile" },
       ];
     }
-    if (user?.role === "rider") {
+    if (user?.role === "courier") {
       return [
-        { icon: Bike, label: "Deliveries", path: "/rider" },
+        { icon: Bike, label: "Deliveries", path: "/courier" },
         { icon: User, label: "Profile", path: "/profile" },
       ];
     }
     // Default Customer Tabs
     return [
-      { icon: Home, label: "Home", path: "/" },
+      { icon: Home, label: "Home", path: "/home" },
       { icon: ClipboardList, label: "Orders", path: "/orders" },
       { icon: MapPin, label: "Nearby", path: "/nearby" },
       { icon: User, label: "Profile", path: "/profile" },
