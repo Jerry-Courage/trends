@@ -186,7 +186,8 @@ export interface CJShippingAddress {
 
 export interface CJOrderResult {
   orderId: string;
-  orderNum: string;
+  orderNumber: string;  // V2 returns orderNumber
+  orderNum?: string;    // legacy fallback
 }
 
 export async function createCJOrder(
@@ -195,18 +196,21 @@ export async function createCJOrder(
   items: CJOrderItem[],
   shippingMethod = "CJPacket"
 ): Promise<CJOrderResult> {
-  const data = await cjFetch<CJOrderResult>("/shopping/order/createOrder", {
+  const data = await cjFetch<CJOrderResult>("/shopping/order/createOrderV2", {
     method: "POST",
     body: {
       orderNumber: referenceNo,
-      shippingZip: shippingAddress.zip,
-      shippingCountry: shippingAddress.country,
-      shippingProvince: shippingAddress.province,
+      shippingZip: shippingAddress.zip || "",
+      shippingCountryCode: shippingAddress.country,   // required: 2-letter ISO code e.g. "US"
+      shippingCountry: shippingAddress.country,        // country name or code
+      shippingProvince: shippingAddress.province || shippingAddress.city,
       shippingCity: shippingAddress.city,
       shippingAddress: shippingAddress.address,
       shippingCustomerName: shippingAddress.consignee,
-      shippingPhone: shippingAddress.phone,
-      shippingMethod,
+      shippingPhone: shippingAddress.phone || "",
+      logisticName: shippingMethod,                    // required
+      fromCountryCode: "CN",                           // required: CJ ships from China
+      payType: 3,                                      // 3 = create order only, no auto-payment
       products: items.map(i => ({ vid: i.vid, quantity: i.quantity })),
     },
   });
@@ -216,11 +220,12 @@ export async function createCJOrder(
 // ─── Order Tracking ───────────────────────────────────────────────────────────
 
 export interface CJTrackingInfo {
+  orderId: string;
   orderNum: string;
   trackNumber: string;
   logisticName: string;
   orderStatus: string;
-  trackingDetails?: { time: string; content: string }[];
+  trackingUrl?: string;
 }
 
 export async function getCJOrderTracking(cjOrderId: string): Promise<CJTrackingInfo> {

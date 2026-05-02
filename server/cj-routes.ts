@@ -229,7 +229,7 @@ router.post("/orders/:orderId/fulfill", auth, requireRole("admin", "warehouse"),
     await db.update(orders)
       .set({
         cjOrderId: result.orderId,
-        cjOrderNum: result.orderNum,
+        cjOrderNum: result.orderNumber || result.orderNum || null,
         shippingCountry: shippingAddress.country,
         updatedAt: new Date(),
       })
@@ -238,7 +238,7 @@ router.post("/orders/:orderId/fulfill", auth, requireRole("admin", "warehouse"),
     res.json({
       success: true,
       cjOrderId: result.orderId,
-      cjOrderNum: result.orderNum,
+      cjOrderNum: result.orderNumber || result.orderNum,
       skippedItems: missingVid.length > 0 ? missingVid : undefined,
     });
   } catch (err: any) {
