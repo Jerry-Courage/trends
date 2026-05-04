@@ -133,7 +133,19 @@ export async function searchCJProducts(
       },
     }
   );
-  return { list: data.list || [], total: data.total || 0 };
+
+  const list = data.list || [];
+
+  // Filter client-side: only keep products whose name contains at least one keyword word
+  const words = keyword.toLowerCase().split(/\s+/).filter(w => w.length > 2);
+  const filtered = words.length > 0
+    ? list.filter(p => {
+        const name = p.productNameEn.toLowerCase();
+        return words.some(w => name.includes(w));
+      })
+    : list;
+
+  return { list: filtered, total: filtered.length };
 }
 
 // Fetch products by category ID (no keyword needed)

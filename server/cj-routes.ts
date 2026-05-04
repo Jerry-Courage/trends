@@ -167,6 +167,7 @@ router.post("/products/bulk-import", auth, requireRole("admin"), async (req, res
       const result = await getCJProductsByCategory(categoryId, 1, maxLimit);
       products = result.list;
     } else {
+      // Fetch more than needed so we have enough after filtering
       const result = await searchCJProducts(keyword, 1, maxLimit);
       products = result.list;
     }
