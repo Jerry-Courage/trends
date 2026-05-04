@@ -1,18 +1,32 @@
 // Model IDs exactly as they appear in Google AI Studio
-// gemma-3 models → v1beta, support systemInstruction
-// gemini-2.0 models → v1beta, support systemInstruction
 const MODELS = [
   { id: "gemini-2.0-flash",      base: "https://generativelanguage.googleapis.com/v1beta/models/", supportsSystemInstruction: true },
   { id: "gemini-2.0-flash-lite", base: "https://generativelanguage.googleapis.com/v1beta/models/", supportsSystemInstruction: true },
-  { id: "gemma-3-27b-it",        base: "https://generativelanguage.googleapis.com/v1beta/models/", supportsSystemInstruction: true },
-  { id: "gemma-3-12b-it",        base: "https://generativelanguage.googleapis.com/v1beta/models/", supportsSystemInstruction: true },
-  { id: "gemma-3-4b-it",         base: "https://generativelanguage.googleapis.com/v1beta/models/", supportsSystemInstruction: true },
-  { id: "gemma-3-1b-it",         base: "https://generativelanguage.googleapis.com/v1beta/models/", supportsSystemInstruction: true },
+  { id: "gemma-3-27b-it",        base: "https://generativelanguage.googleapis.com/v1beta/models/", supportsSystemInstruction: false },
+  { id: "gemma-3-12b-it",        base: "https://generativelanguage.googleapis.com/v1beta/models/", supportsSystemInstruction: false },
+  { id: "gemma-3-4b-it",         base: "https://generativelanguage.googleapis.com/v1beta/models/", supportsSystemInstruction: false },
+  { id: "gemma-3-1b-it",         base: "https://generativelanguage.googleapis.com/v1beta/models/", supportsSystemInstruction: false },
 ];
 
 const rateLimitedUntil: Record<string, number> = {};
-const COOLDOWN_MS = 60 * 1000;        // 1 minute cooldown for 429s
-const HARD_COOLDOWN_MS = 10 * 60 * 1000; // 10 minutes for 403/404
+const COOLDOWN_MS = 60 * 1000;           // 1 min for 429
+const HARD_COOLDOWN_MS = 10 * 60 * 1000; // 10 min for 403/404
+
+// Simple in-flight guard — only one AI request at a time to avoid quota bursts
+let _inFlight = false;
+async function withRateGuard<T>(fn: () => Promise<T>): Promise<T> {
+  const start = Date.now();
+  while (_inFlight) {
+    if (Date.now() - start > 8000) break; // max 8s wait
+    await new Promise(r => setTimeout(r, 200));
+  }
+  _inFlight = true;
+  try {
+    return await fn();
+  } finally {
+    _inFlight = false;
+  }
+}
 
 export const WAREHOUSE_LOCATION = { lat: 5.6201, lng: -0.1740 };
 
@@ -39,6 +53,10 @@ function getAvailableModels() {
 }
 
 async function chat(messages: Message[]): Promise<string> {
+  return withRateGuard(() => _chat(messages));
+}
+
+async function _chat(messages: Message[]): Promise<string> {
   const key = getKey();
 
   // Separate system prompt from conversation
@@ -72,15 +90,17 @@ async function chat(messages: Message[]): Promise<string> {
       };
 
       if (model.supportsSystemInstruction && systemText.trim()) {
-        // v1beta: use systemInstruction field
+        // Gemini models: use systemInstruction field
         requestBody.systemInstruction = { parts: [{ text: systemText.trim() }] };
         requestBody.contents = contents;
       } else if (systemText.trim()) {
-        // v1: prepend system text into the first user message
-        const merged = [...contents];
-        if (merged.length > 0 && merged[0].role === "user") {
-          merged[0] = { role: "user", parts: [{ text: systemText.trim() + "\n\n" + merged[0].parts[0].text }] };
-        }
+        // Gemma models: prepend system text into first user message
+        const merged = contents.map((c, i) => {
+          if (i === 0 && c.role === "user") {
+            return { role: "user", parts: [{ text: systemText.trim() + "\n\n" + c.parts[0].text }] };
+          }
+          return c;
+        });
         requestBody.contents = merged;
       } else {
         requestBody.contents = contents;
