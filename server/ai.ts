@@ -1,10 +1,10 @@
 const BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models/";
 
 const MODELS = [
-  "gemma-3-27b-it",
-  "gemma-3-12b-it",
-  "gemma-3-4b-it",
-  "gemma-3-1b-it"
+  "gemini-2.0-flash",
+  "gemini-1.5-flash",
+  "gemini-1.5-flash-8b",
+  "gemini-1.5-pro",
 ];
 
 // Track rate-limited models with a cooldown timestamp
