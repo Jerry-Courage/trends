@@ -1,17 +1,15 @@
-const BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models/";
-
+// Models with their correct API base URL
+// v1beta supports newer models; v1 supports stable 1.5 models
 const MODELS = [
-  "gemini-2.0-flash",
-  "gemini-1.5-flash",
-  "gemma-3-27b-it",
-  "gemma-3-12b-it",
+  { id: "gemini-2.0-flash-lite", base: "https://generativelanguage.googleapis.com/v1beta/models/" },
+  { id: "gemini-2.0-flash",      base: "https://generativelanguage.googleapis.com/v1beta/models/" },
+  { id: "gemini-1.5-flash",      base: "https://generativelanguage.googleapis.com/v1/models/" },
+  { id: "gemini-1.5-flash-8b",   base: "https://generativelanguage.googleapis.com/v1/models/" },
 ];
 
-// Track rate-limited models with a cooldown timestamp
 const rateLimitedUntil: Record<string, number> = {};
 const COOLDOWN_MS = 10 * 60 * 1000; // 10 minutes
 
-// Trends Electronics Hub (Accra Mall)
 export const WAREHOUSE_LOCATION = { lat: 5.6201, lng: -0.1740 };
 
 interface Message {
@@ -21,22 +19,25 @@ interface Message {
 
 function getKey(): string {
   const key = process.env.GEMINI_API_KEY;
-  if (!key) {
-    console.error("### AI_ERROR: GEMINI_API_KEY is not set in the environment!");
-    throw new Error("GEMINI_API_KEY not set");
-  }
+  if (!key) throw new Error("GEMINI_API_KEY not set");
   return key;
 }
 
-function getAvailableModels(): string[] {
+function getAvailableModels() {
   const now = Date.now();
-  return MODELS.filter(m => !rateLimitedUntil[m] || rateLimitedUntil[m] < now);
+  const available = MODELS.filter(m => !rateLimitedUntil[m.id] || rateLimitedUntil[m.id] < now);
+  if (available.length === 0) {
+    // All rate-limited — reset and try again
+    MODELS.forEach(m => delete rateLimitedUntil[m.id]);
+    return [...MODELS];
+  }
+  return available;
 }
 
 async function chat(messages: Message[]): Promise<string> {
   const key = getKey();
 
-  // Separate system messages from conversation
+  // Separate system prompt from conversation
   let systemText = "";
   const contents: any[] = [];
 
@@ -50,40 +51,28 @@ async function chat(messages: Message[]): Promise<string> {
     }
   }
 
-  // Must have at least one user message
+  // Must have at least one user turn
   if (contents.length === 0) {
     contents.push({ role: "user", parts: [{ text: systemText || "Hello" }] });
     systemText = "";
   }
 
   let lastError: any = null;
-  const available = getAvailableModels();
 
-  if (available.length === 0) {
-    Object.keys(rateLimitedUntil).forEach(k => delete rateLimitedUntil[k]);
-    available.push(...MODELS);
-  }
-
-  for (const modelId of available) {
+  for (const model of getAvailableModels()) {
     try {
-      console.log(`### AI Request (${modelId})`);
+      console.log(`### AI Request (${model.id})`);
 
       const requestBody: any = {
         contents,
-        generationConfig: {
-          maxOutputTokens: 300,
-          temperature: 0.7,
-        },
+        generationConfig: { maxOutputTokens: 300, temperature: 0.7 },
       };
 
-      // Use systemInstruction for proper system prompt support
       if (systemText.trim()) {
-        requestBody.systemInstruction = {
-          parts: [{ text: systemText.trim() }],
-        };
+        requestBody.systemInstruction = { parts: [{ text: systemText.trim() }] };
       }
 
-      const res = await fetch(`${BASE_URL}${modelId}:generateContent?key=${key}`, {
+      const res = await fetch(`${model.base}${model.id}:generateContent?key=${key}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(requestBody),
@@ -92,37 +81,36 @@ async function chat(messages: Message[]): Promise<string> {
       if (!res.ok) {
         const errText = await res.text();
         const status = res.status;
-        console.warn(`### AI ${modelId} failed (${status}): ${errText.slice(0, 300)}`);
+        console.warn(`### AI ${model.id} failed (${status}): ${errText.slice(0, 200)}`);
 
-        if (status === 429 || status === 402 || status === 403 || status === 503 || status === 404) {
-          rateLimitedUntil[modelId] = Date.now() + COOLDOWN_MS;
-          lastError = new Error(`Model ${modelId} unavailable (${status})`);
+        if ([429, 402, 403, 503, 404].includes(status)) {
+          rateLimitedUntil[model.id] = Date.now() + COOLDOWN_MS;
+          lastError = new Error(`Model ${model.id} unavailable (${status})`);
           continue;
         }
 
-        lastError = new Error(`Error ${status} on ${modelId}: ${errText.slice(0, 100)}`);
+        lastError = new Error(`Error ${status} on ${model.id}`);
         continue;
       }
 
       const data = await res.json() as any;
       const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
       if (content) {
-        console.log(`### AI success via ${modelId}`);
+        console.log(`### AI success via ${model.id}`);
         return content;
       }
 
-      // Log unexpected empty response
-      console.warn(`### AI ${modelId} empty response:`, JSON.stringify(data).slice(0, 200));
-      lastError = new Error(`Empty response from ${modelId}`);
+      lastError = new Error(`Empty response from ${model.id}`);
     } catch (err: any) {
-      console.warn(`### AI ${modelId} network error:`, err.message);
+      console.warn(`### AI ${model.id} network error:`, err.message);
       lastError = err;
-      continue;
     }
   }
 
   throw lastError || new Error("All AI models failed");
 }
+
+// ─── Exported AI Functions ────────────────────────────────────────────────────
 
 export interface RecommendationItem {
   id: string;
@@ -138,19 +126,14 @@ export async function getRecommendations(
   interests?: string | null
 ): Promise<RecommendationItem[]> {
   const menuText = menuItems
-    .map(i => `ID:${i.id} "${i.name}" (${i.category}, $${i.price}${i.tags?.length ? ", " + i.tags.join("/") : ""})`)
+    .map(i => `ID:${i.id} "${i.name}" (${i.category}, ${i.price}${i.tags?.length ? ", " + i.tags.join("/") : ""})`)
     .join("\n");
 
   const historyText = recentOrders.length > 0
     ? recentOrders.slice(0, 3).map(o => o.items.map(i => i.name).join(", ")).join(" | ")
     : "No previous orders";
 
-  const prompt = `Menu:
-${menuText}
-Orders: ${historyText}
-Time: ${timeOfDay}
-Interests/Preferences: ${interests || "None"}. DO NOT recommend any products violating these preferences.
-Respond with 4 best JSON recommendations only: [{"id":"1","name":"Item","reason":"reason","confidence":0.95}]`;
+  const prompt = `Menu:\n${menuText}\nOrders: ${historyText}\nTime: ${timeOfDay}\nInterests: ${interests || "None"}.\nRespond with 4 best JSON recommendations only: [{"id":"1","name":"Item","reason":"reason","confidence":0.95}]`;
 
   const response = await chat([
     { role: "system", content: "You are a tech product recommender. Respond with JSON arrays only." },
@@ -162,10 +145,7 @@ Respond with 4 best JSON recommendations only: [{"id":"1","name":"Item","reason"
     return JSON.parse(cleaned);
   } catch {
     return menuItems.slice(0, 4).map(i => ({
-      id: String(i.id),
-      name: i.name,
-      reason: "Popular choice",
-      confidence: 0.8,
+      id: String(i.id), name: i.name, reason: "Popular choice", confidence: 0.8,
     }));
   }
 }
@@ -176,10 +156,7 @@ export async function getOrderETA(
   itemCount: number
 ): Promise<{ minutes: number; message: string }> {
   const minutesSinceOrder = Math.floor((Date.now() - createdAt.getTime()) / 60000);
-
-  const prompt = `You are an AI delivery time estimator for a tech retail store.
-Order: status="${status}", placed ${minutesSinceOrder} min ago, ${itemCount} items.
-Estimate remaining delivery time. Respond with valid JSON only: {"minutes":15,"message":"Your gadgets are being secured for transport!"}`;
+  const prompt = `Order: status="${status}", placed ${minutesSinceOrder} min ago, ${itemCount} items. Estimate remaining delivery time. Respond with valid JSON only: {"minutes":15,"message":"Your gadgets are being secured for transport!"}`;
 
   const response = await chat([
     { role: "system", content: "You are a delivery ETA AI. Respond with valid JSON only." },
@@ -187,17 +164,16 @@ Estimate remaining delivery time. Respond with valid JSON only: {"minutes":15,"m
   ]);
 
   try {
-    const cleaned = response.trim().replace(/^```json\n?|```$/g, "");
-    return JSON.parse(cleaned);
+    return JSON.parse(response.trim().replace(/^```json\n?|```$/g, ""));
   } catch {
     const fallbacks: Record<string, { minutes: number; message: string }> = {
-      pending: { minutes: 35, message: "Order received! Processing your tech request." },
+      pending:   { minutes: 35, message: "Order received! Processing your tech request." },
       confirmed: { minutes: 28, message: "Inventory confirmed! Preparing for dispatch." },
       packaging: { minutes: 20, message: "Your gadgets are being carefully packed!" },
-      ready: { minutes: 12, message: "Order is ready for the courier!" },
-      assigned: { minutes: 10, message: "Courier is arriving at the warehouse!" },
-      picked_up: { minutes: 8, message: "Your order is out for delivery!" },
-      delivered: { minutes: 0, message: "Order delivered. Power on and enjoy!" },
+      ready:     { minutes: 12, message: "Order is ready for the courier!" },
+      assigned:  { minutes: 10, message: "Courier is arriving at the warehouse!" },
+      picked_up: { minutes: 8,  message: "Your order is out for delivery!" },
+      delivered: { minutes: 0,  message: "Order delivered. Power on and enjoy!" },
     };
     return fallbacks[status] ?? { minutes: 20, message: "On the way!" };
   }
@@ -207,7 +183,6 @@ export async function getWarehouseSummary(
   orders: { id: number; status: string; createdAt: Date; items: { name: string; quantity: number }[] }[]
 ): Promise<string> {
   if (orders.length === 0) return "No active orders right now. Enjoy the quiet!";
-
   const filtered = orders.filter(o => o && !["delivered", "cancelled"].includes(o.status)).slice(0, 10);
   if (filtered.length === 0) return "No active orders to report. Great time to prep for the next rush!";
 
@@ -217,11 +192,9 @@ export async function getWarehouseSummary(
     return `Order #${String(o.id).padStart(5, "0")} [${o.status}, ${age}min ago]: ${items}`;
   }).join("\n");
 
-  const prompt = `Warehouse assistant at Trends Electronics. Active orders:\n${ordersText}\nGive a 1-2 sentence briefing. Flag orders waiting >15 min. Be concise.`;
-
   const response = await chat([
     { role: "system", content: "You are a warehouse operations assistant. Be brief and actionable." },
-    { role: "user", content: prompt },
+    { role: "user", content: `Active orders:\n${ordersText}\nGive a 1-2 sentence briefing. Flag orders waiting >15 min.` },
   ]);
 
   return response.trim() || "All orders looking good. Keep up the great work!";
@@ -232,19 +205,16 @@ export async function searchMenu(
   menuItems: { id: number; name: string; category: string; price: string; description: string; tags: string[] | null }[]
 ): Promise<{ message: string; itemIds: number[] }> {
   const menuText = menuItems
-    .map(i => `ID:${i.id} "${i.name}" (${i.category}, $${i.price}) - ${i.description}${i.tags?.length ? " [" + i.tags.join(", ") + "]" : ""}`)
+    .map(i => `ID:${i.id} "${i.name}" (${i.category}, ${i.price}) - ${i.description}${i.tags?.length ? " [" + i.tags.join(", ") + "]" : ""}`)
     .join("\n");
-
-  const prompt = `Menu:\n${menuText}\nQuery: "${query}"\nRespond with best matches as valid JSON only: {"message":"Msg","itemIds":[1,3]}`;
 
   const response = await chat([
     { role: "system", content: "You are a tech retail assistant. Always respond with valid JSON only." },
-    { role: "user", content: prompt },
+    { role: "user", content: `Menu:\n${menuText}\nQuery: "${query}"\nRespond: {"message":"Msg","itemIds":[1,3]}` },
   ]);
 
   try {
-    const cleaned = response.trim().replace(/^```json\n?|```$/g, "");
-    return JSON.parse(cleaned);
+    return JSON.parse(response.trim().replace(/^```json\n?|```$/g, ""));
   } catch {
     return { message: "Here are some items you might enjoy!", itemIds: menuItems.slice(0, 3).map(i => i.id) };
   }
@@ -260,15 +230,11 @@ export async function getAdminInsights(
   }
 ): Promise<string> {
   const popularText = stats.popularItems.map(i => `${i.name} (${i.count} sold)`).join(", ");
-  const recentRevenue = stats.revenue.slice(-7).map(r => `$${r.amount}`).join(", ");
-
-  const prompt = `Business consultant for Trends Electronics.
-30-Day: Revenue=$${stats.totalRevenue.toFixed(2)}, Orders=${stats.totalOrders}, Top items: ${popularText}, Last 7 days revenue: ${recentRevenue}.
-Give a professional 2-3 sentence strategic insight.`;
+  const recentRevenue = stats.revenue.slice(-7).map(r => `${r.amount}`).join(", ");
 
   const response = await chat([
     { role: "system", content: "You are a strategic business analyst for a retail store. Be concise and insightful." },
-    { role: "user", content: prompt },
+    { role: "user", content: `30-Day: Revenue=${stats.totalRevenue.toFixed(2)}, Orders=${stats.totalOrders}, Top items: ${popularText}, Last 7 days revenue: ${recentRevenue}. Give a professional 2-3 sentence strategic insight.` },
   ]);
 
   return response.trim() || "Performance is steady. Focus on maintaining quality and speed.";
@@ -282,60 +248,36 @@ export async function getSupportResponse(
   activeOrders: (any & { items: any[] })[] = []
 ): Promise<string> {
   const query = userQuery.toLowerCase();
-  
-  // 1. Categorize intent
   const techKeywords = ["shop", "recommend", "buy", "product", "gadget", "device", "phone", "laptop", "audio", "watch", "gaming", "accessories", "price", "cost", "warranty", "spec", "stock"];
-  const trackingKeywords = ["where", "track", "status", "courier", "courier", "delivery", "arrival", "eta", "location", "coming", "package"];
-  
-  const hasTechIntent = techKeywords.some(word => query.includes(word));
-  const hasTrackingIntent = trackingKeywords.some(word => query.includes(word));
+  const trackingKeywords = ["where", "track", "status", "delivery", "arrival", "eta", "location", "coming", "package"];
 
-  const menuText = hasTechIntent && menuItems.length > 0 
-    ? menuItems.map(i => `ID:${i.id} "${i.name}" ($${i.price}) - ${i.category}. ${i.description}${i.tags?.length ? " [" + i.tags.join(", ") + "]" : ""}`).join("\n")
+  const hasTechIntent = techKeywords.some(w => query.includes(w));
+  const hasTrackingIntent = trackingKeywords.some(w => query.includes(w));
+
+  const menuText = hasTechIntent && menuItems.length > 0
+    ? menuItems.map(i => `ID:${i.id} "${i.name}" (${i.price}) - ${i.category}. ${i.description}${i.tags?.length ? " [" + i.tags.join(", ") + "]" : ""}`).join("\n")
     : "";
 
-  const orderContext = activeOrders.length > 0 
+  const orderContext = activeOrders.length > 0
     ? activeOrders.map(o => {
         const items = o.items.map((i: any) => `${i.quantity}x ${i.name}`).join(", ");
-        const courierLoc = o.courierLat && o.courierLng ? `Courier at [${o.courierLat}, ${o.courierLng}]` : "Courier location unknown";
-        const restLoc = `Warehouse at [${WAREHOUSE_LOCATION.lat}, ${WAREHOUSE_LOCATION.lng}]`;
-        const custLoc = o.customerLat && o.customerLng ? `Customer at [${o.customerLat}, ${o.customerLng}]` : "Customer location unknown";
-        return `Order #${o.id}: Status=${o.status}. Items: ${items}. ${courierLoc}. ${restLoc}. ${custLoc}.`;
+        return `Order #${o.id}: Status=${o.status}. Items: ${items}.`;
       }).join("\n")
-    : "No active orders for this user.";
+    : "No active orders.";
 
   let systemPrompt: string;
 
   if (hasTrackingIntent && activeOrders.length > 0) {
-    systemPrompt = `You are Trends Electronics' elite logistics coordinator.
-Goal: Provide a precise update on the user's package using the TRACKING CONTEXT below.
-Coordinates: Translate [lat, lng] into human-friendly terms relative to the warehouse and customer.
-Note: If the courier is closer to the customer than the warehouse, say they're "on the home stretch".
-Tone: Informed, professional, and very brief (under 30 words).
-
-TRACKING CONTEXT:
-${orderContext}`;
+    systemPrompt = `You are Trends Electronics' support assistant. Give a brief order status update using: ${orderContext}. Be under 30 words.`;
   } else if (hasTechIntent) {
-    systemPrompt = `You are Trends Electronics' elite tech concierge. 
-Goal: Provide a complete tech setup recommendation (Device + Accessories) using the PRODUCT DATA below.
-Requirement: You MUST use [PRODUCT:id] tags for every item you mention to generate interactive cards.
-Interests: Strictly align with "${interests || "None recognized"}".
-Tone: Helpful, tech-savvy, and very brief (under 30 words).
-
-MENU DATA:
-${menuText}`;
+    systemPrompt = `You are Trends Electronics' tech concierge. Recommend products from this catalog using [PRODUCT:id] tags. Interests: "${interests || "None"}". Be brief (under 30 words).\n\nCATALOG:\n${menuText}`;
   } else {
-    systemPrompt = `You are Trends Electronics' friendly AI assistant.
-Goal: Handle greetings and general chat warmly.
-Note: You don't have the product catalog open right now. If the user wants to see gadgets or the store, encourage them to ask specifically for "recommendations" or "the store".
-Tone: Professional "Trends" persona. Tech-savvy and very short (under 20 words).`;
+    systemPrompt = `You are Trends Electronics' friendly AI assistant. Handle greetings warmly. Be very short (under 20 words).`;
   }
 
-  const messages: Message[] = [
+  return chat([
     { role: "system", content: systemPrompt },
     ...history,
     { role: "user", content: userQuery },
-  ];
-
-  return chat(messages);
+  ]);
 }
