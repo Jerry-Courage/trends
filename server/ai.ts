@@ -1,13 +1,18 @@
-// All models use v1beta which supports systemInstruction
+// Model IDs exactly as they appear in Google AI Studio
+// gemma-3 models → v1beta, support systemInstruction
+// gemini-2.0 models → v1beta, support systemInstruction
 const MODELS = [
-  { id: "gemini-2.0-flash-lite", base: "https://generativelanguage.googleapis.com/v1beta/models/" },
-  { id: "gemini-2.0-flash",      base: "https://generativelanguage.googleapis.com/v1beta/models/" },
-  { id: "gemini-1.5-flash",      base: "https://generativelanguage.googleapis.com/v1beta/models/" },
-  { id: "gemini-1.5-flash-8b",   base: "https://generativelanguage.googleapis.com/v1beta/models/" },
+  { id: "gemini-2.0-flash",      base: "https://generativelanguage.googleapis.com/v1beta/models/", supportsSystemInstruction: true },
+  { id: "gemini-2.0-flash-lite", base: "https://generativelanguage.googleapis.com/v1beta/models/", supportsSystemInstruction: true },
+  { id: "gemma-3-27b-it",        base: "https://generativelanguage.googleapis.com/v1beta/models/", supportsSystemInstruction: true },
+  { id: "gemma-3-12b-it",        base: "https://generativelanguage.googleapis.com/v1beta/models/", supportsSystemInstruction: true },
+  { id: "gemma-3-4b-it",         base: "https://generativelanguage.googleapis.com/v1beta/models/", supportsSystemInstruction: true },
+  { id: "gemma-3-1b-it",         base: "https://generativelanguage.googleapis.com/v1beta/models/", supportsSystemInstruction: true },
 ];
 
 const rateLimitedUntil: Record<string, number> = {};
-const COOLDOWN_MS = 10 * 60 * 1000; // 10 minutes
+const COOLDOWN_MS = 60 * 1000;        // 1 minute cooldown for 429s
+const HARD_COOLDOWN_MS = 10 * 60 * 1000; // 10 minutes for 403/404
 
 export const WAREHOUSE_LOCATION = { lat: 5.6201, lng: -0.1740 };
 
@@ -63,12 +68,22 @@ async function chat(messages: Message[]): Promise<string> {
       console.log(`### AI Request (${model.id})`);
 
       const requestBody: any = {
-        contents,
         generationConfig: { maxOutputTokens: 300, temperature: 0.7 },
       };
 
-      if (systemText.trim()) {
+      if (model.supportsSystemInstruction && systemText.trim()) {
+        // v1beta: use systemInstruction field
         requestBody.systemInstruction = { parts: [{ text: systemText.trim() }] };
+        requestBody.contents = contents;
+      } else if (systemText.trim()) {
+        // v1: prepend system text into the first user message
+        const merged = [...contents];
+        if (merged.length > 0 && merged[0].role === "user") {
+          merged[0] = { role: "user", parts: [{ text: systemText.trim() + "\n\n" + merged[0].parts[0].text }] };
+        }
+        requestBody.contents = merged;
+      } else {
+        requestBody.contents = contents;
       }
 
       const res = await fetch(`${model.base}${model.id}:generateContent?key=${key}`, {
@@ -82,8 +97,13 @@ async function chat(messages: Message[]): Promise<string> {
         const status = res.status;
         console.warn(`### AI ${model.id} failed (${status}): ${errText.slice(0, 200)}`);
 
-        if ([429, 402, 403, 503, 404].includes(status)) {
+        if ([429, 503].includes(status)) {
           rateLimitedUntil[model.id] = Date.now() + COOLDOWN_MS;
+          lastError = new Error(`Model ${model.id} rate limited (${status})`);
+          continue;
+        }
+        if ([402, 403, 404].includes(status)) {
+          rateLimitedUntil[model.id] = Date.now() + HARD_COOLDOWN_MS;
           lastError = new Error(`Model ${model.id} unavailable (${status})`);
           continue;
         }

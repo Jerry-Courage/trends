@@ -68,8 +68,8 @@ const HomePage = () => {
   const { data: aiRecs, isLoading: aiLoading } = useQuery<AIRecommendation[]>({
     queryKey: ["/api/ai/recommendations"],
     queryFn: () => api.get("/ai/recommendations"),
-    staleTime: 5 * 60 * 1000,
-    retry: 1,
+    staleTime: 30 * 60 * 1000, // 30 min — don't hammer the free quota
+    retry: 0,
     enabled: dbItems.length > 0,
   });
 
