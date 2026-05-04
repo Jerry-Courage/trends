@@ -3,8 +3,8 @@ const BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models/";
 const MODELS = [
   "gemini-2.0-flash",
   "gemini-1.5-flash",
-  "gemini-1.5-flash-8b",
-  "gemini-1.5-pro",
+  "gemma-3-27b-it",
+  "gemma-3-12b-it",
 ];
 
 // Track rate-limited models with a cooldown timestamp
@@ -36,6 +36,7 @@ function getAvailableModels(): string[] {
 async function chat(messages: Message[]): Promise<string> {
   const key = getKey();
 
+  // Separate system messages from conversation
   let systemText = "";
   const contents: any[] = [];
 
@@ -43,22 +44,22 @@ async function chat(messages: Message[]): Promise<string> {
     if (msg.role === "system") {
       systemText += msg.content + "\n\n";
     } else if (msg.role === "user") {
-      const text = contents.length === 0 && systemText ? systemText + msg.content : msg.content;
-      contents.push({ role: "user", parts: [{ text }] });
+      contents.push({ role: "user", parts: [{ text: msg.content }] });
     } else if (msg.role === "assistant") {
       contents.push({ role: "model", parts: [{ text: msg.content }] });
     }
   }
 
-  if (contents.length === 0 && systemText) {
-    contents.push({ role: "user", parts: [{ text: systemText }] });
+  // Must have at least one user message
+  if (contents.length === 0) {
+    contents.push({ role: "user", parts: [{ text: systemText || "Hello" }] });
+    systemText = "";
   }
 
   let lastError: any = null;
   const available = getAvailableModels();
 
   if (available.length === 0) {
-    // All models are rate-limited — clear cooldowns and try again from the top
     Object.keys(rateLimitedUntil).forEach(k => delete rateLimitedUntil[k]);
     available.push(...MODELS);
   }
@@ -66,35 +67,40 @@ async function chat(messages: Message[]): Promise<string> {
   for (const modelId of available) {
     try {
       console.log(`### AI Request (${modelId})`);
+
+      const requestBody: any = {
+        contents,
+        generationConfig: {
+          maxOutputTokens: 300,
+          temperature: 0.7,
+        },
+      };
+
+      // Use systemInstruction for proper system prompt support
+      if (systemText.trim()) {
+        requestBody.systemInstruction = {
+          parts: [{ text: systemText.trim() }],
+        };
+      }
+
       const res = await fetch(`${BASE_URL}${modelId}:generateContent?key=${key}`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          contents,
-          generationConfig: {
-            maxOutputTokens: 250,
-            temperature: 0.7,
-          },
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(requestBody),
       });
 
       if (!res.ok) {
         const errText = await res.text();
         const status = res.status;
-        console.warn(`### AI ${modelId} failed (${status}): ${errText.slice(0, 200)}`);
+        console.warn(`### AI ${modelId} failed (${status}): ${errText.slice(0, 300)}`);
 
-        // Rate limited — put this model in cooldown and move to next
         if (status === 429 || status === 402 || status === 403 || status === 503 || status === 404) {
           rateLimitedUntil[modelId] = Date.now() + COOLDOWN_MS;
-          console.log(`### Model ${modelId} rate-limited or unavailable, cooling down for 10min`);
-          lastError = new Error(`Rate limited or unavailable on ${modelId}`);
+          lastError = new Error(`Model ${modelId} unavailable (${status})`);
           continue;
         }
 
-        // For other errors (5xx) just skip this model
-        lastError = new Error(`Error ${status} on ${modelId}`);
+        lastError = new Error(`Error ${status} on ${modelId}: ${errText.slice(0, 100)}`);
         continue;
       }
 
@@ -105,6 +111,8 @@ async function chat(messages: Message[]): Promise<string> {
         return content;
       }
 
+      // Log unexpected empty response
+      console.warn(`### AI ${modelId} empty response:`, JSON.stringify(data).slice(0, 200));
       lastError = new Error(`Empty response from ${modelId}`);
     } catch (err: any) {
       console.warn(`### AI ${modelId} network error:`, err.message);
@@ -113,8 +121,6 @@ async function chat(messages: Message[]): Promise<string> {
     }
   }
 
-  const errorMessage = lastError ? lastError.message : "All AI models failed";
-  console.error(`### AI_FATAL: ${errorMessage}`);
   throw lastError || new Error("All AI models failed");
 }
 
