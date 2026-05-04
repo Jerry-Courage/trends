@@ -136,6 +136,56 @@ export async function searchCJProducts(
   return { list: data.list || [], total: data.total || 0 };
 }
 
+// Fetch products by category ID (no keyword needed)
+export async function getCJProductsByCategory(
+  categoryId: string,
+  page = 1,
+  pageSize = 50
+): Promise<{ list: CJProduct[]; total: number }> {
+  const data = await cjFetch<{ list: CJProduct[]; total: number }>(
+    "/product/list",
+    {
+      params: {
+        categoryId,
+        pageNum: page,
+        pageSize: Math.min(pageSize, 200),
+        orderBy: "listedNum", // most listed = most popular
+        sort: "desc",
+      },
+    }
+  );
+  return { list: data.list || [], total: data.total || 0 };
+}
+
+// Fetch CJ category list
+export interface CJCategory {
+  categoryId: string;
+  categoryName: string;
+  categoryFirstName?: string;
+}
+
+export async function getCJCategories(): Promise<CJCategory[]> {
+  try {
+    const data = await cjFetch<any[]>("/product/getCategory");
+    // Flatten the nested category structure into a simple list
+    const flat: CJCategory[] = [];
+    for (const first of (data || [])) {
+      for (const second of (first.categoryFirstList || [])) {
+        for (const third of (second.categorySecondList || [])) {
+          flat.push({
+            categoryId: third.categoryId,
+            categoryName: third.categoryName,
+            categoryFirstName: first.categoryFirstName,
+          });
+        }
+      }
+    }
+    return flat;
+  } catch {
+    return [];
+  }
+}
+
 export async function getCJProductDetail(pid: string): Promise<CJProductDetail> {
   const data = await cjFetch<CJProductDetail>("/product/query", {
     params: { pid },

@@ -7,6 +7,8 @@ import jwt from "jsonwebtoken";
 import {
   searchCJProducts,
   getCJProductDetail,
+  getCJProductsByCategory,
+  getCJCategories,
   getCJShippingRates,
   createCJOrder,
   getCJOrderTracking,
@@ -133,7 +135,98 @@ router.post("/products/import", auth, requireRole("admin"), async (req, res) => 
   }
 });
 
-// ─── Shipping Rates ───────────────────────────────────────────────────────────
+// ─── Get CJ Categories ────────────────────────────────────────────────────────
+
+router.get("/categories", auth, requireRole("admin"), async (_req, res) => {
+  if (!isCJConfigured()) return res.status(503).json({ error: "CJ API key not configured" });
+  try {
+    const cats = await getCJCategories();
+    res.json(cats);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── Bulk Import by Category ──────────────────────────────────────────────────
+
+router.post("/products/bulk-import", auth, requireRole("admin"), async (req, res) => {
+  if (!isCJConfigured()) return res.status(503).json({ error: "CJ API key not configured" });
+
+  const { keyword, categoryId, limit = 20, markup = 30, storeCategory = "Electronics" } = req.body;
+
+  if (!keyword && !categoryId) {
+    return res.status(400).json({ error: "Either keyword or categoryId is required" });
+  }
+
+  const maxLimit = Math.min(Number(limit), 200);
+
+  try {
+    // Fetch products from CJ
+    let products: any[] = [];
+    if (categoryId) {
+      const result = await getCJProductsByCategory(categoryId, 1, maxLimit);
+      products = result.list;
+    } else {
+      const result = await searchCJProducts(keyword, 1, maxLimit);
+      products = result.list;
+    }
+
+    if (products.length === 0) {
+      return res.json({ imported: 0, skipped: 0, message: "No products found" });
+    }
+
+    let imported = 0;
+    let skipped = 0;
+    const errors: string[] = [];
+
+    for (const product of products) {
+      try {
+        const costPrice = parseFloat(product.sellPrice || "0");
+        if (costPrice <= 0) { skipped++; continue; }
+
+        const sellPrice = (costPrice * (1 + Number(markup) / 100)).toFixed(2);
+
+        // Try to get variant ID
+        let vid: string | null = null;
+        try {
+          const detail = await getCJProductDetail(product.pid);
+          if (detail.variants?.length > 0) vid = detail.variants[0].vid;
+        } catch { /* skip vid if fetch fails */ }
+
+        await storage.createMenuItem({
+          name: product.productNameEn,
+          description: `${product.productNameEn} — ${product.categoryName || storeCategory}`,
+          price: sellPrice,
+          imageUrl: product.productImage || null,
+          category: storeCategory,
+          cjPid: product.pid,
+          cjVid: vid,
+          cjCost: costPrice.toFixed(2),
+          isAvailable: 1,
+          isTop: 0,
+        });
+        imported++;
+
+        // Small delay to avoid CJ rate limits
+        await new Promise(r => setTimeout(r, 100));
+      } catch (err: any) {
+        skipped++;
+        errors.push(`${product.productNameEn}: ${err.message}`);
+      }
+    }
+
+    res.json({
+      imported,
+      skipped,
+      total: products.length,
+      message: `Imported ${imported} products${skipped > 0 ? `, skipped ${skipped}` : ""}`,
+      errors: errors.slice(0, 5), // only first 5 errors
+    });
+  } catch (err: any) {
+    console.error("Bulk import error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
 
 router.get("/shipping/rates", async (req, res) => {
   if (!isCJConfigured()) {

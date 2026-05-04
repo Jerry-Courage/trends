@@ -36,8 +36,7 @@ import {
   MapPin,
   ChevronDown,
   ChevronUp
-} from "lucide-react";
-import { 
+} from "lucide-react";import { 
   AreaChart, 
   Area, 
   XAxis, 
@@ -315,6 +314,10 @@ export default function AdminDashboard() {
   const [cjImporting, setCjImporting] = useState<string | null>(null);
   const [cjMarkup, setCjMarkup] = useState(30);
   const [cjConfigured, setCjConfigured] = useState<boolean | null>(null);
+  const [bulkImporting, setBulkImporting] = useState(false);
+  const [bulkLimit, setBulkLimit] = useState(20);
+  const [bulkCategory, setBulkCategory] = useState("Electronics");
+  const [bulkResult, setBulkResult] = useState<{ imported: number; skipped: number; message: string } | null>(null);
 
   // Orders state
   const [orderSearch, setOrderSearch] = useState("");
@@ -432,6 +435,31 @@ export default function AdminDashboard() {
       toast({ title: "CJ Search Failed", description: err.message, variant: "destructive" });
     } finally {
       setCjSearching(false);
+    }
+  };
+
+  const handleBulkImport = async () => {
+    if (!cjQuery.trim()) {
+      toast({ title: "Enter a keyword first", description: "Type what you want to bulk import (e.g. 'phone case', 'earbuds')", variant: "destructive" });
+      return;
+    }
+    setBulkImporting(true);
+    setBulkResult(null);
+    try {
+      const result = await api.post<any>("/cj/products/bulk-import", {
+        keyword: cjQuery.trim(),
+        limit: bulkLimit,
+        markup: cjMarkup,
+        storeCategory: bulkCategory,
+      });
+      setBulkResult(result);
+      queryClient.invalidateQueries({ queryKey: ["/api/menu"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/menu-items"] });
+      toast({ title: `Bulk import done!`, description: result.message });
+    } catch (err: any) {
+      toast({ title: "Bulk import failed", description: err.message, variant: "destructive" });
+    } finally {
+      setBulkImporting(false);
     }
   };
 
@@ -1249,6 +1277,52 @@ export default function AdminDashboard() {
                     className="w-16 bg-transparent text-foreground text-sm font-bold focus:outline-none text-center"
                   />
                 </div>
+              </div>
+
+              {/* Bulk Import Bar */}
+              <div className="bg-primary/5 border border-primary/20 rounded-2xl p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Download size={16} className="text-primary" />
+                  <span className="text-sm font-bold text-foreground">Bulk Import</span>
+                  <span className="text-xs text-muted-foreground">— import multiple products at once from your search keyword above</span>
+                </div>
+                <div className="flex flex-wrap gap-3 items-end">
+                  <div>
+                    <label className="text-xs text-muted-foreground font-semibold block mb-1">How many</label>
+                    <select
+                      value={bulkLimit}
+                      onChange={e => setBulkLimit(Number(e.target.value))}
+                      className="bg-card border border-border rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none"
+                    >
+                      {[10, 20, 50, 100].map(n => <option key={n} value={n}>{n} products</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground font-semibold block mb-1">Store category</label>
+                    <select
+                      value={bulkCategory}
+                      onChange={e => setBulkCategory(e.target.value)}
+                      className="bg-card border border-border rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none"
+                    >
+                      {["Phones","Laptops","Audio","Tablets","Accessories","Gaming","Wearables","Smart Home","Electronics"].map(c => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <Button
+                    onClick={handleBulkImport}
+                    disabled={bulkImporting || !cjQuery.trim()}
+                    className="h-10 px-5 rounded-xl bg-primary hover:bg-primary/90 gap-2 text-sm font-bold"
+                  >
+                    {bulkImporting ? <><Loader2 size={14} className="animate-spin" /> Importing...</> : <><Download size={14} /> Bulk Import</>}
+                  </Button>
+                </div>
+                {bulkResult && (
+                  <div className="mt-3 flex items-center gap-2 text-sm">
+                    <CheckCircle2 size={16} className="text-emerald-400" />
+                    <span className="text-emerald-400 font-semibold">{bulkResult.message}</span>
+                  </div>
+                )}
               </div>
 
               {/* Results */}
