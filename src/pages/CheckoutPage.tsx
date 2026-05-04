@@ -40,7 +40,7 @@ const CheckoutPage = () => {
   const navigate = useNavigate();
   const { items, updateQuantity, removeItem, subtotal, clearCart } = useCart();
   const { user } = useAuth();
-  const { fmt, currency } = useCurrency();
+  const { fmt, currency, rate } = useCurrency();
   const { toast } = useToast();
 
   const [paymentMethod, setPaymentMethod] = useState<"paystack" | "card">("paystack");
@@ -55,10 +55,11 @@ const CheckoutPage = () => {
   const [zip, setZip] = useState("");
   const [country, setCountry] = useState(currency.countryCode);
 
-  // Shipping is a flat rate — in a real flow you'd fetch from CJ based on cart items
-  const shippingFee = 4.99;
-  const tax = subtotal * 0.0;   // Many dropshippers don't add tax at checkout; adjust as needed
-  const total = subtotal + shippingFee + tax;
+  // All prices are in USD (CJ base currency) — convert for display using live rate
+  const shippingFee = 4.99;           // USD
+  const tax = subtotal * 0.0;
+  const total = subtotal + shippingFee + tax;  // USD total stored in DB
+  const totalLocal = total * rate;             // converted for display & payment
 
   const fullAddress = [addressLine, city, province, zip, country].filter(Boolean).join(", ");
 
@@ -104,7 +105,7 @@ const CheckoutPage = () => {
         api.post<{ accessCode: string; reference: string }>("/payments/initialize", {
           orderId: order.id,
           email: user.email,
-          amount: total.toFixed(2),
+          amount: totalLocal.toFixed(2),
         }),
       ]);
 
@@ -113,7 +114,7 @@ const CheckoutPage = () => {
       const handler = window.PaystackPop.setup({
         key: config.publicKey,
         email: user.email,
-        amount: Math.round(total * 100),
+        amount: Math.round(totalLocal * 100),
         currency: "GHS", // Paystack processes in GHS; update to your live currency when using live keys
         ref: init.reference,
         onClose: () => {
