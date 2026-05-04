@@ -1,10 +1,9 @@
-// Models with their correct API base URL
-// v1beta supports newer models; v1 supports stable 1.5 models
+// All models use v1beta which supports systemInstruction
 const MODELS = [
   { id: "gemini-2.0-flash-lite", base: "https://generativelanguage.googleapis.com/v1beta/models/" },
   { id: "gemini-2.0-flash",      base: "https://generativelanguage.googleapis.com/v1beta/models/" },
-  { id: "gemini-1.5-flash",      base: "https://generativelanguage.googleapis.com/v1/models/" },
-  { id: "gemini-1.5-flash-8b",   base: "https://generativelanguage.googleapis.com/v1/models/" },
+  { id: "gemini-1.5-flash",      base: "https://generativelanguage.googleapis.com/v1beta/models/" },
+  { id: "gemini-1.5-flash-8b",   base: "https://generativelanguage.googleapis.com/v1beta/models/" },
 ];
 
 const rateLimitedUntil: Record<string, number> = {};
