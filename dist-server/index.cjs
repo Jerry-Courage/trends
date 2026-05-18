@@ -124843,6 +124843,16 @@ var registerSchema = external_exports.object({
   address: external_exports.string().optional(),
   adminSecret: external_exports.string().optional()
 });
+router.post("/auth/check-email", async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ error: "Email is required" });
+  try {
+    const user = await storage.getUserByEmail(email.toLowerCase());
+    res.json({ exists: !!user });
+  } catch (err) {
+    res.json({ exists: false });
+  }
+});
 router.post("/auth/register", async (req, res) => {
   const result = registerSchema.safeParse(req.body);
   if (!result.success) return res.status(400).json({ error: result.error.flatten() });

@@ -3,14 +3,15 @@ import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import logo from "@/assets/logo.png";
-import { Eye, EyeOff, ArrowRight } from "lucide-react";
+import { Eye, EyeOff, ArrowLeft, Lock, Truck, CalendarCheck, ShieldCheck } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { GoogleLogin } from "@react-oauth/google";
-
-type Tab = "login" | "register";
+import { api } from "@/lib/api";
 
 const LoginPage = () => {
-  const [tab, setTab] = useState<Tab>("login");
+  const [step, setStep] = useState<1 | 2>(1);
+  const [email, setEmail] = useState("");
+  const [isExisting, setIsExisting] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -25,15 +26,14 @@ const LoginPage = () => {
   });
 
   useEffect(() => {
-    if (signupParam) setTab("register");
     if (roleParam) {
       setRegisterData(p => ({ ...p, role: roleParam }));
     } else if (isStaffMode) {
-      setRegisterData(p => ({ ...p, role: "admin" })); // default staff mode to admin in simplified roles
+      setRegisterData(p => ({ ...p, role: "admin" }));
     } else {
       setRegisterData(p => ({ ...p, role: "customer", adminSecret: "" }));
     }
-  }, [roleParam, signupParam, isStaffMode]);
+  }, [roleParam, isStaffMode]);
 
   const { user, login, register, loginWithGoogle, loading: authLoading } = useAuth();
   const navigate = useNavigate();
@@ -53,6 +53,32 @@ const LoginPage = () => {
       navigate(dest, { replace: true });
     }
   }, [user, authLoading, navigate, from]);
+
+  const handleEmailSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !email.includes("@")) {
+      toast({ title: "Invalid Email", description: "Please enter a valid email address.", variant: "destructive" });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await api.post<{ exists: boolean }>("/auth/check-email", { email });
+      setIsExisting(res.exists);
+      
+      setLoginData(p => ({ ...p, email }));
+      setRegisterData(p => ({ ...p, email }));
+      
+      setStep(2);
+    } catch (err) {
+      // Fallback: assume login
+      setIsExisting(true);
+      setLoginData(p => ({ ...p, email }));
+      setStep(2);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,224 +121,314 @@ const LoginPage = () => {
     }
   };
 
+  const handleUnsupportedSSO = (platform: string) => {
+    toast({
+      title: `${platform} Login`,
+      description: `${platform} is currently being set up. Please use Google or your Email to sign in instantly!`,
+    });
+  };
+
   return (
-    <div className="min-h-screen bg-[#0A0A0A] flex flex-col items-center px-6 py-8 overflow-y-auto overflow-x-hidden safe-top safe-bottom relative justify-center">
-      {/* Subtle Premium Gold Ambiance Glow */}
-      <div className="absolute top-0 left-0 w-full h-[40vh] bg-gradient-to-b from-amber-500/5 via-transparent to-transparent pointer-events-none" />
+    <div className="min-h-screen bg-white text-[#222] flex flex-col font-sans">
+      
+      {/* Top Header Row */}
+      <header className="w-full bg-white border-b border-[#EDEDED] px-4 md:px-8 py-3 flex items-center justify-between">
+        <div onClick={() => navigate("/")} className="flex items-center gap-2 cursor-pointer active:opacity-90">
+          <img src={logo} alt="TRENDS Logo" className="h-8 object-contain rounded-lg" />
+          <span className="text-sm font-black tracking-tight text-[#FB570B] uppercase italic">TRENDS</span>
+        </div>
+        <div className="flex items-center gap-1.5 text-[#00A854] text-xs font-bold">
+          <Lock className="w-3.5 h-3.5 fill-[#00A854]/5" />
+          <span>All data will be encrypted</span>
+        </div>
+      </header>
 
-      <motion.div 
-        initial={{ opacity: 0, y: 15 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-sm my-auto relative z-10"
-      >
-        {/* Header Branding Logo */}
-        <div className="flex flex-col items-center mb-8">
-          <motion.div 
-            whileHover={{ scale: 1.05 }}
-            className="w-20 h-20 flex items-center justify-center mb-4 p-2 bg-[#121212] border border-white/5 rounded-3xl shadow-xl"
-          >
-            <img src={logo} alt="TRENDS Logo" className="w-full h-full object-contain" />
-          </motion.div>
-          <h1 className="text-2xl font-black text-white tracking-tight uppercase italic">Welcome to TRENDS</h1>
-          <p className="text-[#A3A3A3] text-xs mt-1.5 font-semibold">Join premium electronics & worldwide custom gadget delivery</p>
+      {/* Main Core Container */}
+      <div className="flex-1 w-full max-w-[390px] mx-auto px-6 py-12 flex flex-col justify-center">
+        
+        {/* Sign in Heading block */}
+        <div className="text-center">
+          <h2 className="text-2xl font-bold tracking-tight text-[#222]">Sign in / Register</h2>
+          <div className="flex items-center justify-center gap-1 text-[#00A854] text-xs font-semibold mt-1.5">
+            <Lock className="w-3.5 h-3.5" />
+            <span>All data is safeguarded</span>
+          </div>
         </div>
 
-        {/* Tab Selection */}
-        <div className="flex bg-[#141414] p-1 rounded-2xl mb-6 border border-[#222]">
-          {(["login", "register"] as Tab[]).map(t => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={`flex-1 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300 ${
-                tab === t 
-                  ? "bg-gradient-to-r from-amber-500 to-yellow-400 text-black shadow-md" 
-                  : "text-[#737373] hover:text-white"
-              }`}
+        {/* Bullet Features Grid */}
+        <div className="grid grid-cols-2 gap-4 w-full border-b border-[#F2F2F2] pb-6 mt-6 mb-6">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-full bg-[#FAFAFA] border border-[#EDEDED] flex items-center justify-center flex-shrink-0">
+              <Truck className="w-4 h-4 text-gray-700" />
+            </div>
+            <div>
+              <p className="text-[11px] font-black text-gray-800 leading-tight">Free shipping</p>
+              <p className="text-[10px] text-gray-400 font-bold leading-normal">On all orders</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-full bg-[#FAFAFA] border border-[#EDEDED] flex items-center justify-center flex-shrink-0">
+              <CalendarCheck className="w-4 h-4 text-gray-700" />
+            </div>
+            <div>
+              <p className="text-[11px] font-black text-gray-800 leading-tight">Return within 90d</p>
+              <p className="text-[10px] text-gray-400 font-bold leading-normal">From purchase date</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Dynamic Transition Form */}
+        <AnimatePresence mode="wait">
+          {step === 1 ? (
+            <motion.form
+              key="step-1"
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 10 }}
+              transition={{ duration: 0.2 }}
+              onSubmit={handleEmailSubmit}
+              className="space-y-4 text-left"
             >
-              {t === "login" ? "Login" : "Sign up"}
-            </button>
-          ))}
-        </div>
+              <div className="space-y-2">
+                <label htmlFor="email" className="text-xs font-black text-[#222] ml-0.5">Please enter your email address</label>
+                <input
+                  id="email"
+                  type="email"
+                  required
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  placeholder="Email address"
+                  className="w-full px-4 py-3 bg-white text-black font-semibold placeholder:text-gray-400 border border-[#B3B3B3] rounded-lg focus:border-[#FB570B] focus:ring-1 focus:ring-[#FB570B] outline-none text-sm transition-all"
+                />
+              </div>
 
-        <div className="space-y-6">
-          <AnimatePresence mode="wait">
-            {tab === "login" ? (
-              <motion.form 
-                key="login-form"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onSubmit={handleLogin} 
-                className="space-y-4 text-left"
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-[#FB570B] hover:bg-[#E04B07] text-white font-black py-3.5 rounded-full shadow-md disabled:opacity-50 transition-all text-sm uppercase tracking-wider mt-4"
               >
-                <div className="space-y-3.5">
-                  <AuthInput 
-                    id="email"
-                    label="Email Address"
-                    type="email"
-                    placeholder="Enter email..."
-                    value={loginData.email}
-                    onChange={v => setLoginData(p => ({ ...p, email: v }))}
-                  />
+                {loading ? "Checking Account..." : "Continue"}
+              </button>
 
-                  <AuthInput 
-                    id="password"
-                    label="Password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Enter password..."
-                    value={loginData.password}
-                    onChange={v => setLoginData(p => ({ ...p, password: v }))}
-                    suffix={
-                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="text-[#737373] hover:text-amber-500 transition-colors">
-                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                      </button>
-                    }
-                  />
-                </div>
-
-                <motion.button
-                  whileTap={{ scale: 0.98 }}
-                  type="submit"
-                  disabled={loading}
-                  className="w-full bg-gradient-to-r from-amber-500 to-yellow-400 text-black font-black py-4 rounded-2xl shadow-xl shadow-amber-500/5 disabled:opacity-50 transition-all hover:brightness-110 active:scale-[0.99] uppercase text-xs tracking-widest mt-6"
+              <div className="text-center pt-2">
+                <button
+                  type="button"
+                  onClick={() => toast({ title: "Trouble signing in?", description: "Try signing in with Google or resetting your browser storage." })}
+                  className="text-xs text-gray-500 font-bold hover:underline"
                 >
-                  {loading ? "Verifying..." : "Sign In securely"}
-                </motion.button>
-              </motion.form>
-            ) : (
-              <motion.form 
-                key="register-form"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onSubmit={handleRegister} 
-                className="space-y-4 text-left"
-              >
-                <div className="space-y-3.5">
-                  <AuthInput 
-                    id="reg-name"
-                    label="Full Name"
-                    placeholder="Your legal name"
-                    value={registerData.name}
-                    onChange={v => setRegisterData(p => ({ ...p, name: v }))}
-                  />
-                  <AuthInput 
-                    id="reg-email"
-                    label="Email Address"
-                    type="email"
-                    placeholder="your@email.com"
-                    value={registerData.email}
-                    onChange={v => setRegisterData(p => ({ ...p, email: v }))}
-                  />
-                  <AuthInput 
-                    id="reg-password"
-                    label="Password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Minimum 6 characters"
-                    value={registerData.password}
-                    onChange={v => setRegisterData(p => ({ ...p, password: v }))}
-                    suffix={
-                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="text-[#737373] hover:text-amber-500 transition-colors">
+                  Trouble signing in?
+                </button>
+              </div>
+            </motion.form>
+          ) : (
+            <motion.form
+              key="step-2"
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -10 }}
+              transition={{ duration: 0.2 }}
+              onSubmit={isExisting ? handleLogin : handleRegister}
+              className="space-y-4 text-left"
+            >
+              {/* Back breadcrumb */}
+              <div className="flex items-center justify-between mb-2">
+                <button
+                  type="button"
+                  onClick={() => setStep(1)}
+                  className="flex items-center gap-1 text-xs text-gray-500 font-black hover:text-[#FB570B] transition-colors"
+                >
+                  <ArrowLeft size={14} /> Back
+                </button>
+                <span className="text-xs text-gray-400 font-semibold truncate max-w-[150px]">{email}</span>
+              </div>
+
+              {isExisting ? (
+                // Login Password form
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label htmlFor="pass" className="text-xs font-black text-[#222]">Please enter your password</label>
+                    <div className="relative">
+                      <input
+                        id="pass"
+                        type={showPassword ? "text" : "password"}
+                        required
+                        value={loginData.password}
+                        onChange={e => setLoginData(p => ({ ...p, password: e.target.value }))}
+                        placeholder="Password"
+                        className="w-full px-4 py-3 bg-white text-black font-semibold border border-[#B3B3B3] rounded-lg focus:border-[#FB570B] focus:ring-1 focus:ring-[#FB570B] outline-none text-sm transition-all pr-12"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black transition-colors"
+                      >
                         {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                       </button>
-                    }
-                  />
+                    </div>
+                  </div>
 
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full bg-[#FB570B] hover:bg-[#E04B07] text-white font-black py-3.5 rounded-full shadow-md disabled:opacity-50 transition-all text-sm uppercase tracking-wider mt-4"
+                  >
+                    {loading ? "Verifying Credentials..." : "Sign In"}
+                  </button>
+                </div>
+              ) : (
+                // New Account Profile Details Form
+                <div className="space-y-4">
+                  <div className="bg-[#FFF2EB] border border-[#FFDEC9] p-3.5 rounded-2xl flex items-start gap-2.5 mb-2">
+                    <ShieldCheck className="w-5 h-5 text-[#FB570B] flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-xs font-black text-[#FB570B] uppercase">Welcome to TRENDS!</p>
+                      <p className="text-[10px] text-gray-500 font-semibold leading-normal mt-0.5">Let's create your premium customer account instantly to unlock global dropshipping shipping features.</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label htmlFor="reg-name" className="text-xs font-black text-[#222]">Full Name</label>
+                    <input
+                      id="reg-name"
+                      type="text"
+                      required
+                      value={registerData.name}
+                      onChange={e => setRegisterData(p => ({ ...p, name: e.target.value }))}
+                      placeholder="Your legal name"
+                      className="w-full px-4 py-3 bg-white text-black font-semibold border border-[#B3B3B3] rounded-lg focus:border-[#FB570B] focus:ring-1 focus:ring-[#FB570B] outline-none text-sm transition-all"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label htmlFor="reg-pass" className="text-xs font-black text-[#222]">Create Password (min 6 characters)</label>
+                    <div className="relative">
+                      <input
+                        id="reg-pass"
+                        type={showPassword ? "text" : "password"}
+                        required
+                        value={registerData.password}
+                        onChange={e => setRegisterData(p => ({ ...p, password: e.target.value }))}
+                        placeholder="Password"
+                        className="w-full px-4 py-3 bg-white text-black font-semibold border border-[#B3B3B3] rounded-lg focus:border-[#FB570B] focus:ring-1 focus:ring-[#FB570B] outline-none text-sm transition-all pr-12"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black transition-colors"
+                      >
+                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Staff clearances inside register section */}
                   {(registerData.role === "admin" || isStaffMode) && (
-                    <div className="pt-4 space-y-4 border-t border-white/5">
+                    <div className="pt-4 space-y-4 border-t border-[#EDEDED] mt-2">
                       <div className="space-y-1.5">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-[#737373] ml-1.5">Staff Role Mapping</label>
+                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Staff Role Mapping</label>
                         <select
                           value={registerData.role}
                           onChange={e => setRegisterData(p => ({ ...p, role: e.target.value as any }))}
-                          className="w-full px-4 py-3.5 bg-[#121212] rounded-2xl text-white font-bold border border-[#222] focus:outline-none focus:border-amber-500/50 transition-all appearance-none text-xs"
+                          className="w-full px-4 py-3.5 bg-white rounded-xl text-black font-bold border border-[#B3B3B3] focus:outline-none focus:border-[#FB570B] transition-all text-xs"
                         >
-                          <option value="customer" className="bg-[#121212]">Customer</option>
-                          <option value="admin" className="bg-[#121212]">Admin Operations</option>
+                          <option value="customer">Customer</option>
+                          <option value="admin">Admin Operations</option>
                         </select>
                       </div>
-                      <AuthInput 
-                        id="reg-secret"
-                        label="Clearance Security Key"
-                        type="password"
-                        placeholder="Operations Secret Key..."
-                        value={registerData.adminSecret}
-                        onChange={v => setRegisterData(p => ({ ...p, adminSecret: v }))}
-                      />
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Clearance Security Key</label>
+                        <input
+                          type="password"
+                          placeholder="Operations Secret Key..."
+                          required
+                          value={registerData.adminSecret}
+                          onChange={e => setRegisterData(p => ({ ...p, adminSecret: e.target.value }))}
+                          className="w-full px-4 py-3 bg-white text-black font-semibold border border-[#B3B3B3] rounded-lg focus:border-[#FB570B] outline-none text-xs transition-all"
+                        />
+                      </div>
                     </div>
                   )}
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full bg-[#FB570B] hover:bg-[#E04B07] text-white font-black py-3.5 rounded-full shadow-md disabled:opacity-50 transition-all text-sm uppercase tracking-wider mt-4"
+                  >
+                    {loading ? "Creating Account..." : "Register & Continue"}
+                  </button>
                 </div>
+              )}
+            </motion.form>
+          )}
+        </AnimatePresence>
 
-                <motion.button
-                  whileTap={{ scale: 0.98 }}
-                  type="submit"
-                  disabled={loading}
-                  className="w-full bg-gradient-to-r from-amber-500 to-yellow-400 text-black font-black py-4 rounded-2xl shadow-xl shadow-amber-500/5 disabled:opacity-50 transition-all hover:brightness-110 uppercase text-xs tracking-widest mt-6"
-                >
-                  {loading ? "Creating Account..." : "Create Free Account"}
-                </motion.button>
-              </motion.form>
-            )}
-          </AnimatePresence>
-
-          <div className="relative flex items-center justify-center py-2">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-white/5" />
-            </div>
-            <span className="relative bg-[#0A0A0A] px-4 text-[10px] font-black uppercase tracking-widest text-[#737373]">Or continue with</span>
+        {/* SSO Social Logins Title */}
+        <div className="relative flex items-center justify-center py-5 mt-6">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t border-[#EDEDED]" />
           </div>
-
-          <div className="flex justify-center -mx-1">
-            <GoogleLogin
-              onSuccess={handleGoogleSuccess}
-              onError={() => toast({ title: "Error", description: "Google login failed", variant: "destructive" })}
-              useOneTap
-              theme="filled_black"
-              shape="pill"
-              width="100%"
-            />
-          </div>
+          <span className="relative bg-white px-4 text-xs font-semibold text-gray-400">Or continue with other ways</span>
         </div>
 
-        {/* Footer */}
-        <div className="mt-10 flex flex-col items-center gap-6">
-          <p className="text-center text-[9px] text-[#737373] tracking-wide leading-relaxed max-w-[280px] font-semibold">
-            By continuing, you agree to TRENDS Electronics' <span className="text-white border-b border-[#333] cursor-pointer hover:border-white transition-colors">Terms of Service</span> and <span className="text-white border-b border-[#333] cursor-pointer hover:border-white transition-colors">Privacy Policy</span>.
+        {/* Social SSO Buttons row */}
+        <div className="flex items-center justify-center gap-5 pt-1.5 relative">
+          
+          {/* Circular Google Button */}
+          <div className="relative w-12 h-12 flex-shrink-0">
+            <div className="w-12 h-12 rounded-full bg-white border border-[#E5E5E5] shadow-[0_2px_6px_rgba(0,0,0,0.05)] hover:bg-gray-50 flex items-center justify-center cursor-pointer active:scale-95 transition-all">
+              <svg className="w-5.5 h-5.5" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+              </svg>
+            </div>
+            
+            {/* Invisible real GoogleLogin overlay hack to keep absolute security & compliance */}
+            <div className="absolute inset-0 opacity-0 overflow-hidden cursor-pointer">
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={() => toast({ title: "Error", description: "Google login failed", variant: "destructive" })}
+                useOneTap
+                shape="circle"
+              />
+            </div>
+          </div>
+
+          {/* Circular Facebook Button */}
+          <button
+            onClick={() => handleUnsupportedSSO("Facebook")}
+            className="w-12 h-12 rounded-full bg-[#1877F2] border border-[#1877F2] shadow-[0_2px_6px_rgba(24,119,242,0.15)] flex items-center justify-center cursor-pointer hover:brightness-105 active:scale-95 transition-all"
+          >
+            <svg className="w-5.5 h-5.5 fill-white" viewBox="0 0 24 24">
+              <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+            </svg>
+          </button>
+
+          {/* Circular Apple Button */}
+          <button
+            onClick={() => handleUnsupportedSSO("Apple")}
+            className="w-12 h-12 rounded-full bg-black border border-black shadow-[0_2px_6px_rgba(0,0,0,0.15)] flex items-center justify-center cursor-pointer hover:bg-neutral-900 active:scale-95 transition-all"
+          >
+            <svg className="w-5.5 h-5.5 fill-white" viewBox="0 0 24 24">
+              <path d="M17.05 20.28c-.98.95-2.05 1.88-3.08 1.88-1.07 0-1.43-.65-2.62-.65-1.22 0-1.62.62-2.64.65-1.08.03-2.27-.99-3.27-1.95-2.03-1.97-3.59-5.55-3.59-8.91 0-5.32 3.46-8.15 6.87-8.15 1.09 0 2.1.66 2.76.66.65 0 1.9-.81 3.25-.81 1.41 0 2.69.51 3.49 1.55-2.88 1.73-2.42 5.72.96 7.1-1.04 2.51-2.93 5.73-3.94 6.78zM14.93 3.56c.86-1.05 1.43-2.5 1.27-3.56-.97.04-2.15.65-2.85 1.47-.61.71-1.14 2.19-.98 3.22 1.08.08 2.18-.54 2.56-1.13z" />
+            </svg>
+          </button>
+
+        </div>
+
+        {/* Footer Policy agreement */}
+        <div className="mt-8 flex flex-col items-center">
+          <p className="text-center text-[10px] text-gray-400 font-bold max-w-[290px] leading-relaxed">
+            By continuing, you agree to our{" "}
+            <span className="text-[#222] underline cursor-pointer hover:text-black">Terms of Use</span> and{" "}
+            <span className="text-[#222] underline cursor-pointer hover:text-black">Privacy Policy</span>.
           </p>
         </div>
-      </motion.div>
+
+      </div>
     </div>
   );
 };
-
-const AuthInput = ({ id, label, type = "text", placeholder, value, onChange, suffix }: { 
-  id: string; 
-  label: string; 
-  type?: string; 
-  placeholder: string; 
-  value: string; 
-  onChange: (v: string) => void;
-  suffix?: React.ReactNode;
-}) => (
-  <div className="space-y-1.5">
-    <label htmlFor={id} className="text-[10px] font-black uppercase tracking-widest text-[#737373] ml-1.5">{label}</label>
-    <div className="relative">
-      <input
-        id={id}
-        type={type}
-        required
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        placeholder={placeholder}
-        className="w-full px-4 py-3.5 bg-[#121212] rounded-2xl text-white font-bold placeholder:text-[#404040] border border-[#222] focus:border-amber-500/50 focus:bg-[#141414] transition-all duration-300 text-xs tracking-wider outline-none"
-      />
-      {suffix && (
-        <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center justify-center">
-          {suffix}
-        </div>
-      )}
-    </div>
-  </div>
-);
 
 export default LoginPage;

@@ -416,7 +416,7 @@ const CheckoutPage = () => {
       </div>
 
       {/* Bottom Sticky Action CTAs bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-[#0E0E0E] border-t border-[#1A1A1A] px-4 py-4 z-40 shadow-2xl safe-bottom">
+      <div className="fixed bottom-4 left-4 right-4 md:bottom-6 md:left-1/2 md:-translate-x-1/2 md:w-full md:max-w-2xl bg-[#0E0E0E] border border-[#1A1A1A] px-5 py-3.5 z-40 shadow-2xl rounded-3xl">
         <div className="max-w-5xl mx-auto flex items-center justify-between gap-4">
           <button 
             onClick={() => navigate(-1)} 

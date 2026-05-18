@@ -266,7 +266,7 @@ const ItemDetailPage = () => {
       </div>
 
       {/* Secure Quick-Cart Add Drawer */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#EDEDED] px-4 py-4 z-45 shadow-2xl safe-bottom">
+      <div className="fixed bottom-4 left-4 right-4 md:bottom-6 md:left-1/2 md:-translate-x-1/2 md:w-full md:max-w-2xl bg-white border border-[#EDEDED] px-5 py-3.5 z-45 shadow-2xl rounded-3xl">
         <div className="max-w-5xl mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 bg-[#FAFAFA] border border-[#EDEDED] rounded-2xl p-0.5">
             <button 
