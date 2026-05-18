@@ -6,7 +6,6 @@ import { api } from "@/lib/api";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import { useCurrency } from "@/context/CurrencyContext";
-import promoCombo from "@/assets/sony_tv_bundle_1777553396955.png";
 import logo from "@/assets/logo.png";
 import ThemeToggle from "@/components/ThemeToggle";
 import { useToast } from "@/hooks/use-toast";
@@ -396,26 +395,6 @@ function normalizeCategory(category: string): string {
         </div>
       </header>
 
-      {/* HERO HERO PROMOTIONAL SLIDER BANNER */}
-      <div className="max-w-7xl mx-auto px-4 mt-5">
-        <div 
-          onClick={() => navigate("/menu")}
-          className="relative bg-gradient-to-r from-[#FFF5F0] via-white to-[#FFF9F6] border border-[#FFDEC9] rounded-3xl p-5 overflow-hidden shadow flex items-center cursor-pointer group justify-between"
-        >
-          <div className="text-left min-w-0 pr-4">
-            <span className="bg-[#FB570B]/10 border border-[#FB570B]/20 text-[#FB570B] text-[9px] font-black uppercase px-2.5 py-0.5 rounded-full tracking-widest">LAUNCH PROMO</span>
-            <h2 className="text-xl md:text-2xl font-black tracking-tight text-[#222] uppercase mt-3 leading-tight">PREMIUM SOUNDS BUNDLE</h2>
-            <p className="text-xs md:text-sm text-gray-500 mt-1 font-semibold">Use code <span className="text-[#FB570B] font-extrabold uppercase">TRENDS10</span> at checkout to get 10% off instantly!</p>
-            <div className="flex items-center gap-1.5 mt-4">
-              <span className="text-xs md:text-sm font-black text-[#FB570B]">Claim offer</span>
-              <ChevronRight className="w-4 h-4 text-[#FB570B] group-hover:translate-x-0.5 transition-transform" />
-            </div>
-          </div>
-          <div className="w-24 h-24 md:w-32 md:h-32 flex-shrink-0 flex items-center justify-center relative">
-            <img src={promoCombo} alt="Sony Bundle" className="w-full h-full object-contain drop-shadow" />
-          </div>
-        </div>
-      </div>
 
       {/* CATEGORY NAV STRIP */}
       <div className="max-w-7xl mx-auto mt-6">
