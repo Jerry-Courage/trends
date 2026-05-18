@@ -101,6 +101,91 @@ const HomePage = () => {
 
   const lastOrder = myOrders[0] ?? null;
 
+function normalizeCategory(category: string): string {
+  const cat = category.toLowerCase().trim();
+  
+  if (
+    cat.includes("fashion") ||
+    cat.includes("apparel") ||
+    cat.includes("suits") ||
+    cat.includes("dresses") ||
+    cat.includes("clothing") ||
+    cat.includes("wear") ||
+    cat.includes("shoes") ||
+    cat.includes("jewelry") ||
+    cat.includes("bracelets") ||
+    cat.includes("necklaces") ||
+    cat.includes("earrings") ||
+    cat.includes("bangles") ||
+    cat.includes("bags") ||
+    cat.includes("watches") ||
+    cat.includes("accessories")
+  ) {
+    return "Fashion & Apparel";
+  }
+  
+  if (
+    cat.includes("home") ||
+    cat.includes("kitchen") ||
+    cat.includes("furniture") ||
+    cat.includes("decor") ||
+    cat.includes("garden") ||
+    cat.includes("household")
+  ) {
+    return "Home & Kitchen";
+  }
+  
+  if (
+    cat.includes("electron") ||
+    cat.includes("phone") ||
+    cat.includes("computer") ||
+    cat.includes("audio") ||
+    cat.includes("earbud") ||
+    cat.includes("headphone") ||
+    cat.includes("camera") ||
+    cat.includes("device") ||
+    cat.includes("tablet") ||
+    cat.includes("laptop") ||
+    cat.includes("wearable") ||
+    cat.includes("smartwatch")
+  ) {
+    return "Electronics";
+  }
+  
+  if (
+    cat.includes("beauty") ||
+    cat.includes("care") ||
+    cat.includes("cosmetic") ||
+    cat.includes("makeup") ||
+    cat.includes("personal") ||
+    cat.includes("health")
+  ) {
+    return "Beauty & Care";
+  }
+  
+  if (
+    cat.includes("sport") ||
+    cat.includes("outdoor") ||
+    cat.includes("fitness") ||
+    cat.includes("camp") ||
+    cat.includes("exercise")
+  ) {
+    return "Sports & Outdoors";
+  }
+  
+  if (
+    cat.includes("toy") ||
+    cat.includes("hobby") ||
+    cat.includes("game") ||
+    cat.includes("kid") ||
+    cat.includes("baby")
+  ) {
+    return "Toys & Hobbies";
+  }
+  
+  return category;
+}
+
   const menuItems = dbItems.map(item => ({
     id: String(item.id),
     name: item.name,
@@ -109,7 +194,7 @@ const HomePage = () => {
     image: item.imageUrl || "",
     specs: item.specs ?? undefined,
     tags: item.tags ? JSON.parse(item.tags) : undefined,
-    category: item.category,
+    category: normalizeCategory(item.category),
     rating: item.rating ? parseFloat(item.rating) : undefined,
     isTop: item.isTop === 1,
   }));
@@ -191,7 +276,7 @@ const HomePage = () => {
                   {categories.map(cat => (
                     <div 
                       key={cat.label}
-                      onClick={() => navigate(`/menu?cat=${cat.label}`)}
+                      onClick={() => navigate(`/menu?cat=${encodeURIComponent(cat.label)}`)}
                       className="px-4 py-2 hover:bg-[#F7F7F7] text-xs font-bold text-[#444] flex items-center gap-2"
                     >
                       <span>{cat.icon}</span>
@@ -342,7 +427,7 @@ const HomePage = () => {
           {categories.map(cat => (
             <button 
               key={cat.label} 
-              onClick={() => navigate(`/menu?cat=${cat.label}`)}
+              onClick={() => navigate(`/menu?cat=${encodeURIComponent(cat.label)}`)}
               className="flex items-center gap-2 bg-white border border-[#EBEBEB] hover:border-gray-300 px-5 py-3 rounded-2xl transition-all flex-shrink-0 shadow-sm"
             >
               <span className="text-lg">{cat.icon}</span>

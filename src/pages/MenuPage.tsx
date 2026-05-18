@@ -26,6 +26,91 @@ interface DBMenuItem {
   isAvailable: number | null;
 }
 
+function normalizeCategory(category: string): string {
+  const cat = category.toLowerCase().trim();
+  
+  if (
+    cat.includes("fashion") ||
+    cat.includes("apparel") ||
+    cat.includes("suits") ||
+    cat.includes("dresses") ||
+    cat.includes("clothing") ||
+    cat.includes("wear") ||
+    cat.includes("shoes") ||
+    cat.includes("jewelry") ||
+    cat.includes("bracelets") ||
+    cat.includes("necklaces") ||
+    cat.includes("earrings") ||
+    cat.includes("bangles") ||
+    cat.includes("bags") ||
+    cat.includes("watches") ||
+    cat.includes("accessories")
+  ) {
+    return "Fashion & Apparel";
+  }
+  
+  if (
+    cat.includes("home") ||
+    cat.includes("kitchen") ||
+    cat.includes("furniture") ||
+    cat.includes("decor") ||
+    cat.includes("garden") ||
+    cat.includes("household")
+  ) {
+    return "Home & Kitchen";
+  }
+  
+  if (
+    cat.includes("electron") ||
+    cat.includes("phone") ||
+    cat.includes("computer") ||
+    cat.includes("audio") ||
+    cat.includes("earbud") ||
+    cat.includes("headphone") ||
+    cat.includes("camera") ||
+    cat.includes("device") ||
+    cat.includes("tablet") ||
+    cat.includes("laptop") ||
+    cat.includes("wearable") ||
+    cat.includes("smartwatch")
+  ) {
+    return "Electronics";
+  }
+  
+  if (
+    cat.includes("beauty") ||
+    cat.includes("care") ||
+    cat.includes("cosmetic") ||
+    cat.includes("makeup") ||
+    cat.includes("personal") ||
+    cat.includes("health")
+  ) {
+    return "Beauty & Care";
+  }
+  
+  if (
+    cat.includes("sport") ||
+    cat.includes("outdoor") ||
+    cat.includes("fitness") ||
+    cat.includes("camp") ||
+    cat.includes("exercise")
+  ) {
+    return "Sports & Outdoors";
+  }
+  
+  if (
+    cat.includes("toy") ||
+    cat.includes("hobby") ||
+    cat.includes("game") ||
+    cat.includes("kid") ||
+    cat.includes("baby")
+  ) {
+    return "Toys & Hobbies";
+  }
+  
+  return category;
+}
+
 function dbToCart(item: DBMenuItem): CartMenuItem {
   return {
     id: String(item.id),
@@ -35,7 +120,7 @@ function dbToCart(item: DBMenuItem): CartMenuItem {
     image: item.imageUrl || "",
     specs: item.specs ?? undefined,
     tags: item.tags ? JSON.parse(item.tags) : undefined,
-    category: item.category,
+    category: normalizeCategory(item.category),
     rating: item.rating ? parseFloat(item.rating) : undefined,
     reviews: item.reviews ?? undefined,
     isTop: item.isTop === 1,
@@ -59,7 +144,7 @@ const MenuPage = () => {
   });
 
   const menuItems = dbItems.map(dbToCart);
-  const categories = ["All", ...Array.from(new Set(dbItems.map(i => i.category)))];
+  const categories = ["All", ...Array.from(new Set(menuItems.map(i => i.category)))];
   const filtered = activeCategory === "All" ? menuItems : menuItems.filter(i => i.category === activeCategory);
 
   const handleAddToCart = (e: React.MouseEvent, item: CartMenuItem) => {
