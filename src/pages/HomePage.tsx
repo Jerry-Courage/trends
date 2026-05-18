@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Search, Bell, ChevronRight, Plus, Sparkles, Globe, Clock, Gift, ShoppingBag, Compass, Star } from "lucide-react";
+import { Search, Bell, ChevronRight, Plus, Sparkles, Globe, Clock, Gift, ShoppingBag, Compass, Star, ChevronDown, List, User, ShoppingCart, HelpCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
@@ -61,10 +61,11 @@ interface Order {
 const HomePage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { addItem } = useCart();
+  const { items, addItem, totalItems } = useCart();
   const { fmt, currency } = useCurrency();
   const { toast } = useToast();
   const [isAIChatOpen, setIsAIChatOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Animated Search Placeholder index
   const [searchIndex, setSearchIndex] = useState(0);
@@ -72,25 +73,6 @@ const HomePage = () => {
     const timer = setInterval(() => {
       setSearchIndex(prev => (prev + 1) % searchPlaceholders.length);
     }, 3200);
-    return () => clearInterval(timer);
-  }, []);
-
-  // Flash sales real countdown timer
-  const [timeLeft, setTimeLeft] = useState({ hours: 2, minutes: 44, seconds: 12 });
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev.seconds > 0) {
-          return { ...prev, seconds: prev.seconds - 1 };
-        } else if (prev.minutes > 0) {
-          return { ...prev, minutes: prev.minutes - 1, seconds: 59 };
-        } else if (prev.hours > 0) {
-          return { hours: prev.hours - 1, minutes: 59, seconds: 59 };
-        } else {
-          return { hours: 2, minutes: 59, seconds: 59 }; // reset loop
-        }
-      });
-    }, 1000);
     return () => clearInterval(timer);
   }, []);
 
@@ -139,178 +121,240 @@ const HomePage = () => {
         .filter((item): item is (typeof menuItems[0] & { reason: string }) => item !== null)
     : [];
 
-  const flashSaleItems = menuItems.filter(item => item.isTop).slice(0, 3);
-  const regularItems = menuItems.filter(item => !item.isTop);
-
   const handleAddToCart = (e: React.MouseEvent, item: typeof menuItems[0]) => {
     e.stopPropagation();
     addItem(item);
     toast({
       title: "Added to Cart! 🛒",
-      description: `${item.name} successfully updated in your drawer.`,
+      description: `${item.name} successfully updated.`,
     });
   };
 
-  return (
-    <div className="pb-28 bg-[#0A0A0A] text-white min-h-screen relative overflow-x-hidden font-sans">
-      {/* Subtle Premium Gold Gradient Glow */}
-      <div className="absolute top-0 left-0 w-full h-[50vh] bg-gradient-to-b from-amber-500/5 via-transparent to-transparent pointer-events-none" />
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/menu?search=${encodeURIComponent(searchQuery)}`);
+    } else {
+      navigate("/menu");
+    }
+  };
 
-      {/* HEADER SECTION */}
-      <header className="sticky top-0 bg-[#0A0A0A]/90 backdrop-blur-md z-40 border-b border-[#1C1C1C] px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 overflow-hidden flex items-center justify-center p-1 bg-[#121212] border border-white/5 rounded-xl shadow-lg">
-            <img src={logo} alt="TRENDS Logo" className="w-full h-full object-contain" />
+  return (
+    <div className="pb-28 bg-[#F7F7F7] text-[#222222] min-h-screen relative overflow-x-hidden font-sans">
+      
+      {/* 1. DESKTOP VIEW PROMOTION BLACK TOP BAR */}
+      <div className="hidden md:block bg-black text-white text-[11px] font-semibold py-2 px-6">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-1.5 text-emerald-400">
+            <span className="text-sm">🚚</span>
+            <span className="font-bold text-white">Free shipping on all orders</span>
+            <span className="text-gray-400 font-medium">Limited-time offer</span>
           </div>
-          <div>
-            <h1 className="text-sm font-black uppercase tracking-widest leading-none text-white italic">TRENDS</h1>
-            <p className="text-[9px] text-[#A3A3A3] font-bold uppercase tracking-wider mt-0.5">Electronics Store</p>
+          <div className="flex items-center gap-1.5">
+            <span className="text-amber-400 text-sm">🪙</span>
+            <span className="font-bold">Price adjustment</span>
+            <span className="text-gray-400 font-medium">Within 30 days</span>
+          </div>
+          <div className="flex items-center gap-1.5 text-gray-300">
+            <span>📱</span>
+            <span className="font-bold hover:underline cursor-pointer">Get the TRENDS App</span>
           </div>
         </div>
+      </div>
 
-        <div className="flex items-center gap-2">
-          {/* Active currency identifier indicator badge */}
-          <div className="flex items-center gap-1 bg-[#121212] border border-[#222] px-2 py-1 rounded-full text-[10px] font-black uppercase tracking-wider text-amber-500">
-            <Globe className="w-3.5 h-3.5" />
-            {currency.code}
+      {/* 2. DESKTOP VIEW WHITE MAIN HEADER PANEL */}
+      <header className="hidden md:block bg-white border-b border-[#EDEDED] sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between gap-6">
+          
+          {/* Brand branding */}
+          <div className="flex items-center gap-4 flex-shrink-0">
+            <div 
+              onClick={() => navigate("/home")}
+              className="flex items-center gap-2 cursor-pointer"
+            >
+              {/* Premium stylized orange logo container like Temu screenshot */}
+              <div className="bg-[#FB570B] text-white font-black text-lg p-2.5 rounded-2xl shadow-md flex items-center justify-center leading-none">
+                TRENDS
+              </div>
+            </div>
+            
+            {/* Left navigation links */}
+            <div className="flex items-center gap-4 text-xs font-bold text-[#222] ml-2">
+              <button onClick={() => navigate("/menu?filter=best")} className="hover:text-[#FB570B] transition-colors flex items-center gap-1">⭐ Best-Selling Items</button>
+              <button onClick={() => navigate("/menu?filter=top")} className="hover:text-[#FB570B] transition-colors flex items-center gap-1">🔥 5-Star Rated</button>
+              <button onClick={() => navigate("/menu")} className="hover:text-[#FB570B] transition-colors flex items-center gap-1">New In</button>
+              <div className="relative group cursor-pointer py-1">
+                <span className="hover:text-[#FB570B] flex items-center gap-0.5">Categories <ChevronDown className="w-3 h-3" /></span>
+                <div className="absolute top-full left-0 bg-white border border-[#EDEDED] shadow-xl rounded-xl py-2 w-44 hidden group-hover:block z-50 mt-1">
+                  {categories.map(cat => (
+                    <div 
+                      key={cat.label}
+                      onClick={() => navigate(`/menu?cat=${cat.label}`)}
+                      className="px-4 py-2 hover:bg-[#F7F7F7] text-xs font-bold text-[#444] flex items-center gap-2"
+                    >
+                      <span>{cat.icon}</span>
+                      <span>{cat.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
-          <ThemeToggle />
-          <button onClick={() => navigate("/profile")} className="w-9 h-9 bg-gradient-to-br from-amber-500 to-yellow-400 rounded-full flex items-center justify-center border border-amber-500/20 shadow-md">
-            <span className="text-xs font-black text-black">{user ? user.name.charAt(0).toUpperCase() : "?"}</span>
+
+          {/* Large Center Search Drawer */}
+          <form onSubmit={handleSearchSubmit} className="flex-1 max-w-xl">
+            <div className="relative flex items-center border-2 border-[#222] rounded-full overflow-hidden bg-white hover:border-[#FB570B] transition-colors">
+              <input
+                type="text"
+                placeholder={searchPlaceholders[searchIndex]}
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="w-full pl-6 pr-12 py-2.5 text-sm font-semibold text-[#222] outline-none placeholder:text-[#888]"
+              />
+              <button 
+                type="submit"
+                className="absolute right-1 w-9 h-9 bg-black hover:bg-[#FB570B] rounded-full flex items-center justify-center text-white transition-colors"
+              >
+                <Search className="w-4 h-4" />
+              </button>
+            </div>
+          </form>
+
+          {/* Right actions */}
+          <div className="flex items-center gap-6 text-xs font-bold text-[#222] flex-shrink-0">
+            <div 
+              onClick={() => navigate("/profile")}
+              className="flex items-center gap-2 cursor-pointer hover:text-[#FB570B] transition-colors"
+            >
+              <User className="w-5 h-5 text-gray-700" />
+              <div className="text-left leading-tight">
+                <p className="text-[10px] text-gray-400 font-medium">Hello, {user ? user.name.split(" ")[0] : "Sign in"}</p>
+                <p className="font-bold text-[#222]">Orders & Account</p>
+              </div>
+            </div>
+
+            <div 
+              onClick={() => setIsAIChatOpen(true)}
+              className="flex items-center gap-1.5 cursor-pointer hover:text-[#FB570B] transition-colors"
+            >
+              <HelpCircle className="w-5 h-5 text-gray-700" />
+              <span>Support</span>
+            </div>
+
+            <div 
+              onClick={() => navigate("/checkout")}
+              className="relative flex items-center gap-1 cursor-pointer hover:text-[#FB570B] transition-colors"
+            >
+              <ShoppingCart className="w-5 h-5 text-gray-700" />
+              {totalItems > 0 && (
+                <span className="absolute -top-2.5 -right-2 bg-[#FB570B] text-white text-[9px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center shadow">
+                  {totalItems}
+                </span>
+              )}
+            </div>
+
+            {/* Currency Badging */}
+            <div className="flex items-center gap-1 bg-[#F5F5F5] border border-[#EBEBEB] px-2.5 py-1.5 rounded-full text-[10px] font-black text-[#555] tracking-wider uppercase">
+              🌐 {currency.code}
+            </div>
+          </div>
+
+        </div>
+      </header>
+
+      {/* 3. MOBILE VIEW MAIN HEADER PANEL */}
+      <header className="md:hidden bg-white border-b border-[#EDEDED] px-3.5 py-2.5 sticky top-0 z-50 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          {/* Logo / Text */}
+          <span 
+            onClick={() => navigate("/home")}
+            className="text-lg font-black tracking-tight text-[#FB570B] uppercase italic cursor-pointer"
+          >
+            TRENDS
+          </span>
+        </div>
+
+        {/* Center Search Input */}
+        <form onSubmit={handleSearchSubmit} className="flex-1">
+          <div className="relative flex items-center bg-[#F2F2F2] rounded-full px-3 py-1.5">
+            <Search className="w-3.5 h-3.5 text-gray-400 mr-2 flex-shrink-0" />
+            <input
+              type="text"
+              placeholder="Search..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="w-full bg-transparent text-xs font-bold text-[#222] outline-none placeholder:text-gray-400"
+            />
+          </div>
+        </form>
+
+        {/* Right Navigation Controls */}
+        <div className="flex items-center gap-3">
+          <button onClick={() => navigate("/menu")} className="text-gray-700 hover:text-[#FB570B] p-1">
+            <List className="w-4.5 h-4.5" />
+          </button>
+          <button onClick={() => navigate("/profile")} className="text-gray-700 hover:text-[#FB570B] p-1">
+            <User className="w-4.5 h-4.5" />
+          </button>
+          <button onClick={() => navigate("/checkout")} className="relative text-gray-700 hover:text-[#FB570B] p-1">
+            <ShoppingCart className="w-4.5 h-4.5" />
+            {totalItems > 0 && (
+              <span className="absolute -top-1.5 -right-1 bg-[#FB570B] text-white text-[8px] font-black w-3.5 h-3.5 rounded-full flex items-center justify-center">
+                {totalItems}
+              </span>
+            )}
           </button>
         </div>
       </header>
 
-      {/* STICKY SEARCH RECOMMENDATION */}
-      <div className="px-4 mt-4">
-        <div 
-          onClick={() => navigate("/menu")} 
-          className="w-full flex items-center gap-3 bg-[#121212] border border-[#222] hover:border-[#333] rounded-2xl px-4 py-3.5 cursor-pointer shadow-md transition-all group"
-        >
-          <Search className="w-4.5 h-4.5 text-[#737373] group-hover:text-amber-500 transition-colors" />
-          <div className="flex-1 text-left relative h-5 overflow-hidden">
-            <AnimatePresence mode="wait">
-              <motion.span 
-                key={searchIndex}
-                initial={{ y: 15, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: -15, opacity: 0 }}
-                transition={{ duration: 0.35 }}
-                className="absolute left-0 text-xs font-bold text-[#737373] block truncate"
-              >
-                {searchPlaceholders[searchIndex]}
-              </motion.span>
-            </AnimatePresence>
-          </div>
-          <span className="text-[10px] font-black uppercase tracking-wider text-amber-500 bg-amber-500/10 px-2.5 py-1 rounded-lg">Browse</span>
-        </div>
-      </div>
-
-      {/* HERO PROMOTIONAL BANNER */}
-      <div className="px-4 mt-5">
+      {/* HERO HERO PROMOTIONAL SLIDER BANNER */}
+      <div className="max-w-7xl mx-auto px-4 mt-5">
         <div 
           onClick={() => navigate("/menu")}
-          className="relative bg-gradient-to-r from-neutral-900 via-black to-[#231A05] border border-[#3A290C] rounded-3xl p-5 overflow-hidden shadow-2xl flex items-center cursor-pointer group"
+          className="relative bg-gradient-to-r from-[#FFF5F0] via-white to-[#FFF9F6] border border-[#FFDEC9] rounded-3xl p-5 overflow-hidden shadow flex items-center cursor-pointer group justify-between"
         >
-          <div className="flex-1 z-10 text-left min-w-0 pr-4">
-            <span className="bg-amber-500/10 border border-amber-500/20 text-amber-500 text-[8px] font-black uppercase px-2 py-0.5 rounded-full tracking-widest">LAUNCH PROMO</span>
-            <h2 className="text-lg font-black tracking-tight text-white uppercase italic mt-2 leading-tight">PREMIUM SOUNDS BUNDLE</h2>
-            <p className="text-xs text-[#A3A3A3] mt-1 font-bold">Use code <span className="text-amber-500 font-extrabold uppercase">TRENDS10</span> at checkout to get 10% off instantly!</p>
-            <div className="flex items-center gap-1.5 mt-3">
-              <span className="text-sm font-black text-amber-400">Claim offer</span>
-              <ChevronRight className="w-4 h-4 text-amber-500 group-hover:translate-x-0.5 transition-transform" />
+          <div className="text-left min-w-0 pr-4">
+            <span className="bg-[#FB570B]/10 border border-[#FB570B]/20 text-[#FB570B] text-[9px] font-black uppercase px-2.5 py-0.5 rounded-full tracking-widest">LAUNCH PROMO</span>
+            <h2 className="text-xl md:text-2xl font-black tracking-tight text-[#222] uppercase mt-3 leading-tight">PREMIUM SOUNDS BUNDLE</h2>
+            <p className="text-xs md:text-sm text-gray-500 mt-1 font-semibold">Use code <span className="text-[#FB570B] font-extrabold uppercase">TRENDS10</span> at checkout to get 10% off instantly!</p>
+            <div className="flex items-center gap-1.5 mt-4">
+              <span className="text-xs md:text-sm font-black text-[#FB570B]">Claim offer</span>
+              <ChevronRight className="w-4 h-4 text-[#FB570B] group-hover:translate-x-0.5 transition-transform" />
             </div>
           </div>
-          <div className="w-24 h-24 flex-shrink-0 flex items-center justify-center relative">
-            <img src={promoCombo} alt="Sony Bundle" className="w-full h-full object-contain drop-shadow-xl" />
+          <div className="w-24 h-24 md:w-32 md:h-32 flex-shrink-0 flex items-center justify-center relative">
+            <img src={promoCombo} alt="Sony Bundle" className="w-full h-full object-contain drop-shadow" />
           </div>
         </div>
       </div>
 
       {/* CATEGORY NAV STRIP */}
-      <div className="mt-6">
+      <div className="max-w-7xl mx-auto mt-6">
         <div className="flex items-center justify-between px-4 mb-3">
-          <h2 className="text-xs font-black uppercase tracking-widest text-[#737373] text-left">Top Categories</h2>
-          <button onClick={() => navigate("/menu")} className="text-[10px] text-amber-500 font-black uppercase tracking-wider flex items-center gap-0.5 hover:underline">Explore all <ChevronRight className="w-3.5 h-3.5" /></button>
+          <h2 className="text-xs font-black uppercase tracking-widest text-gray-400 text-left">Top Categories</h2>
+          <button onClick={() => navigate("/menu")} className="text-[10px] text-[#FB570B] font-black uppercase tracking-wider flex items-center gap-0.5 hover:underline">Explore all <ChevronRight className="w-3.5 h-3.5" /></button>
         </div>
         <div className="flex gap-3 overflow-x-auto px-4 pb-2 scrollbar-none">
           {categories.map(cat => (
             <button 
               key={cat.label} 
               onClick={() => navigate(`/menu?cat=${cat.label}`)}
-              className="flex items-center gap-2 bg-[#121212] border border-[#222] hover:border-[#333] px-4.5 py-3 rounded-2xl transition-all flex-shrink-0 shadow-sm"
+              className="flex items-center gap-2 bg-white border border-[#EBEBEB] hover:border-gray-300 px-5 py-3 rounded-2xl transition-all flex-shrink-0 shadow-sm"
             >
               <span className="text-lg">{cat.icon}</span>
-              <span className="text-xs font-black uppercase tracking-wider text-white">{cat.label}</span>
+              <span className="text-xs font-black uppercase tracking-wider text-[#222]">{cat.label}</span>
             </button>
           ))}
         </div>
       </div>
 
-      {/* REAL-TIME ticking FLASH SALES SECTION */}
-      {flashSaleItems.length > 0 && (
-        <div className="mt-6 px-4">
-          <div className="bg-[#121212] border border-[#222] rounded-3xl p-4.5 shadow-lg">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2 text-left">
-                <span className="text-lg">⚡</span>
-                <div>
-                  <h3 className="text-xs font-black uppercase tracking-widest text-white">Flash Deals</h3>
-                  <p className="text-[9px] text-[#A3A3A3] font-bold uppercase tracking-wider mt-0.5">High conversion sales</p>
-                </div>
-              </div>
-              
-              {/* COUNTDOWN TILES */}
-              <div className="flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5 text-amber-500" />
-                <span className="bg-[#1C1C1C] border border-[#333] text-white text-[10px] font-black px-1.5 py-0.5 rounded-md">{String(timeLeft.hours).padStart(2, '0')}</span>
-                <span className="text-xs text-[#737373] font-bold">:</span>
-                <span className="bg-[#1C1C1C] border border-[#333] text-white text-[10px] font-black px-1.5 py-0.5 rounded-md">{String(timeLeft.minutes).padStart(2, '0')}</span>
-                <span className="text-xs text-[#737373] font-bold">:</span>
-                <span className="bg-[#1C1C1C] border border-[#333] text-white text-[10px] font-black px-1.5 py-0.5 rounded-md">{String(timeLeft.seconds).padStart(2, '0')}</span>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-3">
-              {flashSaleItems.map(item => (
-                <div 
-                  key={item.id} 
-                  onClick={() => navigate(`/item/${item.id}`)}
-                  className="bg-[#1A1A1A] border border-[#222] hover:border-white/5 rounded-2xl p-2 cursor-pointer shadow-md text-left transition-all relative"
-                >
-                  <div className="absolute top-1 left-1 bg-amber-500 text-black text-[7px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-wider">
-                    SALE
-                  </div>
-                  {item.image ? (
-                    <img src={item.image} alt={item.name} className="w-full h-16 rounded-xl object-cover border border-white/5" />
-                  ) : (
-                    <div className="w-full h-16 bg-[#222] rounded-xl flex items-center justify-center text-xl">💻</div>
-                  )}
-                  <h4 className="text-[10px] font-black uppercase text-white truncate mt-2 leading-tight">{item.name}</h4>
-                  <div className="flex items-center justify-between mt-1">
-                    <span className="text-[10px] font-black text-amber-400">{fmt(item.price)}</span>
-                    <span className="text-[8px] text-[#737373] line-through font-extrabold">{fmt(item.price * 1.35)}</span>
-                  </div>
-                  
-                  {/* Stock sold progress bar */}
-                  <div className="mt-2 h-1 bg-[#2C2C2C] rounded-full overflow-hidden">
-                    <div className="h-full bg-amber-500 rounded-full w-4/5" />
-                  </div>
-                  <p className="text-[7px] text-[#A3A3A3] font-black uppercase mt-1">79% Claimed</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* DYNAMIC AI RECOMMENDATIONS */}
       {recommendedItems.length > 0 && (
-        <div className="mt-6 px-4">
-          <div className="flex items-center justify-between mb-3.5">
+        <div className="max-w-7xl mx-auto mt-6 px-4">
+          <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-1.5 text-left">
-              <Sparkles className="w-4.5 h-4.5 text-amber-500" />
-              <h2 className="text-xs font-black uppercase tracking-widest text-[#737373]">Smart AI Recs</h2>
+              <Sparkles className="w-4.5 h-4.5 text-[#FB570B] animate-pulse" />
+              <h2 className="text-xs font-black uppercase tracking-widest text-gray-400">Smart AI Recommendations</h2>
             </div>
           </div>
 
@@ -319,31 +363,28 @@ const HomePage = () => {
               <div 
                 key={item.id} 
                 onClick={() => navigate(`/item/${item.id}`)}
-                className="bg-[#121212] border border-[#222] hover:border-[#333] rounded-3xl p-4 w-72 flex-shrink-0 cursor-pointer shadow-md text-left transition-all relative overflow-hidden"
+                className="bg-white border border-[#EDEDED] hover:border-gray-300 rounded-3xl p-4 w-72 flex-shrink-0 cursor-pointer shadow-sm text-left transition-all relative overflow-hidden"
               >
-                {/* Background soft glow */}
-                <div className="absolute right-0 top-0 w-24 h-24 bg-amber-500/5 rounded-full blur-3xl" />
-                
                 <div className="flex gap-3">
                   {item.image ? (
-                    <img src={item.image} alt={item.name} className="w-16 h-16 rounded-2xl object-cover border border-white/5 flex-shrink-0" />
+                    <img src={item.image} alt={item.name} className="w-16 h-16 rounded-2xl object-cover border border-gray-100 flex-shrink-0" />
                   ) : (
-                    <div className="w-16 h-16 bg-[#1A1A1A] border border-[#222] rounded-2xl flex items-center justify-center text-2xl flex-shrink-0">💻</div>
+                    <div className="w-16 h-16 bg-[#F5F5F5] border border-[#EDEDED] rounded-2xl flex items-center justify-center text-xl flex-shrink-0">💻</div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <h4 className="text-xs font-black uppercase text-white truncate leading-tight">{item.name}</h4>
-                    <p className="text-[9px] text-amber-500 font-extrabold uppercase mt-1 flex items-center gap-1">
+                    <h4 className="text-xs font-black uppercase text-[#222] truncate leading-tight">{item.name}</h4>
+                    <p className="text-[9px] text-[#FB570B] font-extrabold uppercase mt-1 flex items-center gap-1">
                       <Sparkles className="w-3 h-3" /> Selected for you
                     </p>
-                    <p className="text-[10px] text-[#A3A3A3] line-clamp-2 mt-1 leading-normal font-medium">{item.reason}</p>
+                    <p className="text-[10px] text-gray-400 line-clamp-2 mt-1 leading-normal font-semibold">{item.reason}</p>
                   </div>
                 </div>
 
-                <div className="border-t border-[#1C1C1C] mt-3.5 pt-3.5 flex items-center justify-between">
-                  <span className="text-xs font-black text-amber-400">{fmt(item.price)}</span>
+                <div className="border-t border-[#EDEDED] mt-3.5 pt-3.5 flex items-center justify-between">
+                  <span className="text-xs font-black text-[#FB570B]">{fmt(item.price)}</span>
                   <button 
                     onClick={(e) => handleAddToCart(e, item)}
-                    className="bg-gradient-to-r from-amber-500 to-yellow-400 hover:brightness-110 text-black text-[9px] font-black uppercase tracking-widest px-4 py-2.5 rounded-xl shadow-md"
+                    className="bg-[#FB570B] hover:bg-[#E04B07] text-white text-[9px] font-black uppercase tracking-widest px-4 py-2.5 rounded-xl shadow active:scale-95 transition-all"
                   >
                     Quick Add
                   </button>
@@ -356,80 +397,144 @@ const HomePage = () => {
 
       {/* LAST ACTIVE ORDER PANEL */}
       {lastOrder && (
-        <div className="mt-6 px-4">
+        <div className="max-w-7xl mx-auto mt-6 px-4">
           <div 
             onClick={() => navigate(`/tracking/${lastOrder.id}`)}
-            className="bg-[#121212] border border-[#222] hover:border-[#333] rounded-3xl p-4 flex items-center justify-between cursor-pointer shadow-md text-left transition-all"
+            className="bg-white border border-[#EDEDED] hover:border-gray-300 rounded-3xl p-4 flex items-center justify-between cursor-pointer shadow-sm text-left transition-all"
           >
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                <ShoppingBag className="w-4.5 h-4.5 text-amber-500" />
+              <div className="w-9 h-9 bg-[#FB570B]/5 border border-[#FB570B]/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                <ShoppingBag className="w-4.5 h-4.5 text-[#FB570B]" />
               </div>
               <div>
-                <h4 className="text-xs font-black uppercase text-white leading-none">Order Tracking</h4>
-                <p className="text-[9px] text-[#A3A3A3] font-bold uppercase tracking-wider mt-1.5">
-                  ID: #{lastOrder.id} • Status: <span className="text-amber-500 font-extrabold uppercase">{lastOrder.status}</span>
+                <h4 className="text-xs font-black uppercase text-[#222] leading-none">Order Tracking</h4>
+                <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mt-1.5">
+                  ID: #{lastOrder.id} • Status: <span className="text-[#FB570B] font-extrabold uppercase">{lastOrder.status}</span>
                 </p>
               </div>
             </div>
-            <ChevronRight className="w-4 h-4 text-[#737373]" />
+            <ChevronRight className="w-4 h-4 text-gray-400" />
           </div>
         </div>
       )}
 
-      {/* REGULAR CATALOG GRID */}
-      <div className="mt-6 px-4">
-        <h2 className="text-xs font-black uppercase tracking-widest text-[#737373] mb-4 text-left">All Gadgets</h2>
-        <div className="grid grid-cols-2 gap-4">
-          {regularItems.map(item => (
-            <div 
-              key={item.id} 
-              onClick={() => navigate(`/item/${item.id}`)}
-              className="bg-[#121212] border border-[#222] hover:border-[#333] rounded-3xl p-3.5 cursor-pointer shadow-md text-left transition-all relative flex flex-col justify-between"
-            >
-              <div>
-                {item.image ? (
-                  <img src={item.image} alt={item.name} className="w-full h-28 rounded-2xl object-cover border border-white/5" />
-                ) : (
-                  <div className="w-full h-28 bg-[#1A1A1A] border border-[#222] rounded-2xl flex items-center justify-center text-3xl">💻</div>
-                )}
-                
-                {/* Custom Tags */}
-                <div className="flex gap-1.5 mt-3 flex-wrap">
-                  <span className="text-[7px] font-black uppercase bg-amber-500/10 text-amber-500 border border-amber-500/20 px-2 py-0.5 rounded-full">
-                    FREE SHIPPING
-                  </span>
-                  <span className="text-[7px] font-black uppercase bg-[#1C1C1C] text-[#A3A3A3] border border-[#333] px-2 py-0.5 rounded-full">
-                    RATED 4.9
-                  </span>
+      {/* 4. EXACT RESPONSIVE TEMU/CJ GADGETS GRID (5 COLUMNS ON DESKTOP, 2 COLUMNS ON MOBILE) */}
+      <main className="max-w-7xl mx-auto mt-6 px-4">
+        <div className="text-left mb-4">
+          <h2 className="text-lg md:text-xl font-black uppercase tracking-tight text-[#222]">Similar Items</h2>
+          <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-0.5">High-Quality premium electronic gadgets</p>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3.5">
+          {menuItems.map((item, idx) => {
+            const reviewsCount = ((Number(item.id) * 31) % 1200) + 45;
+            const originalPrice = item.price * 1.45;
+            const pctOff = Math.round((1 - (item.price / originalPrice)) * 100);
+
+            return (
+              <div 
+                key={item.id} 
+                onClick={() => navigate(`/item/${item.id}`)}
+                className="bg-white rounded-2xl overflow-hidden border border-[#EDEDED] flex flex-col justify-between hover:shadow-md transition-shadow relative cursor-pointer text-left pb-3"
+              >
+                {/* Product image block */}
+                <div>
+                  <div className="relative w-full aspect-square bg-[#FAFAFA] flex items-center justify-center border-b border-[#F5F5F5] overflow-hidden">
+                    {item.image ? (
+                      <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="text-4xl">💻</div>
+                    )}
+                    
+                    {/* Small tag capsule */}
+                    <div className="absolute top-2 left-2 bg-[#FB570B] text-white text-[7px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider">
+                      TRENDING
+                    </div>
+                  </div>
+
+                  <div className="px-3 pt-2.5">
+                    {/* Title */}
+                    <h3 className="text-[11px] font-semibold text-[#222] leading-tight line-clamp-2 h-7.5 hover:text-[#FB570B] transition-colors">
+                      {item.name}
+                    </h3>
+
+                    {/* Sales description line */}
+                    <p className="text-[9px] text-[#A3A3A3] font-bold uppercase mt-1 leading-none">
+                      {reviewsCount * 7}+ sold
+                    </p>
+
+                    {/* Star Rating below */}
+                    <div className="flex items-center gap-0.5 mt-1">
+                      {[...Array(5)].map((_, starIdx) => (
+                        <Star key={starIdx} className="w-2.5 h-2.5 fill-[#FF9E0D] text-[#FF9E0D]" />
+                      ))}
+                      <span className="text-[9px] text-[#737373] font-bold ml-1">
+                        {reviewsCount.toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
                 </div>
 
-                <h3 className="text-xs font-black uppercase text-white mt-2 leading-snug line-clamp-1">{item.name}</h3>
-                <p className="text-[9px] text-[#737373] mt-0.5 line-clamp-1 font-semibold">{item.description}</p>
-              </div>
+                {/* Price block */}
+                <div className="px-3 mt-3">
+                  <div className="flex items-center justify-between gap-1.5">
+                    <div className="flex items-baseline gap-1.5 flex-wrap min-w-0">
+                      <span className="text-xs md:text-sm font-black text-[#FB570B] truncate">
+                        {fmt(item.price)}
+                      </span>
+                      <span className="text-[9px] text-[#A3A3A3] line-through font-bold truncate">
+                        {fmt(originalPrice)}
+                      </span>
+                    </div>
 
-              <div className="flex items-center justify-between mt-3 pt-3 border-t border-[#1C1C1C]">
-                <span className="text-xs font-black text-amber-400">{fmt(item.price)}</span>
-                <button 
-                  onClick={(e) => handleAddToCart(e, item)}
-                  className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-500 to-yellow-400 hover:brightness-110 active:scale-95 shadow-md flex items-center justify-center text-black font-bold flex-shrink-0"
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
+                    {/* Circular Add-To-Cart trigger like the screenshot */}
+                    <button 
+                      onClick={(e) => handleAddToCart(e, item)}
+                      className="w-7 h-7 rounded-full border border-[#D9D9D9] hover:border-[#FB570B] bg-white flex items-center justify-center text-gray-700 hover:text-[#FB570B] transition-all flex-shrink-0 hover:bg-[#FB570B]/5 active:scale-95"
+                    >
+                      <Plus className="w-3.5 h-3.5 font-bold" />
+                    </button>
+                  </div>
+
+                  {/* Percentage OFF badge */}
+                  <div className="mt-2.5 flex items-center gap-1.5">
+                    <span className="text-[9px] font-black text-[#FB570B] bg-[#FFF2EB] px-1.5 py-0.5 rounded">
+                      {pctOff}% OFF
+                    </span>
+                    <span className="text-[8px] text-emerald-600 font-extrabold uppercase bg-emerald-50 px-1 py-0.5 rounded leading-none">
+                      Free shipping
+                    </span>
+                  </div>
+                </div>
+
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
-      </div>
+      </main>
 
       {/* Floating AI Helper Agent Trigger */}
-      <div className="fixed bottom-24 right-4 z-40">
+      <div className="fixed bottom-24 right-4 z-40 flex flex-col gap-2">
         <button 
           onClick={() => setIsAIChatOpen(true)}
-          className="w-12 h-12 bg-gradient-to-br from-amber-500 to-yellow-400 rounded-full flex items-center justify-center shadow-xl shadow-amber-500/10 border border-amber-500/20 active:scale-95 transition-transform"
+          className="w-12 h-12 bg-gradient-to-br from-[#FB570B] to-[#FF7020] rounded-full flex items-center justify-center shadow-xl border border-[#FB570B]/10 active:scale-95 transition-transform"
         >
-          <Sparkles className="w-6 h-6 text-black animate-pulse" />
+          <Sparkles className="w-6 h-6 text-white animate-pulse" />
         </button>
+      </div>
+
+      {/* Mobile-only green floating shipping / cart badge as seen in Screenshot 2 */}
+      <div className="md:hidden fixed bottom-24 right-20 z-40">
+        <div 
+          onClick={() => navigate("/checkout")}
+          className="bg-emerald-500 hover:bg-emerald-600 text-white flex flex-col items-center p-2 rounded-full shadow-lg border border-white cursor-pointer active:scale-95 transition-all text-[8px] font-black tracking-tight"
+        >
+          <div className="bg-white text-emerald-500 p-1 rounded-full">
+            <ShoppingCart className="w-4 h-4" />
+          </div>
+          <span className="mt-0.5 leading-none">Cart</span>
+          <span className="bg-white/20 px-1 py-0.2 rounded mt-0.5 scale-90">Free shipping</span>
+        </div>
       </div>
 
       <AnimatePresence>

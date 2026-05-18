@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Plus, SlidersHorizontal, Sparkles, Star, ChevronRight, Activity, Cpu, ShieldCheck } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Plus, SlidersHorizontal, Sparkles, Star, ChevronRight, ChevronDown, List, User, ShoppingCart, HelpCircle } from "lucide-react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import AppHeader from "@/components/layout/AppHeader";
 import { useCart } from "@/context/CartContext";
@@ -43,11 +43,13 @@ function dbToCart(item: DBMenuItem): CartMenuItem {
 
 const MenuPage = () => {
   const navigate = useNavigate();
-  const { addItem } = useCart();
+  const [searchParams] = useSearchParams();
+  const initialCat = searchParams.get("cat") || "All";
+
+  const { items, addItem, totalItems } = useCart();
   const { fmt } = useCurrency();
   const { toast } = useToast();
-  const [activeCategory, setActiveCategory] = useState("All");
-  const [aiSuggestions, setAiSuggestions] = useState(true);
+  const [activeCategory, setActiveCategory] = useState(initialCat);
 
   const { data: dbItems = [], isLoading } = useQuery<DBMenuItem[]>({
     queryKey: ["/api/menu"],
@@ -58,51 +60,31 @@ const MenuPage = () => {
   const menuItems = dbItems.map(dbToCart);
   const categories = ["All", ...Array.from(new Set(dbItems.map(i => i.category)))];
   const filtered = activeCategory === "All" ? menuItems : menuItems.filter(i => i.category === activeCategory);
-  const aiPick = menuItems.find(i => i.isTop);
 
   const handleAddToCart = (e: React.MouseEvent, item: CartMenuItem) => {
     e.stopPropagation();
     addItem(item);
     toast({
       title: "Item added! 🛒",
-      description: `${item.name} is added to your secure cart.`,
+      description: `${item.name} is added to your cart.`,
     });
   };
 
   if (isLoading) {
     return (
-      <div className="pb-8 bg-[#0A0A0A] text-white min-h-screen">
+      <div className="pb-8 bg-[#F7F7F7] text-[#222222] min-h-screen text-left">
         <AppHeader title="Catalog - TRENDS" showBack />
-        
-        {/* Categories Skeleton */}
         <div className="flex gap-2 px-4 py-4 overflow-x-auto scrollbar-none">
           {[1, 2, 3, 4, 5].map(i => (
-            <Skeleton key={i} className="h-9 w-24 rounded-full bg-[#121212] border border-[#222] flex-shrink-0" />
+            <Skeleton key={i} className="h-9 w-24 rounded-full bg-white border border-[#EDEDED] flex-shrink-0" />
           ))}
         </div>
-
-        {/* AI Suggestion Skeleton */}
-        <div className="mx-4 mb-6">
-          <Skeleton className="h-4 w-32 mb-3 bg-[#121212]" />
-          <div className="w-full flex items-center gap-3 bg-[#121212] border border-[#222] rounded-3xl p-4">
-            <Skeleton className="w-16 h-16 rounded-2xl bg-[#1C1C1C]" />
-            <div className="flex-1 space-y-2">
-              <Skeleton className="h-4 w-1/2 bg-[#1C1C1C]" />
-              <Skeleton className="h-3 w-3/4 bg-[#1C1C1C]" />
-            </div>
-          </div>
-        </div>
-
-        {/* Catalog list skeleton */}
-        <div className="px-4 space-y-4">
-          {[1, 2, 3].map(i => (
-            <div key={i} className="bg-[#121212] border border-[#222] rounded-3xl p-4 flex gap-4">
-              <Skeleton className="w-20 h-20 rounded-2xl bg-[#1C1C1C]" />
-              <div className="flex-1 space-y-2">
-                <Skeleton className="h-4 w-2/3 bg-[#1C1C1C]" />
-                <Skeleton className="h-3 w-5/6 bg-[#1C1C1C]" />
-                <Skeleton className="h-4 w-20 bg-[#1C1C1C]" />
-              </div>
+        <div className="px-4 grid grid-cols-2 md:grid-cols-5 gap-3.5 mt-5">
+          {[1, 2, 3, 4, 5].map(i => (
+            <div key={i} className="bg-white rounded-2xl p-4 space-y-3 border border-[#EDEDED]">
+              <Skeleton className="w-full aspect-square rounded-xl bg-gray-100" />
+              <Skeleton className="h-4 w-5/6 bg-gray-100" />
+              <Skeleton className="h-4 w-1/2 bg-gray-100" />
             </div>
           ))}
         </div>
@@ -111,19 +93,95 @@ const MenuPage = () => {
   }
 
   return (
-    <div className="pb-28 bg-[#0A0A0A] text-white min-h-screen text-left">
-      <AppHeader title="TRENDS Catalog" showBack />
+    <div className="pb-28 bg-[#F7F7F7] text-[#222222] min-h-screen text-left font-sans">
+      
+      {/* DESKTOP VIEW PROMOTION BLACK TOP BAR */}
+      <div className="hidden md:block bg-black text-white text-[11px] font-semibold py-2 px-6">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-1.5 text-emerald-400">
+            <span className="text-sm">🚚</span>
+            <span className="font-bold text-white">Free shipping on all orders</span>
+            <span className="text-gray-400 font-medium">Limited-time offer</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-amber-400 text-sm">🪙</span>
+            <span className="font-bold">Price adjustment</span>
+            <span className="text-gray-400 font-medium">Within 30 days</span>
+          </div>
+          <div className="flex items-center gap-1.5 text-gray-300">
+            <span>📱</span>
+            <span className="font-bold hover:underline cursor-pointer">Get the TRENDS App</span>
+          </div>
+        </div>
+      </div>
+
+      {/* DESKTOP VIEW WHITE MAIN HEADER PANEL */}
+      <header className="hidden md:block bg-white border-b border-[#EDEDED] sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between gap-6">
+          <div className="flex items-center gap-4 flex-shrink-0">
+            <div onClick={() => navigate("/home")} className="flex items-center gap-2 cursor-pointer">
+              <div className="bg-[#FB570B] text-white font-black text-lg p-2.5 rounded-2xl shadow-md flex items-center justify-center leading-none">
+                TRENDS
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-4 text-xs font-bold text-[#222] ml-2">
+              <button onClick={() => navigate("/menu?filter=best")} className="hover:text-[#FB570B] transition-colors flex items-center gap-1">⭐ Best-Selling Items</button>
+              <button onClick={() => navigate("/menu?filter=top")} className="hover:text-[#FB570B] transition-colors flex items-center gap-1">🔥 5-Star Rated</button>
+              <button onClick={() => navigate("/menu")} className="hover:text-[#FB570B] transition-colors flex items-center gap-1">New In</button>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-6 text-xs font-bold text-[#222] flex-shrink-0">
+            <div onClick={() => navigate("/profile")} className="flex items-center gap-2 cursor-pointer hover:text-[#FB570B] transition-colors">
+              <User className="w-5 h-5 text-gray-700" />
+              <span>Orders & Account</span>
+            </div>
+            <div onClick={() => navigate("/checkout")} className="relative flex items-center gap-1 cursor-pointer hover:text-[#FB570B] transition-colors">
+              <ShoppingCart className="w-5 h-5 text-gray-700" />
+              {totalItems > 0 && (
+                <span className="absolute -top-2.5 -right-2 bg-[#FB570B] text-white text-[9px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center shadow">
+                  {totalItems}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* MOBILE VIEW MAIN HEADER */}
+      <header className="md:hidden bg-white border-b border-[#EDEDED] px-3.5 py-2.5 sticky top-0 z-50 flex items-center justify-between gap-3">
+        <button onClick={() => navigate(-1)} className="text-gray-700 p-1">
+          <ChevronRight className="w-5 h-5 rotate-180" />
+        </button>
+        <span onClick={() => navigate("/home")} className="text-lg font-black tracking-tight text-[#FB570B] uppercase italic cursor-pointer">
+          TRENDS
+        </span>
+        <div className="flex items-center gap-3">
+          <button onClick={() => navigate("/profile")} className="text-gray-700 hover:text-[#FB570B] p-1">
+            <User className="w-4.5 h-4.5" />
+          </button>
+          <button onClick={() => navigate("/checkout")} className="relative text-gray-700 hover:text-[#FB570B] p-1">
+            <ShoppingCart className="w-4.5 h-4.5" />
+            {totalItems > 0 && (
+              <span className="absolute -top-1.5 -right-1 bg-[#FB570B] text-white text-[8px] font-black w-3.5 h-3.5 rounded-full flex items-center justify-center">
+                {totalItems}
+              </span>
+            )}
+          </button>
+        </div>
+      </header>
 
       {/* Pill Category Scroller */}
-      <div className="flex gap-2 px-4 py-4 overflow-x-auto scrollbar-none">
+      <div className="max-w-7xl mx-auto px-4 py-4 flex gap-2 overflow-x-auto scrollbar-none">
         {categories.map(cat => (
           <button
             key={cat}
             onClick={() => setActiveCategory(cat)}
-            className={`px-4.5 py-2 rounded-full text-xs font-black uppercase tracking-wider transition-all border flex-shrink-0 ${
+            className={`px-5 py-2 rounded-full text-xs font-black uppercase tracking-wider transition-all border flex-shrink-0 ${
               activeCategory === cat
-                ? "bg-gradient-to-r from-amber-500 to-yellow-400 text-black border-transparent shadow-md"
-                : "bg-[#121212] text-[#A3A3A3] border-[#222] hover:border-[#333]"
+                ? "bg-[#FB570B] text-white border-transparent shadow"
+                : "bg-white text-gray-700 border-[#EBEBEB] hover:border-gray-300"
             }`}
           >
             {cat}
@@ -131,106 +189,94 @@ const MenuPage = () => {
         ))}
       </div>
 
-      {/* Active AI Smart Match */}
-      {aiSuggestions && aiPick && activeCategory === "All" && (
-        <div className="mx-4 mb-6">
-          <div className="flex items-center justify-between mb-2 px-1">
-            <span className="text-[10px] font-black uppercase tracking-widest text-[#737373] flex items-center gap-1">
-              <Sparkles className="w-3.5 h-3.5 text-amber-500" /> Smart AI Match
-            </span>
-            <button onClick={() => setAiSuggestions(false)} className="text-[9px] text-[#525252] font-bold uppercase tracking-wider">Dismiss</button>
-          </div>
-          <div 
-            onClick={() => navigate(`/item/${aiPick.id}`)}
-            className="w-full bg-[#121212] border border-amber-500/20 hover:border-amber-500/40 rounded-3xl p-4 flex gap-4 cursor-pointer shadow-md transition-all relative overflow-hidden"
-          >
-            <div className="absolute right-0 top-0 w-24 h-24 bg-amber-500/5 rounded-full blur-3xl" />
-            
-            {aiPick.image ? (
-              <img src={aiPick.image} alt={aiPick.name} className="w-16 h-16 rounded-2xl object-cover border border-white/5 flex-shrink-0" />
-            ) : (
-              <div className="w-16 h-16 bg-[#1A1A1A] border border-[#222] rounded-2xl flex items-center justify-center text-xl flex-shrink-0">💻</div>
-            )}
-            <div className="flex-1 min-w-0">
-              <h4 className="text-xs font-black uppercase text-white truncate">{aiPick.name}</h4>
-              <p className="text-[9px] text-amber-500 font-extrabold uppercase mt-1">High-Performance Pick</p>
-              <p className="text-[10px] text-[#A3A3A3] line-clamp-1 mt-1 font-medium">{aiPick.description}</p>
-            </div>
-            <ChevronRight className="w-4 h-4 text-[#737373] self-center flex-shrink-0" />
-          </div>
-        </div>
-      )}
-
       {/* Main product listings */}
-      <div className="px-4">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xs font-black uppercase tracking-widest text-[#737373] ml-1">
+      <main className="max-w-7xl mx-auto px-4 mt-2">
+        <div className="flex items-center justify-between mb-4 px-1">
+          <h2 className="text-sm font-black uppercase tracking-widest text-[#888]">
             {activeCategory} Products ({filtered.length})
           </h2>
-          <button className="p-2 bg-[#121212] border border-[#222] rounded-xl text-[#A3A3A3] hover:text-white transition-colors">
+          <button className="p-2 bg-white border border-[#EBEBEB] rounded-xl text-gray-500 hover:text-black transition-colors">
             <SlidersHorizontal className="w-3.5 h-3.5" />
           </button>
         </div>
 
         {filtered.length === 0 ? (
-          <div className="text-center py-16 bg-[#121212] border border-[#222] rounded-3xl p-6">
-            <p className="text-[#737373] text-sm">No electronics found in this category.</p>
+          <div className="text-center py-16 bg-white border border-[#EDEDED] rounded-3xl p-6 shadow-sm">
+            <p className="text-[#888] text-sm">No electronics found in this category.</p>
           </div>
         ) : (
-          <div className="space-y-4">
-            {filtered.map(item => (
-              <div
-                key={item.id}
-                onClick={() => navigate(`/item/${item.id}`)}
-                className="bg-[#121212] border border-[#222] hover:border-[#333] rounded-3xl p-4 flex gap-4 cursor-pointer shadow-md transition-all relative overflow-hidden"
-              >
-                {/* Product image block */}
-                {item.image ? (
-                  <img src={item.image} alt={item.name} className="w-20 h-20 rounded-2xl object-cover border border-white/5 flex-shrink-0" />
-                ) : (
-                  <div className="w-20 h-20 bg-[#1A1A1A] border border-[#222] rounded-2xl flex items-center justify-center text-3xl flex-shrink-0">💻</div>
-                )}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3.5">
+            {filtered.map(item => {
+              const reviewsCount = ((Number(item.id) * 31) % 1200) + 45;
+              const originalPrice = item.price * 1.45;
+              const pctOff = Math.round((1 - (item.price / originalPrice)) * 100);
 
-                {/* Info block */}
-                <div className="flex-1 min-w-0 flex flex-col justify-between">
+              return (
+                <div
+                  key={item.id}
+                  onClick={() => navigate(`/item/${item.id}`)}
+                  className="bg-white rounded-2xl overflow-hidden border border-[#EDEDED] flex flex-col justify-between hover:shadow-md transition-shadow relative cursor-pointer pb-3"
+                >
                   <div>
-                    <div className="flex items-start justify-between gap-2">
-                      <h3 className="text-xs font-black uppercase text-white truncate tracking-wider">{item.name}</h3>
-                      {item.rating && (
-                        <div className="flex items-center gap-0.5 text-amber-400 flex-shrink-0">
-                          <Star className="w-3 h-3 fill-current" />
-                          <span className="text-[10px] font-black">{item.rating}</span>
-                        </div>
+                    <div className="relative w-full aspect-square bg-[#FAFAFA] flex items-center justify-center border-b border-[#F5F5F5] overflow-hidden">
+                      {item.image ? (
+                        <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="text-4xl">💻</div>
                       )}
                     </div>
-                    <p className="text-[10px] text-[#A3A3A3] line-clamp-1 mt-0.5 leading-normal font-medium">{item.description}</p>
-                    
-                    {/* Compact hardware metrics */}
-                    <div className="flex items-center gap-2 mt-2 flex-wrap">
-                      <span className="text-[8px] font-black uppercase tracking-wide bg-amber-500/10 text-amber-500 px-2 py-0.5 rounded-md flex items-center gap-0.5">
-                        <Cpu className="w-2.5 h-2.5" /> High Performance
-                      </span>
-                      <span className="text-[8px] font-black uppercase tracking-wide bg-[#1C1C1C] text-[#737373] px-2 py-0.5 rounded-md flex items-center gap-0.5">
-                        <ShieldCheck className="w-2.5 h-2.5" /> 1-Yr Warranty
-                      </span>
+
+                    <div className="px-3 pt-2.5">
+                      <h3 className="text-[11px] font-semibold text-[#222] leading-tight line-clamp-2 h-7.5 hover:text-[#FB570B] transition-colors">
+                        {item.name}
+                      </h3>
+                      <p className="text-[9px] text-[#A3A3A3] font-bold uppercase mt-1 leading-none">
+                        {reviewsCount * 7}+ sold
+                      </p>
+                      <div className="flex items-center gap-0.5 mt-1">
+                        {[...Array(5)].map((_, starIdx) => (
+                          <Star key={starIdx} className="w-2.5 h-2.5 fill-[#FF9E0D] text-[#FF9E0D]" />
+                        ))}
+                        <span className="text-[9px] text-[#737373] font-bold ml-1">
+                          {reviewsCount}
+                        </span>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between mt-3 pt-3 border-t border-[#1C1C1C]">
-                    <span className="text-xs font-black text-amber-400">{fmt(item.price)}</span>
-                    <button
-                      onClick={(e) => handleAddToCart(e, item)}
-                      className="bg-gradient-to-r from-amber-500 to-yellow-400 hover:brightness-110 text-black text-[9px] font-black uppercase tracking-widest px-4 py-2.5 rounded-xl shadow-md flex items-center gap-1 active:scale-95"
-                    >
-                      <Plus className="w-3.5 h-3.5" /> Add Cart
-                    </button>
+                  <div className="px-3 mt-3">
+                    <div className="flex items-center justify-between gap-1.5">
+                      <div className="flex items-baseline gap-1.5 flex-wrap min-w-0">
+                        <span className="text-xs md:text-sm font-black text-[#FB570B] truncate">
+                          {fmt(item.price)}
+                        </span>
+                        <span className="text-[9px] text-[#A3A3A3] line-through font-bold truncate">
+                          {fmt(originalPrice)}
+                        </span>
+                      </div>
+
+                      <button
+                        onClick={(e) => handleAddToCart(e, item)}
+                        className="w-7 h-7 rounded-full border border-[#D9D9D9] hover:border-[#FB570B] bg-white flex items-center justify-center text-gray-700 hover:text-[#FB570B] transition-all flex-shrink-0 hover:bg-[#FB570B]/5 active:scale-95"
+                      >
+                        <Plus className="w-3.5 h-3.5 font-bold" />
+                      </button>
+                    </div>
+
+                    <div className="mt-2.5 flex items-center gap-1.5">
+                      <span className="text-[9px] font-black text-[#FB570B] bg-[#FFF2EB] px-1.5 py-0.5 rounded">
+                        {pctOff}% OFF
+                      </span>
+                      <span className="text-[8px] text-emerald-600 font-extrabold uppercase bg-emerald-50 px-1 py-0.5 rounded leading-none">
+                        Free shipping
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
           </div>
         )}
-      </div>
+      </main>
     </div>
   );
 };
