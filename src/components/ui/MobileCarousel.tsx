@@ -10,7 +10,7 @@ const slides = [
     id: 1,
     title: "Tech Masterpieces",
     description: "Every device is a masterpiece of engineering, curated for the modern technologist.",
-    icon: <img src={logo} alt="Trends Electronics" className="w-20 h-20 object-contain" />,
+    icon: <img src={logo} alt="TRENDS" className="w-20 h-20 object-contain" />,
     badge: <Sparkles size={14} className="text-blue-400" />,
     badgeText: "Premium Gadgets",
     color: "from-blue-500/30 to-blue-900/10",

@@ -36,7 +36,7 @@ const SearchPage = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: "assistant",
-      content: "Hi! I'm Trends Electronics smart assistant. Ask me anything — high-performance laptops, the latest phones, or premium audio — and I'll find the perfect tech for you.",
+      content: "Hi! I'm TRENDS' smart assistant. Ask me anything — high-performance laptops, the latest phones, or premium audio — and I'll find the perfect products for you.",
     },
   ]);
   const [loading, setLoading] = useState(false);
@@ -180,7 +180,7 @@ const SearchPage = () => {
             value={query}
             onChange={e => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Ask Trends Electronics anything..."
+            placeholder="Ask TRENDS anything..."
             className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none"
             disabled={loading}
           />

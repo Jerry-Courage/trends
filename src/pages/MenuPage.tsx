@@ -9,6 +9,7 @@ import { api } from "@/lib/api";
 import type { MenuItem as CartMenuItem } from "@/data/menuData";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import logo from "@/assets/logo.png";
 
 interface DBMenuItem {
   id: number;
@@ -119,10 +120,9 @@ const MenuPage = () => {
       <header className="hidden md:block bg-white border-b border-[#EDEDED] sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between gap-6">
           <div className="flex items-center gap-4 flex-shrink-0">
-            <div onClick={() => navigate("/home")} className="flex items-center gap-2 cursor-pointer">
-              <div className="bg-[#FB570B] text-white font-black text-lg p-2.5 rounded-2xl shadow-md flex items-center justify-center leading-none">
-                TRENDS
-              </div>
+            <div onClick={() => navigate("/")} className="flex items-center gap-2.5 cursor-pointer">
+              <img src={logo} alt="TRENDS Logo" className="h-10 object-contain rounded-xl" />
+              <span className="text-xl font-black tracking-tight text-[#FB570B] uppercase italic">TRENDS</span>
             </div>
             
             <div className="flex items-center gap-4 text-xs font-bold text-[#222] ml-2">
@@ -154,9 +154,10 @@ const MenuPage = () => {
         <button onClick={() => navigate(-1)} className="text-gray-700 p-1">
           <ChevronRight className="w-5 h-5 rotate-180" />
         </button>
-        <span onClick={() => navigate("/home")} className="text-lg font-black tracking-tight text-[#FB570B] uppercase italic cursor-pointer">
-          TRENDS
-        </span>
+        <div onClick={() => navigate("/")} className="flex items-center gap-2 cursor-pointer">
+          <img src={logo} alt="TRENDS Logo" className="h-8 object-contain rounded-lg" />
+          <span className="text-base font-black tracking-tight text-[#FB570B] uppercase italic">TRENDS</span>
+        </div>
         <div className="flex items-center gap-3">
           <button onClick={() => navigate("/profile")} className="text-gray-700 hover:text-[#FB570B] p-1">
             <User className="w-4.5 h-4.5" />

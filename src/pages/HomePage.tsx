@@ -169,13 +169,11 @@ const HomePage = () => {
           {/* Brand branding */}
           <div className="flex items-center gap-4 flex-shrink-0">
             <div 
-              onClick={() => navigate("/home")}
-              className="flex items-center gap-2 cursor-pointer"
+              onClick={() => navigate("/")}
+              className="flex items-center gap-2.5 cursor-pointer"
             >
-              {/* Premium stylized orange logo container like Temu screenshot */}
-              <div className="bg-[#FB570B] text-white font-black text-lg p-2.5 rounded-2xl shadow-md flex items-center justify-center leading-none">
-                TRENDS
-              </div>
+              <img src={logo} alt="TRENDS Logo" className="h-10 object-contain rounded-xl" />
+              <span className="text-xl font-black tracking-tight text-[#FB570B] uppercase italic">TRENDS</span>
             </div>
             
             {/* Left navigation links */}
@@ -264,12 +262,12 @@ const HomePage = () => {
 
       {/* 3. MOBILE VIEW MAIN HEADER PANEL */}
       <header className="md:hidden bg-white border-b border-[#EDEDED] px-3.5 py-2.5 sticky top-0 z-50 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          {/* Logo / Text */}
-          <span 
-            onClick={() => navigate("/home")}
-            className="text-lg font-black tracking-tight text-[#FB570B] uppercase italic cursor-pointer"
-          >
+        <div 
+          onClick={() => navigate("/")}
+          className="flex items-center gap-2 cursor-pointer"
+        >
+          <img src={logo} alt="TRENDS Logo" className="h-8 object-contain rounded-lg" />
+          <span className="text-base font-black tracking-tight text-[#FB570B] uppercase italic">
             TRENDS
           </span>
         </div>

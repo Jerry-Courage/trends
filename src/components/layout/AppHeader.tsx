@@ -21,7 +21,7 @@ const AppHeader = ({ title, showBack = false, rightIcon }: AppHeaderProps) => {
           </button>
         ) : (
           <div className="w-10 h-10 flex items-center justify-center overflow-hidden">
-            <img src={logo} alt="Trends Electronics" className="w-8 h-8 object-contain" />
+            <img src={logo} alt="TRENDS" className="w-8 h-8 object-contain" />
           </div>
         )}
       </div>

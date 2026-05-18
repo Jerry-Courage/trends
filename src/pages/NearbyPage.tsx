@@ -14,11 +14,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import "leaflet/dist/leaflet.css";
 
 const locations = [
-  { name: "Trends Electronics Tse Addo", badge: "⚡FASTEST", address: "Tse Addo, Accra, Ghana", dist: "0.8 mi", rating: 4.8, time: "15-20 min", status: "Open", lat: 5.6020, lng: -0.1118 },
-  { name: "Trends Electronics Adjiringanor", address: "Adjiringanor, Accra, Ghana", dist: "2.4 mi", rating: 4.5, time: "25-35 min", status: "Open", lat: 5.6512, lng: -0.1485 },
-  { name: "Trends Electronics UG Legon", address: "Bani Hostel, UG, Legon", dist: "3.1 mi", rating: 4.2, time: "30-45 min", status: "Closing Soon", lat: 5.6540, lng: -0.1865 },
-  { name: "Trends Electronics Awoshie", address: "Awoshie, Accra, Ghana", dist: "4.5 mi", rating: 4.3, time: "35-50 min", status: "Open", lat: 5.5925, lng: -0.2740 },
-  { name: "Trends Electronics Dansoman", address: "Dansoman, Accra, Ghana", dist: "5.2 mi", rating: 4.6, time: "40-55 min", status: "Open", lat: 5.5545, lng: -0.2520 },
+  { name: "TRENDS Tse Addo", badge: "⚡FASTEST", address: "Tse Addo, Accra, Ghana", dist: "0.8 mi", rating: 4.8, time: "15-20 min", status: "Open", lat: 5.6020, lng: -0.1118 },
+  { name: "TRENDS Adjiringanor", address: "Adjiringanor, Accra, Ghana", dist: "2.4 mi", rating: 4.5, time: "25-35 min", status: "Open", lat: 5.6512, lng: -0.1485 },
+  { name: "TRENDS UG Legon", address: "Bani Hostel, UG, Legon", dist: "3.1 mi", rating: 4.2, time: "30-45 min", status: "Closing Soon", lat: 5.6540, lng: -0.1865 },
+  { name: "TRENDS Awoshie", address: "Awoshie, Accra, Ghana", dist: "4.5 mi", rating: 4.3, time: "35-50 min", status: "Open", lat: 5.5925, lng: -0.2740 },
+  { name: "TRENDS Dansoman", address: "Dansoman, Accra, Ghana", dist: "5.2 mi", rating: 4.6, time: "40-55 min", status: "Open", lat: 5.5545, lng: -0.2520 },
 ];
 
 const NearbyPage = () => {
@@ -170,7 +170,7 @@ const NearbyPage = () => {
   if (isLoading) {
     return (
       <div className="pb-4 relative bg-black min-h-screen">
-        <AppHeader title="Find Trends Electronics" />
+        <AppHeader title="Find TRENDS Hubs" />
         <div className="md:grid md:grid-cols-2 md:gap-4 md:px-4 md:mt-3">
           <div className="px-4 md:px-0">
             <Skeleton className="w-full h-[320px] rounded-[2rem]" />
@@ -225,7 +225,7 @@ const NearbyPage = () => {
       </Dialog>
 
       <div className={`transition-all duration-500 ${pickupLocation ? 'opacity-0 scale-95 pointer-events-none' : 'opacity-100 scale-100'}`}>
-        <AppHeader title="Find Trends Electronics" />
+        <AppHeader title="Find TRENDS Hubs" />
         
         <div className="md:grid md:grid-cols-2 md:gap-4 md:px-4 md:mt-3">
           <div>

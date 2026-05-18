@@ -371,7 +371,7 @@ const ProfilePage = () => {
       </div>
 
       <p className="text-center text-[10px] text-[#737373] mt-8 pb-4 font-semibold tracking-wider">
-        TRENDS ELECTRONICS CORP<br />
+        TRENDS CORP<br />
         SYSTEM VERSION 4.0.0 (GOLD VIP EDITION)
       </p>
     </div>

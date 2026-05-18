@@ -83,12 +83,12 @@ const HelpPage = () => {
           </div>
           <div className="text-left">
             <h3 className="font-bold text-sm">AI Live Support</h3>
-            <p className="text-xs opacity-80">Instant help from Trends Electronics Intelligence</p>
+            <p className="text-xs opacity-80">Instant help from TRENDS Intelligence</p>
           </div>
           <ChevronRight className="w-5 h-5 ml-auto" />
         </button>
         <button 
-          onClick={() => window.location.href = "mailto:support@trendselectronics.com"}
+          onClick={() => window.location.href = "mailto:support@trends.com"}
           className="w-full bg-card border border-border rounded-xl p-4 flex items-center gap-3 hover:bg-muted/50 transition-all"
         >
           <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
@@ -186,7 +186,7 @@ const HelpPage = () => {
       {/* Footer */}
       <div className="text-center mt-8 pb-4">
         <p className="text-xs text-muted-foreground">Support ID: TRENDS-SUPPORT-2025</p>
-        <p className="text-xs text-muted-foreground">Trends Electronics Support © 2025</p>
+        <p className="text-xs text-muted-foreground">TRENDS Support © 2025</p>
       </div>
       <SupportChat isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
     </div>
