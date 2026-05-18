@@ -34188,27 +34188,27 @@ var require_router = __commonJS({
     var slice = Array.prototype.slice;
     var flatten = Array.prototype.flat;
     var methods = METHODS.map((method) => method.toLowerCase());
-    module2.exports = Router2;
+    module2.exports = Router3;
     module2.exports.Route = Route;
-    function Router2(options) {
-      if (!(this instanceof Router2)) {
-        return new Router2(options);
+    function Router3(options) {
+      if (!(this instanceof Router3)) {
+        return new Router3(options);
       }
       const opts = options || {};
-      function router2(req, res, next) {
-        router2.handle(req, res, next);
+      function router3(req, res, next) {
+        router3.handle(req, res, next);
       }
-      Object.setPrototypeOf(router2, this);
-      router2.caseSensitive = opts.caseSensitive;
-      router2.mergeParams = opts.mergeParams;
-      router2.params = {};
-      router2.strict = opts.strict;
-      router2.stack = [];
-      return router2;
+      Object.setPrototypeOf(router3, this);
+      router3.caseSensitive = opts.caseSensitive;
+      router3.mergeParams = opts.mergeParams;
+      router3.params = {};
+      router3.strict = opts.strict;
+      router3.stack = [];
+      return router3;
     }
-    Router2.prototype = function() {
+    Router3.prototype = function() {
     };
-    Router2.prototype.param = function param(name, fn) {
+    Router3.prototype.param = function param(name, fn) {
       if (!name) {
         throw new TypeError("argument name is required");
       }
@@ -34228,7 +34228,7 @@ var require_router = __commonJS({
       params.push(fn);
       return this;
     };
-    Router2.prototype.handle = function handle(req, res, callback) {
+    Router3.prototype.handle = function handle(req, res, callback) {
       if (!callback) {
         throw new TypeError("argument callback is required");
       }
@@ -34355,7 +34355,7 @@ var require_router = __commonJS({
         }
       }
     };
-    Router2.prototype.use = function use(handler) {
+    Router3.prototype.use = function use(handler) {
       let offset = 0;
       let path4 = "/";
       if (typeof handler !== "function") {
@@ -34388,7 +34388,7 @@ var require_router = __commonJS({
       }
       return this;
     };
-    Router2.prototype.route = function route(path4) {
+    Router3.prototype.route = function route(path4) {
       const route2 = new Route(path4);
       const layer = new Layer(path4, {
         sensitive: this.caseSensitive,
@@ -34403,7 +34403,7 @@ var require_router = __commonJS({
       return route2;
     };
     methods.concat("all").forEach(function(method) {
-      Router2.prototype[method] = function(path4) {
+      Router3.prototype[method] = function(path4) {
         const route = this.route(path4);
         route[method].apply(route, slice.call(arguments, 1));
         return this;
@@ -34586,13 +34586,13 @@ var require_application = __commonJS({
     var compileTrust = require_utils3().compileTrust;
     var resolve = require("node:path").resolve;
     var once = require_once();
-    var Router2 = require_router();
+    var Router3 = require_router();
     var slice = Array.prototype.slice;
     var flatten = Array.prototype.flat;
     var app2 = exports2 = module2.exports = {};
     var trustProxyDefaultSymbol = "@@symbol:trust_proxy_default";
     app2.init = function init() {
-      var router2 = null;
+      var router3 = null;
       this.cache = /* @__PURE__ */ Object.create(null);
       this.engines = /* @__PURE__ */ Object.create(null);
       this.settings = /* @__PURE__ */ Object.create(null);
@@ -34601,13 +34601,13 @@ var require_application = __commonJS({
         configurable: true,
         enumerable: true,
         get: function getrouter() {
-          if (router2 === null) {
-            router2 = new Router2({
+          if (router3 === null) {
+            router3 = new Router3({
               caseSensitive: this.enabled("case sensitive routing"),
               strict: this.enabled("strict routing")
             });
           }
-          return router2;
+          return router3;
         }
       });
     };
@@ -34678,15 +34678,15 @@ var require_application = __commonJS({
       if (fns.length === 0) {
         throw new TypeError("app.use() requires a middleware function");
       }
-      var router2 = this.router;
+      var router3 = this.router;
       fns.forEach(function(fn2) {
         if (!fn2 || !fn2.handle || !fn2.set) {
-          return router2.use(path4, fn2);
+          return router3.use(path4, fn2);
         }
         debug(".use app under %s", path4);
         fn2.mountpath = path4;
         fn2.parent = this;
-        router2.use(path4, function mounted_app(req, res, next) {
+        router3.use(path4, function mounted_app(req, res, next) {
           var orig = req.app;
           fn2.handle(req, res, function(err) {
             Object.setPrototypeOf(req, orig.request);
@@ -56223,7 +56223,7 @@ var require_express = __commonJS({
     var EventEmitter = require("node:events").EventEmitter;
     var mixin = require_merge_descriptors();
     var proto = require_application();
-    var Router2 = require_router();
+    var Router3 = require_router();
     var req = require_request();
     var res = require_response();
     exports2 = module2.exports = createApplication;
@@ -56245,8 +56245,8 @@ var require_express = __commonJS({
     exports2.application = proto;
     exports2.request = req;
     exports2.response = res;
-    exports2.Route = Router2.Route;
-    exports2.Router = Router2;
+    exports2.Route = Router3.Route;
+    exports2.Router = Router3;
     exports2.json = bodyParser.json;
     exports2.raw = bodyParser.raw;
     exports2.static = require_serve_static();
@@ -74107,14 +74107,14 @@ var require_client = __commonJS({
        * @param {Object} auth - the auth parameters
        * @private
        */
-      connect(name, auth2 = {}) {
+      connect(name, auth3 = {}) {
         if (this.server._nsps.has(name)) {
           debug("connecting to namespace %s", name);
-          return this.doConnect(name, auth2);
+          return this.doConnect(name, auth3);
         }
-        this.server._checkNamespace(name, auth2, (dynamicNspName) => {
+        this.server._checkNamespace(name, auth3, (dynamicNspName) => {
           if (dynamicNspName) {
-            this.doConnect(name, auth2);
+            this.doConnect(name, auth3);
           } else {
             debug("creation of namespace %s was denied", name);
             this._packet({
@@ -74135,9 +74135,9 @@ var require_client = __commonJS({
        *
        * @private
        */
-      doConnect(name, auth2) {
+      doConnect(name, auth3) {
         const nsp = this.server.of(name);
-        nsp._add(this, auth2, (socket) => {
+        nsp._add(this, auth3, (socket) => {
           this.sockets.set(socket.id, socket);
           this.nsps.set(nsp.name, socket);
           if (this.connectTimeout) {
@@ -74856,7 +74856,7 @@ var require_socket2 = __commonJS({
        * @param {Object} auth
        * @package
        */
-      constructor(nsp, client2, auth2, previousSession) {
+      constructor(nsp, client2, auth3, previousSession) {
         super();
         this.nsp = nsp;
         this.client = client2;
@@ -74890,7 +74890,7 @@ var require_socket2 = __commonJS({
             this.pid = base64id_1.default.generateId();
           }
         }
-        this.handshake = this.buildHandshake(auth2);
+        this.handshake = this.buildHandshake(auth3);
         this.on("error", noop2);
       }
       /**
@@ -74898,7 +74898,7 @@ var require_socket2 = __commonJS({
        *
        * @private
        */
-      buildHandshake(auth2) {
+      buildHandshake(auth3) {
         var _a, _b, _c, _d;
         return {
           headers: ((_a = this.request) === null || _a === void 0 ? void 0 : _a.headers) || {},
@@ -74911,7 +74911,7 @@ var require_socket2 = __commonJS({
           url: (_c = this.request) === null || _c === void 0 ? void 0 : _c.url,
           // @ts-ignore
           query: ((_d = this.request) === null || _d === void 0 ? void 0 : _d._query) || {},
-          auth: auth2
+          auth: auth3
         };
       }
       /**
@@ -75875,10 +75875,10 @@ var require_namespace = __commonJS({
        * @return {Socket}
        * @private
        */
-      async _add(client2, auth2, fn) {
+      async _add(client2, auth3, fn) {
         var _a;
         debug("adding socket to nsp %s", this.name);
-        const socket = await this._createSocket(client2, auth2);
+        const socket = await this._createSocket(client2, auth3);
         this._preConnectSockets.set(socket.id, socket);
         if (
           // @ts-ignore
@@ -75909,9 +75909,9 @@ var require_namespace = __commonJS({
           });
         });
       }
-      async _createSocket(client2, auth2) {
-        const sessionId = auth2.pid;
-        const offset = auth2.offset;
+      async _createSocket(client2, auth3) {
+        const sessionId = auth3.pid;
+        const offset = auth3.offset;
         if (
           // @ts-ignore
           this.server.opts.connectionStateRecovery && typeof sessionId === "string" && typeof offset === "string"
@@ -75924,10 +75924,10 @@ var require_namespace = __commonJS({
           }
           if (session) {
             debug("connection state recovered for sid %s", session.sid);
-            return new socket_1.Socket(this, client2, auth2, session);
+            return new socket_1.Socket(this, client2, auth3, session);
           }
         }
-        return new socket_1.Socket(this, client2, auth2);
+        return new socket_1.Socket(this, client2, auth3);
       }
       _doConnect(socket, fn) {
         this._preConnectSockets.delete(socket.id);
@@ -81380,7 +81380,7 @@ var require_dist3 = __commonJS({
        *
        * @private
        */
-      _checkNamespace(name, auth2, fn) {
+      _checkNamespace(name, auth3, fn) {
         if (this.parentNsps.size === 0)
           return fn(false);
         const keysIterator = this.parentNsps.keys();
@@ -81389,7 +81389,7 @@ var require_dist3 = __commonJS({
           if (nextFn.done) {
             return fn(false);
           }
-          nextFn.value(name, auth2, (err, allow) => {
+          nextFn.value(name, auth3, (err, allow) => {
             if (err || !allow) {
               return run();
             }
@@ -82787,9 +82787,9 @@ var require_jws = __commonJS({
 var require_decode = __commonJS({
   "node_modules/jsonwebtoken/decode.js"(exports2, module2) {
     var jws = require_jws();
-    module2.exports = function(jwt2, options) {
+    module2.exports = function(jwt3, options) {
       options = options || {};
-      var decoded = jws.decode(jwt2, options);
+      var decoded = jws.decode(jwt3, options);
       if (!decoded) {
         return null;
       }
@@ -96283,8 +96283,8 @@ var require_dist5 = __commonJS({
         let payload = `CONNECT ${host}:${opts.port} HTTP/1.1\r
 `;
         if (proxy.username || proxy.password) {
-          const auth2 = `${decodeURIComponent(proxy.username)}:${decodeURIComponent(proxy.password)}`;
-          headers["Proxy-Authorization"] = `Basic ${Buffer.from(auth2).toString("base64")}`;
+          const auth3 = `${decodeURIComponent(proxy.username)}:${decodeURIComponent(proxy.password)}`;
+          headers["Proxy-Authorization"] = `Basic ${Buffer.from(auth3).toString("base64")}`;
         }
         headers.Host = `${host}:${opts.port}`;
         if (!headers["Proxy-Connection"]) {
@@ -107186,14 +107186,14 @@ var require_oauth2client = __commonJS({
        * @param maxExpiry The max expiry the certificate can be (Optional).
        * @return Returns a promise resolving to LoginTicket on verification.
        */
-      async verifySignedJwtWithCertsAsync(jwt2, certs, requiredAudience, issuers, maxExpiry) {
+      async verifySignedJwtWithCertsAsync(jwt3, certs, requiredAudience, issuers, maxExpiry) {
         const crypto2 = (0, crypto_1.createCrypto)();
         if (!maxExpiry) {
           maxExpiry = _OAuth2Client.DEFAULT_MAX_TOKEN_LIFETIME_SECS_;
         }
-        const segments = jwt2.split(".");
+        const segments = jwt3.split(".");
         if (segments.length !== 3) {
-          throw new Error("Wrong number of segments in token: " + jwt2);
+          throw new Error("Wrong number of segments in token: " + jwt3);
         }
         const signed = segments[0] + "." + segments[1];
         let signature = segments[2];
@@ -107230,7 +107230,7 @@ var require_oauth2client = __commonJS({
         }
         const verified = await crypto2.verify(cert, signed, signature);
         if (!verified) {
-          throw new Error("Invalid token signature: " + jwt2);
+          throw new Error("Invalid token signature: " + jwt3);
         }
         if (!payload.iat) {
           throw new Error("No issue time in token: " + JSON.stringify(payload));
@@ -108147,9 +108147,9 @@ var require_jwtclient = __commonJS({
        * @return The cloned instance.
        */
       createScoped(scopes) {
-        const jwt2 = new _JWT(this);
-        jwt2.scopes = scopes;
-        return jwt2;
+        const jwt3 = new _JWT(this);
+        jwt3.scopes = scopes;
+        return jwt3;
       }
       /**
        * Obtains the metadata to be sent with the request.
@@ -111945,8 +111945,8 @@ var require_src5 = __commonJS({
       return passthrough_1.PassThroughClient;
     } });
     __exportStar(require_googleToken(), exports2);
-    var auth2 = new googleauth_1.GoogleAuth();
-    exports2.auth = auth2;
+    var auth3 = new googleauth_1.GoogleAuth();
+    exports2.auth = auth3;
   }
 });
 
@@ -111969,7 +111969,7 @@ module.exports = __toCommonJS(index_exports);
 })();
 
 // server/index.ts
-var import_express2 = __toESM(require_express2(), 1);
+var import_express3 = __toESM(require_express2(), 1);
 var import_cors = __toESM(require_lib4(), 1);
 var import_http = require("http");
 
@@ -118396,11 +118396,11 @@ function isValidIP(ip, version2) {
   }
   return false;
 }
-function isValidJWT(jwt2, alg) {
-  if (!jwtRegex.test(jwt2))
+function isValidJWT(jwt3, alg) {
+  if (!jwtRegex.test(jwt3))
     return false;
   try {
-    const [header] = jwt2.split(".");
+    const [header] = jwt3.split(".");
     if (!header)
       return false;
     const base64 = header.replace(/-/g, "+").replace(/_/g, "/").padEnd(header.length + (4 - header.length % 4) % 4, "=");
@@ -121451,7 +121451,7 @@ var coerce = {
 var NEVER = INVALID;
 
 // shared/schema.ts
-var roles = ["customer", "warehouse", "courier", "admin"];
+var roles = ["customer", "admin"];
 var orderStatuses = [
   "pending",
   "confirmed",
@@ -121492,6 +121492,13 @@ var menuItems = sqliteTable("menu_items", {
   reviews: integer("reviews"),
   isTop: integer("is_top").default(0),
   isAvailable: integer("is_available").default(1),
+  // CJ Dropshipping fields
+  cjPid: text("cj_pid"),
+  // CJ product ID
+  cjVid: text("cj_vid"),
+  // CJ default variant ID
+  cjCost: text("cj_cost"),
+  // CJ wholesale cost (for margin tracking)
   createdAt: integer("created_at", { mode: "timestamp" }).default(sql`(unixepoch())`).notNull(),
   updatedAt: integer("updated_at", { mode: "timestamp" }).default(sql`(unixepoch())`).notNull()
 });
@@ -121505,6 +121512,7 @@ var orders = sqliteTable("orders", {
   tax: text("tax").notNull(),
   tip: text("tip").notNull(),
   total: text("total").notNull(),
+  currency: text("currency").notNull().default("USD"),
   paymentMethod: text("payment_method").notNull().default("card"),
   paymentStatus: text("payment_status").notNull().default("pending"),
   transactionId: text("transaction_id"),
@@ -121514,6 +121522,16 @@ var orders = sqliteTable("orders", {
   customerLat: real("customer_lat"),
   customerLng: real("customer_lng"),
   notes: text("notes"),
+  // CJ Dropshipping fulfillment fields
+  cjOrderId: text("cj_order_id"),
+  // CJ's internal order ID
+  cjOrderNum: text("cj_order_num"),
+  // CJ's order number
+  cjTrackingNo: text("cj_tracking_no"),
+  // Shipping tracking number
+  cjLogistic: text("cj_logistic"),
+  // Shipping carrier name
+  shippingCountry: text("shipping_country"),
   createdAt: integer("created_at", { mode: "timestamp" }).default(sql`(unixepoch())`).notNull(),
   updatedAt: integer("updated_at", { mode: "timestamp" }).default(sql`(unixepoch())`).notNull()
 });
@@ -124532,29 +124550,49 @@ var Storage = class {
 var storage = new Storage();
 
 // server/ai.ts
-var BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models/";
 var MODELS = [
-  "gemma-3-27b-it",
-  "gemma-3-12b-it",
-  "gemma-3-4b-it",
-  "gemma-3-1b-it"
+  { id: "gemini-2.0-flash", base: "https://generativelanguage.googleapis.com/v1beta/models/", supportsSystemInstruction: true },
+  { id: "gemini-2.0-flash-lite", base: "https://generativelanguage.googleapis.com/v1beta/models/", supportsSystemInstruction: true },
+  { id: "gemma-3-27b-it", base: "https://generativelanguage.googleapis.com/v1beta/models/", supportsSystemInstruction: false },
+  { id: "gemma-3-12b-it", base: "https://generativelanguage.googleapis.com/v1beta/models/", supportsSystemInstruction: false },
+  { id: "gemma-3-4b-it", base: "https://generativelanguage.googleapis.com/v1beta/models/", supportsSystemInstruction: false },
+  { id: "gemma-3-1b-it", base: "https://generativelanguage.googleapis.com/v1beta/models/", supportsSystemInstruction: false }
 ];
 var rateLimitedUntil = {};
-var COOLDOWN_MS = 10 * 60 * 1e3;
-var WAREHOUSE_LOCATION = { lat: 5.6201, lng: -0.174 };
+var COOLDOWN_MS = 60 * 1e3;
+var HARD_COOLDOWN_MS = 10 * 60 * 1e3;
+var _inFlight = false;
+async function withRateGuard(fn) {
+  const start = Date.now();
+  while (_inFlight) {
+    if (Date.now() - start > 8e3) break;
+    await new Promise((r2) => setTimeout(r2, 200));
+  }
+  _inFlight = true;
+  try {
+    return await fn();
+  } finally {
+    _inFlight = false;
+  }
+}
 function getKey() {
   const key = process.env.GEMINI_API_KEY;
-  if (!key) {
-    console.error("### AI_ERROR: GEMINI_API_KEY is not set in the environment!");
-    throw new Error("GEMINI_API_KEY not set");
-  }
+  if (!key) throw new Error("GEMINI_API_KEY not set");
   return key;
 }
 function getAvailableModels() {
   const now = Date.now();
-  return MODELS.filter((m2) => !rateLimitedUntil[m2] || rateLimitedUntil[m2] < now);
+  const available = MODELS.filter((m2) => !rateLimitedUntil[m2.id] || rateLimitedUntil[m2.id] < now);
+  if (available.length === 0) {
+    MODELS.forEach((m2) => delete rateLimitedUntil[m2.id]);
+    return [...MODELS];
+  }
+  return available;
 }
 async function chat(messages) {
+  return withRateGuard(() => _chat(messages));
+}
+async function _chat(messages) {
   const key = getKey();
   let systemText = "";
   const contents = [];
@@ -124562,75 +124600,80 @@ async function chat(messages) {
     if (msg.role === "system") {
       systemText += msg.content + "\n\n";
     } else if (msg.role === "user") {
-      const text2 = contents.length === 0 && systemText ? systemText + msg.content : msg.content;
-      contents.push({ role: "user", parts: [{ text: text2 }] });
+      contents.push({ role: "user", parts: [{ text: msg.content }] });
     } else if (msg.role === "assistant") {
       contents.push({ role: "model", parts: [{ text: msg.content }] });
     }
   }
-  if (contents.length === 0 && systemText) {
-    contents.push({ role: "user", parts: [{ text: systemText }] });
+  if (contents.length === 0) {
+    contents.push({ role: "user", parts: [{ text: systemText || "Hello" }] });
+    systemText = "";
   }
   let lastError = null;
-  const available = getAvailableModels();
-  if (available.length === 0) {
-    Object.keys(rateLimitedUntil).forEach((k) => delete rateLimitedUntil[k]);
-    available.push(...MODELS);
-  }
-  for (const modelId of available) {
+  for (const model of getAvailableModels()) {
     try {
-      console.log(`### AI Request (${modelId})`);
-      const res = await fetch(`${BASE_URL}${modelId}:generateContent?key=${key}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          contents,
-          generationConfig: {
-            maxOutputTokens: 250,
-            temperature: 0.7
+      console.log(`### AI Request (${model.id})`);
+      const requestBody = {
+        generationConfig: { maxOutputTokens: 300, temperature: 0.7 }
+      };
+      if (model.supportsSystemInstruction && systemText.trim()) {
+        requestBody.systemInstruction = { parts: [{ text: systemText.trim() }] };
+        requestBody.contents = contents;
+      } else if (systemText.trim()) {
+        const merged = contents.map((c, i2) => {
+          if (i2 === 0 && c.role === "user") {
+            return { role: "user", parts: [{ text: systemText.trim() + "\n\n" + c.parts[0].text }] };
           }
-        })
+          return c;
+        });
+        requestBody.contents = merged;
+      } else {
+        requestBody.contents = contents;
+      }
+      const res = await fetch(`${model.base}${model.id}:generateContent?key=${key}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(requestBody)
       });
       if (!res.ok) {
         const errText = await res.text();
         const status = res.status;
-        console.warn(`### AI ${modelId} failed (${status}): ${errText.slice(0, 200)}`);
-        if (status === 429 || status === 402 || status === 403 || status === 503 || status === 404) {
-          rateLimitedUntil[modelId] = Date.now() + COOLDOWN_MS;
-          console.log(`### Model ${modelId} rate-limited or unavailable, cooling down for 10min`);
-          lastError = new Error(`Rate limited or unavailable on ${modelId}`);
+        console.warn(`### AI ${model.id} failed (${status}): ${errText.slice(0, 200)}`);
+        if ([429, 503].includes(status)) {
+          rateLimitedUntil[model.id] = Date.now() + COOLDOWN_MS;
+          lastError = new Error(`Model ${model.id} rate limited (${status})`);
           continue;
         }
-        lastError = new Error(`Error ${status} on ${modelId}`);
+        if ([402, 403, 404].includes(status)) {
+          rateLimitedUntil[model.id] = Date.now() + HARD_COOLDOWN_MS;
+          lastError = new Error(`Model ${model.id} unavailable (${status})`);
+          continue;
+        }
+        lastError = new Error(`Error ${status} on ${model.id}`);
         continue;
       }
       const data = await res.json();
       const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
       if (content) {
-        console.log(`### AI success via ${modelId}`);
+        console.log(`### AI success via ${model.id}`);
         return content;
       }
-      lastError = new Error(`Empty response from ${modelId}`);
+      lastError = new Error(`Empty response from ${model.id}`);
     } catch (err) {
-      console.warn(`### AI ${modelId} network error:`, err.message);
+      console.warn(`### AI ${model.id} network error:`, err.message);
       lastError = err;
-      continue;
     }
   }
-  const errorMessage = lastError ? lastError.message : "All AI models failed";
-  console.error(`### AI_FATAL: ${errorMessage}`);
   throw lastError || new Error("All AI models failed");
 }
 async function getRecommendations(menuItems2, recentOrders, timeOfDay, interests) {
-  const menuText = menuItems2.map((i2) => `ID:${i2.id} "${i2.name}" (${i2.category}, $${i2.price}${i2.tags?.length ? ", " + i2.tags.join("/") : ""})`).join("\n");
+  const menuText = menuItems2.map((i2) => `ID:${i2.id} "${i2.name}" (${i2.category}, ${i2.price}${i2.tags?.length ? ", " + i2.tags.join("/") : ""})`).join("\n");
   const historyText = recentOrders.length > 0 ? recentOrders.slice(0, 3).map((o) => o.items.map((i2) => i2.name).join(", ")).join(" | ") : "No previous orders";
   const prompt = `Menu:
 ${menuText}
 Orders: ${historyText}
 Time: ${timeOfDay}
-Interests/Preferences: ${interests || "None"}. DO NOT recommend any products violating these preferences.
+Interests: ${interests || "None"}.
 Respond with 4 best JSON recommendations only: [{"id":"1","name":"Item","reason":"reason","confidence":0.95}]`;
   const response = await chat([
     { role: "system", content: "You are a tech product recommender. Respond with JSON arrays only." },
@@ -124650,16 +124693,13 @@ Respond with 4 best JSON recommendations only: [{"id":"1","name":"Item","reason"
 }
 async function getOrderETA(status, createdAt, itemCount) {
   const minutesSinceOrder = Math.floor((Date.now() - createdAt.getTime()) / 6e4);
-  const prompt = `You are an AI delivery time estimator for a tech retail store.
-Order: status="${status}", placed ${minutesSinceOrder} min ago, ${itemCount} items.
-Estimate remaining delivery time. Respond with valid JSON only: {"minutes":15,"message":"Your gadgets are being secured for transport!"}`;
+  const prompt = `Order: status="${status}", placed ${minutesSinceOrder} min ago, ${itemCount} items. Estimate remaining delivery time. Respond with valid JSON only: {"minutes":15,"message":"Your gadgets are being secured for transport!"}`;
   const response = await chat([
     { role: "system", content: "You are a delivery ETA AI. Respond with valid JSON only." },
     { role: "user", content: prompt }
   ]);
   try {
-    const cleaned = response.trim().replace(/^```json\n?|```$/g, "");
-    return JSON.parse(cleaned);
+    return JSON.parse(response.trim().replace(/^```json\n?|```$/g, ""));
   } catch {
     const fallbacks = {
       pending: { minutes: 35, message: "Order received! Processing your tech request." },
@@ -124682,89 +124722,65 @@ async function getWarehouseSummary(orders2) {
     const items = (o.items || []).map((i2) => `${i2.quantity}\xD7 ${i2.name}`).join(", ");
     return `Order #${String(o.id).padStart(5, "0")} [${o.status}, ${age}min ago]: ${items}`;
   }).join("\n");
-  const prompt = `Warehouse assistant at Trends Electronics. Active orders:
-${ordersText}
-Give a 1-2 sentence briefing. Flag orders waiting >15 min. Be concise.`;
   const response = await chat([
     { role: "system", content: "You are a warehouse operations assistant. Be brief and actionable." },
-    { role: "user", content: prompt }
+    { role: "user", content: `Active orders:
+${ordersText}
+Give a 1-2 sentence briefing. Flag orders waiting >15 min.` }
   ]);
   return response.trim() || "All orders looking good. Keep up the great work!";
 }
 async function searchMenu(query, menuItems2) {
-  const menuText = menuItems2.map((i2) => `ID:${i2.id} "${i2.name}" (${i2.category}, $${i2.price}) - ${i2.description}${i2.tags?.length ? " [" + i2.tags.join(", ") + "]" : ""}`).join("\n");
-  const prompt = `Menu:
-${menuText}
-Query: "${query}"
-Respond with best matches as valid JSON only: {"message":"Msg","itemIds":[1,3]}`;
+  const menuText = menuItems2.map((i2) => `ID:${i2.id} "${i2.name}" (${i2.category}, ${i2.price}) - ${i2.description}${i2.tags?.length ? " [" + i2.tags.join(", ") + "]" : ""}`).join("\n");
   const response = await chat([
     { role: "system", content: "You are a tech retail assistant. Always respond with valid JSON only." },
-    { role: "user", content: prompt }
+    { role: "user", content: `Menu:
+${menuText}
+Query: "${query}"
+Respond: {"message":"Msg","itemIds":[1,3]}` }
   ]);
   try {
-    const cleaned = response.trim().replace(/^```json\n?|```$/g, "");
-    return JSON.parse(cleaned);
+    return JSON.parse(response.trim().replace(/^```json\n?|```$/g, ""));
   } catch {
     return { message: "Here are some items you might enjoy!", itemIds: menuItems2.slice(0, 3).map((i2) => i2.id) };
   }
 }
 async function getAdminInsights(stats) {
   const popularText = stats.popularItems.map((i2) => `${i2.name} (${i2.count} sold)`).join(", ");
-  const recentRevenue = stats.revenue.slice(-7).map((r2) => `$${r2.amount}`).join(", ");
-  const prompt = `Business consultant for Trends Electronics.
-30-Day: Revenue=$${stats.totalRevenue.toFixed(2)}, Orders=${stats.totalOrders}, Top items: ${popularText}, Last 7 days revenue: ${recentRevenue}.
-Give a professional 2-3 sentence strategic insight.`;
+  const recentRevenue = stats.revenue.slice(-7).map((r2) => `${r2.amount}`).join(", ");
   const response = await chat([
     { role: "system", content: "You are a strategic business analyst for a retail store. Be concise and insightful." },
-    { role: "user", content: prompt }
+    { role: "user", content: `30-Day: Revenue=${stats.totalRevenue.toFixed(2)}, Orders=${stats.totalOrders}, Top items: ${popularText}, Last 7 days revenue: ${recentRevenue}. Give a professional 2-3 sentence strategic insight.` }
   ]);
   return response.trim() || "Performance is steady. Focus on maintaining quality and speed.";
 }
 async function getSupportResponse(userQuery, history = [], menuItems2 = [], interests, activeOrders = []) {
   const query = userQuery.toLowerCase();
   const techKeywords = ["shop", "recommend", "buy", "product", "gadget", "device", "phone", "laptop", "audio", "watch", "gaming", "accessories", "price", "cost", "warranty", "spec", "stock"];
-  const trackingKeywords = ["where", "track", "status", "courier", "courier", "delivery", "arrival", "eta", "location", "coming", "package"];
-  const hasTechIntent = techKeywords.some((word) => query.includes(word));
-  const hasTrackingIntent = trackingKeywords.some((word) => query.includes(word));
-  const menuText = hasTechIntent && menuItems2.length > 0 ? menuItems2.map((i2) => `ID:${i2.id} "${i2.name}" ($${i2.price}) - ${i2.category}. ${i2.description}${i2.tags?.length ? " [" + i2.tags.join(", ") + "]" : ""}`).join("\n") : "";
+  const trackingKeywords = ["where", "track", "status", "delivery", "arrival", "eta", "location", "coming", "package"];
+  const hasTechIntent = techKeywords.some((w) => query.includes(w));
+  const hasTrackingIntent = trackingKeywords.some((w) => query.includes(w));
+  const menuText = hasTechIntent && menuItems2.length > 0 ? menuItems2.map((i2) => `ID:${i2.id} "${i2.name}" (${i2.price}) - ${i2.category}. ${i2.description}${i2.tags?.length ? " [" + i2.tags.join(", ") + "]" : ""}`).join("\n") : "";
   const orderContext = activeOrders.length > 0 ? activeOrders.map((o) => {
     const items = o.items.map((i2) => `${i2.quantity}x ${i2.name}`).join(", ");
-    const courierLoc = o.courierLat && o.courierLng ? `Courier at [${o.courierLat}, ${o.courierLng}]` : "Courier location unknown";
-    const restLoc = `Warehouse at [${WAREHOUSE_LOCATION.lat}, ${WAREHOUSE_LOCATION.lng}]`;
-    const custLoc = o.customerLat && o.customerLng ? `Customer at [${o.customerLat}, ${o.customerLng}]` : "Customer location unknown";
-    return `Order #${o.id}: Status=${o.status}. Items: ${items}. ${courierLoc}. ${restLoc}. ${custLoc}.`;
-  }).join("\n") : "No active orders for this user.";
+    return `Order #${o.id}: Status=${o.status}. Items: ${items}.`;
+  }).join("\n") : "No active orders.";
   let systemPrompt;
   if (hasTrackingIntent && activeOrders.length > 0) {
-    systemPrompt = `You are Trends Electronics' elite logistics coordinator.
-Goal: Provide a precise update on the user's package using the TRACKING CONTEXT below.
-Coordinates: Translate [lat, lng] into human-friendly terms relative to the warehouse and customer.
-Note: If the courier is closer to the customer than the warehouse, say they're "on the home stretch".
-Tone: Informed, professional, and very brief (under 30 words).
-
-TRACKING CONTEXT:
-${orderContext}`;
+    systemPrompt = `You are Trends Electronics' support assistant. Give a brief order status update using: ${orderContext}. Be under 30 words.`;
   } else if (hasTechIntent) {
-    systemPrompt = `You are Trends Electronics' elite tech concierge. 
-Goal: Provide a complete tech setup recommendation (Device + Accessories) using the PRODUCT DATA below.
-Requirement: You MUST use [PRODUCT:id] tags for every item you mention to generate interactive cards.
-Interests: Strictly align with "${interests || "None recognized"}".
-Tone: Helpful, tech-savvy, and very brief (under 30 words).
+    systemPrompt = `You are Trends Electronics' tech concierge. Recommend products from this catalog using [PRODUCT:id] tags. Interests: "${interests || "None"}". Be brief (under 30 words).
 
-MENU DATA:
+CATALOG:
 ${menuText}`;
   } else {
-    systemPrompt = `You are Trends Electronics' friendly AI assistant.
-Goal: Handle greetings and general chat warmly.
-Note: You don't have the product catalog open right now. If the user wants to see gadgets or the store, encourage them to ask specifically for "recommendations" or "the store".
-Tone: Professional "Trends" persona. Tech-savvy and very short (under 20 words).`;
+    systemPrompt = `You are Trends Electronics' friendly AI assistant. Handle greetings warmly. Be very short (under 20 words).`;
   }
-  const messages = [
+  return chat([
     { role: "system", content: systemPrompt },
     ...history,
     { role: "user", content: userQuery }
-  ];
-  return chat(messages);
+  ]);
 }
 
 // server/routes.ts
@@ -124832,8 +124848,8 @@ router.post("/auth/register", async (req, res) => {
   if (!result.success) return res.status(400).json({ error: result.error.flatten() });
   const { role, adminSecret, email } = result.data;
   const lowerEmail = email.toLowerCase();
-  if (role === "admin" || role === "warehouse") {
-    return res.status(403).json({ error: "Administrative accounts must be created by the Super Admin" });
+  if (role === "admin") {
+    return res.status(403).json({ error: "Admin accounts are managed by the super admin" });
   }
   if (lowerEmail === "admin@trendselectronics.com") {
     return res.status(403).json({ error: "Unauthorized email address" });
@@ -125048,6 +125064,8 @@ router.post("/payments/verify", auth, async (req, res) => {
       return res.status(400).json({ error: "Payment verification failed" });
     }
     const order = await storage.updatePaymentStatus(Number(orderId), "completed", reference);
+    await storage.updateOrderStatus(Number(orderId), "confirmed");
+    io2.to(`user:${order.userId}`).emit("order_status", { orderId: order.id, status: "confirmed" });
     res.json({ success: true, reference, order });
   } catch (err) {
     console.error("Paystack verify error:", err);
@@ -125162,6 +125180,45 @@ router.get("/admin/stats", auth, requireRole("admin"), async (req, res) => {
   const days = Number(req.query.days) || 30;
   const stats = await storage.getAdminStats(days);
   res.json(stats);
+});
+router.get("/admin/orders", auth, requireRole("admin"), async (_req, res) => {
+  const allOrders = await storage.getAllOrders();
+  const enriched = await Promise.all(
+    allOrders.map(async (order) => {
+      const items = await Promise.all(
+        order.items.map(async (item) => {
+          if (item.menuItemId) {
+            const menuItem = await storage.getMenuItem(item.menuItemId);
+            return { ...item, cjCost: menuItem?.cjCost || null };
+          }
+          return { ...item, cjCost: null };
+        })
+      );
+      return { ...order, items };
+    })
+  );
+  res.json(enriched);
+});
+router.patch("/admin/orders/:id/status", auth, requireRole("admin"), async (req, res) => {
+  const { status } = req.body;
+  const validStatuses = ["pending", "confirmed", "packaging", "ready", "assigned", "picked_up", "delivered", "cancelled"];
+  if (!validStatuses.includes(status)) return res.status(400).json({ error: "Invalid status" });
+  const order = await storage.updateOrderStatus(Number(req.params.id), status);
+  io2.to(`user:${order.userId}`).emit("order_status", { orderId: order.id, status });
+  res.json(order);
+});
+router.patch("/orders/:id/cancel", auth, async (req, res) => {
+  const order = await storage.getOrderById(Number(req.params.id));
+  if (!order) return res.status(404).json({ error: "Order not found" });
+  if (req.user.role === "customer") {
+    if (order.userId !== req.user.id) return res.status(403).json({ error: "Forbidden" });
+    if (!["pending", "confirmed"].includes(order.status)) {
+      return res.status(400).json({ error: "Order can no longer be cancelled" });
+    }
+  }
+  const updated = await storage.updateOrderStatus(Number(req.params.id), "cancelled");
+  io2.to(`user:${updated.userId}`).emit("order_status", { orderId: updated.id, status: "cancelled" });
+  res.json(updated);
 });
 router.get("/admin/menu-items", auth, requireRole("admin", "warehouse"), async (_req, res) => {
   const items = await storage.getMenuItems(true);
@@ -125342,17 +125399,471 @@ router.post("/api/rewards/redeem", auth, async (req, res) => {
 });
 var routes_default = router;
 
+// server/cj-routes.ts
+var import_express2 = __toESM(require_express2(), 1);
+var import_jsonwebtoken2 = __toESM(require_jsonwebtoken(), 1);
+
+// server/cj.ts
+var CJ_BASE = "https://developers.cjdropshipping.com/api2.0/v1";
+var _accessToken = null;
+var _tokenExpiry = 0;
+async function getAccessToken() {
+  if (_accessToken && Date.now() < _tokenExpiry) return _accessToken;
+  const apiKey = process.env.CJ_API_KEY;
+  if (!apiKey) throw new Error("CJ_API_KEY must be set in environment variables");
+  const res = await fetch(`${CJ_BASE}/authentication/getAccessToken`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ apiKey })
+  });
+  if (!res.ok) {
+    throw new Error(`CJ Auth HTTP error: ${res.status} ${res.statusText}`);
+  }
+  const data = await res.json();
+  if (!data.result || !data.data?.accessToken) {
+    throw new Error(`CJ Auth failed: ${data.message}`);
+  }
+  _accessToken = data.data.accessToken;
+  _tokenExpiry = new Date(data.data.accessTokenExpiryDate).getTime() - 10 * 60 * 1e3;
+  return _accessToken;
+}
+async function cjFetch(path4, options = {}) {
+  const token = await getAccessToken();
+  let url = `${CJ_BASE}${path4}`;
+  if (options.params) {
+    const qs = new URLSearchParams(
+      Object.entries(options.params).filter(([, v]) => v !== void 0 && v !== null && v !== "").map(([k, v]) => [k, String(v)])
+    ).toString();
+    if (qs) url += `?${qs}`;
+  }
+  const res = await fetch(url, {
+    method: options.method || "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "CJ-Access-Token": token
+    },
+    body: options.body ? JSON.stringify(options.body) : void 0
+  });
+  if (!res.ok) {
+    throw new Error(`CJ API HTTP error: ${res.status} ${res.statusText}`);
+  }
+  const data = await res.json();
+  if (!data.result) {
+    throw new Error(`CJ API error: ${data.message}`);
+  }
+  return data.data;
+}
+async function searchCJProducts(keyword, page = 1, pageSize = 20) {
+  const data = await cjFetch(
+    "/product/list",
+    {
+      params: {
+        productNameEn: keyword,
+        pageNum: page,
+        pageSize: Math.min(pageSize, 200)
+      }
+    }
+  );
+  const list = data.list || [];
+  const words = keyword.toLowerCase().split(/\s+/).filter((w) => w.length > 2);
+  const filtered = words.length > 0 ? list.filter((p) => {
+    const name = p.productNameEn.toLowerCase();
+    return words.some((w) => name.includes(w));
+  }) : list;
+  return { list: filtered, total: filtered.length };
+}
+async function getCJProductsByCategory(categoryId, page = 1, pageSize = 50) {
+  const data = await cjFetch(
+    "/product/list",
+    {
+      params: {
+        categoryId,
+        pageNum: page,
+        pageSize: Math.min(pageSize, 200),
+        orderBy: "listedNum",
+        // most listed = most popular
+        sort: "desc"
+      }
+    }
+  );
+  return { list: data.list || [], total: data.total || 0 };
+}
+async function getCJCategories() {
+  try {
+    const data = await cjFetch("/product/getCategory");
+    const flat = [];
+    for (const first of data || []) {
+      for (const second of first.categoryFirstList || []) {
+        for (const third of second.categorySecondList || []) {
+          flat.push({
+            categoryId: third.categoryId,
+            categoryName: third.categoryName,
+            categoryFirstName: first.categoryFirstName
+          });
+        }
+      }
+    }
+    return flat;
+  } catch {
+    return [];
+  }
+}
+async function getCJProductDetail(pid) {
+  const data = await cjFetch("/product/query", {
+    params: { pid }
+  });
+  return data;
+}
+async function getCJShippingRates(vid, country, quantity = 1) {
+  try {
+    const data = await cjFetch("/logistic/freightCalculate", {
+      params: { vid, country, quantity }
+    });
+    return Array.isArray(data) ? data : [];
+  } catch {
+    return [];
+  }
+}
+async function createCJOrder(referenceNo, shippingAddress, items, shippingMethod = "CJPacket") {
+  const data = await cjFetch("/shopping/order/createOrderV2", {
+    method: "POST",
+    body: {
+      orderNumber: referenceNo,
+      shippingZip: shippingAddress.zip || "",
+      shippingCountryCode: shippingAddress.country,
+      // required: 2-letter ISO code e.g. "US"
+      shippingCountry: shippingAddress.country,
+      // country name or code
+      shippingProvince: shippingAddress.province || shippingAddress.city,
+      shippingCity: shippingAddress.city,
+      shippingAddress: shippingAddress.address,
+      shippingCustomerName: shippingAddress.consignee,
+      shippingPhone: shippingAddress.phone || "",
+      logisticName: shippingMethod,
+      // required
+      fromCountryCode: "CN",
+      // required: CJ ships from China
+      payType: 3,
+      // 3 = create order only, no auto-payment
+      products: items.map((i2) => ({ vid: i2.vid, quantity: i2.quantity }))
+    }
+  });
+  return data;
+}
+async function getCJOrderTracking(cjOrderId) {
+  const data = await cjFetch("/shopping/order/getOrderDetail", {
+    params: { orderId: cjOrderId }
+  });
+  return data;
+}
+function isCJConfigured() {
+  return !!process.env.CJ_API_KEY;
+}
+
+// server/cj-routes.ts
+var router2 = (0, import_express2.Router)();
+var JWT_SECRET2 = process.env.JWT_SECRET || "trends-electronics-secret-key-change-in-production";
+function auth2(req, res, next) {
+  const token = req.headers.authorization?.split(" ")[1];
+  if (!token) return res.status(401).json({ error: "Unauthorized" });
+  try {
+    const decoded = import_jsonwebtoken2.default.verify(token, JWT_SECRET2);
+    req.user = decoded;
+    next();
+  } catch {
+    res.status(401).json({ error: "Invalid token" });
+  }
+}
+function requireRole2(...roles3) {
+  return (req, res, next) => {
+    if (!req.user || !roles3.includes(req.user.role)) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+    next();
+  };
+}
+router2.get("/status", (_req, res) => {
+  res.json({ configured: isCJConfigured() });
+});
+router2.get("/products/search", auth2, requireRole2("admin"), async (req, res) => {
+  if (!isCJConfigured()) {
+    return res.status(503).json({ error: "CJ Dropshipping API key not configured. Add CJ_API_KEY to your environment variables." });
+  }
+  const { q, page = "1", pageSize = "20" } = req.query;
+  if (!q) return res.status(400).json({ error: "q (search query) is required" });
+  try {
+    const result = await searchCJProducts(q, Number(page), Number(pageSize));
+    res.json(result);
+  } catch (err) {
+    console.error("CJ product search error:", err);
+    res.status(500).json({ error: err.message || "CJ product search failed" });
+  }
+});
+router2.get("/products/:pid", auth2, requireRole2("admin"), async (req, res) => {
+  if (!isCJConfigured()) {
+    return res.status(503).json({ error: "CJ API keys not configured" });
+  }
+  try {
+    const product = await getCJProductDetail(req.params.pid);
+    res.json(product);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+router2.post("/products/import", auth2, requireRole2("admin"), async (req, res) => {
+  if (!isCJConfigured()) {
+    return res.status(503).json({ error: "CJ API key not configured" });
+  }
+  const { pid, vid, name, description, price, category, imageUrl, markup = 30 } = req.body;
+  if (!pid || !name || !price || !category) {
+    return res.status(400).json({ error: "pid, name, price, and category are required" });
+  }
+  try {
+    const costPrice = parseFloat(price);
+    const sellPrice = (costPrice * (1 + Number(markup) / 100)).toFixed(2);
+    let resolvedVid = vid || null;
+    if (!resolvedVid) {
+      try {
+        const detail = await getCJProductDetail(pid);
+        if (detail.variants && detail.variants.length > 0) {
+          resolvedVid = detail.variants[0].vid;
+        }
+      } catch {
+        console.warn(`Could not fetch variants for CJ product ${pid}`);
+      }
+    }
+    const item = await storage.createMenuItem({
+      name,
+      description: description || `${name} \u2014 sourced via CJ Dropshipping`,
+      price: sellPrice,
+      imageUrl: imageUrl || null,
+      category,
+      cjPid: pid,
+      cjVid: resolvedVid,
+      cjCost: costPrice.toFixed(2),
+      isAvailable: 1,
+      isTop: 0
+    });
+    res.status(201).json(item);
+  } catch (err) {
+    console.error("CJ import error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+router2.get("/categories", auth2, requireRole2("admin"), async (_req, res) => {
+  if (!isCJConfigured()) return res.status(503).json({ error: "CJ API key not configured" });
+  try {
+    const cats = await getCJCategories();
+    res.json(cats);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+router2.post("/products/bulk-import", auth2, requireRole2("admin"), async (req, res) => {
+  if (!isCJConfigured()) return res.status(503).json({ error: "CJ API key not configured" });
+  const { keyword, categoryId, limit = 20, markup = 30, storeCategory = "Electronics" } = req.body;
+  if (!keyword && !categoryId) {
+    return res.status(400).json({ error: "Either keyword or categoryId is required" });
+  }
+  const maxLimit = Math.min(Number(limit), 200);
+  try {
+    let products = [];
+    if (categoryId) {
+      const result = await getCJProductsByCategory(categoryId, 1, maxLimit);
+      products = result.list;
+    } else {
+      const result = await searchCJProducts(keyword, 1, maxLimit);
+      products = result.list;
+    }
+    if (products.length === 0) {
+      return res.json({ imported: 0, skipped: 0, message: "No products found" });
+    }
+    let imported = 0;
+    let skipped = 0;
+    const errors = [];
+    for (const product of products) {
+      try {
+        const costPrice = parseFloat(product.sellPrice || "0");
+        if (costPrice <= 0) {
+          skipped++;
+          continue;
+        }
+        const sellPrice = (costPrice * (1 + Number(markup) / 100)).toFixed(2);
+        let vid = null;
+        try {
+          const detail = await getCJProductDetail(product.pid);
+          if (detail.variants?.length > 0) vid = detail.variants[0].vid;
+        } catch {
+        }
+        await storage.createMenuItem({
+          name: product.productNameEn,
+          description: `${product.productNameEn} \u2014 ${product.categoryName || storeCategory}`,
+          price: sellPrice,
+          imageUrl: product.productImage || null,
+          category: storeCategory,
+          cjPid: product.pid,
+          cjVid: vid,
+          cjCost: costPrice.toFixed(2),
+          isAvailable: 1,
+          isTop: 0
+        });
+        imported++;
+        await new Promise((r2) => setTimeout(r2, 100));
+      } catch (err) {
+        skipped++;
+        errors.push(`${product.productNameEn}: ${err.message}`);
+      }
+    }
+    res.json({
+      imported,
+      skipped,
+      total: products.length,
+      message: `Imported ${imported} products${skipped > 0 ? `, skipped ${skipped}` : ""}`,
+      errors: errors.slice(0, 5)
+      // only first 5 errors
+    });
+  } catch (err) {
+    console.error("Bulk import error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+router2.get("/shipping/rates", async (req, res) => {
+  if (!isCJConfigured()) {
+    return res.json([
+      { logisticName: "CJ Packet", logisticAbbreviation: "CJPacket", logisticPrice: 3.99, estimateDeliveryDays: "7-15" },
+      { logisticName: "CJ Express", logisticAbbreviation: "CJExpress", logisticPrice: 12.99, estimateDeliveryDays: "3-7" }
+    ]);
+  }
+  const { pid, country = "US", quantity = "1" } = req.query;
+  if (!pid) return res.status(400).json({ error: "pid is required" });
+  try {
+    const rates = await getCJShippingRates(pid, country, Number(quantity));
+    res.json(rates);
+  } catch (err) {
+    console.error("CJ shipping rates error:", err);
+    res.json([
+      { logisticName: "Standard Shipping", logisticAbbreviation: "Standard", logisticPrice: 4.99, estimateDeliveryDays: "10-20" }
+    ]);
+  }
+});
+router2.post("/orders/:orderId/fulfill", auth2, requireRole2("admin", "warehouse"), async (req, res) => {
+  if (!isCJConfigured()) {
+    return res.status(503).json({ error: "CJ API keys not configured. Add CJ_API_EMAIL and CJ_API_KEY to your .env file." });
+  }
+  const orderId = Number(req.params.orderId);
+  const order = await storage.getOrderById(orderId);
+  if (!order) return res.status(404).json({ error: "Order not found" });
+  if (order.cjOrderId) {
+    return res.status(409).json({ error: "Order already submitted to CJ", cjOrderId: order.cjOrderId });
+  }
+  const { shippingAddress } = req.body;
+  if (!shippingAddress?.country || !shippingAddress?.address || !shippingAddress?.consignee) {
+    return res.status(400).json({ error: "shippingAddress with consignee, country, province, city, address, zip, phone is required" });
+  }
+  try {
+    const cjItems = [];
+    const missingVid = [];
+    for (const item of order.items) {
+      if (item.menuItemId) {
+        const menuItem = await storage.getMenuItem(item.menuItemId);
+        if (menuItem?.cjVid) {
+          cjItems.push({ vid: menuItem.cjVid, quantity: item.quantity });
+        } else if (menuItem?.cjPid) {
+          try {
+            const detail = await getCJProductDetail(menuItem.cjPid);
+            if (detail.variants && detail.variants.length > 0) {
+              const vid = detail.variants[0].vid;
+              await db.update(menuItems).set({ cjVid: vid, updatedAt: /* @__PURE__ */ new Date() }).where(eq(menuItems.id, menuItem.id));
+              cjItems.push({ vid, quantity: item.quantity });
+            } else {
+              missingVid.push(item.name);
+            }
+          } catch {
+            missingVid.push(item.name);
+          }
+        } else {
+          missingVid.push(item.name);
+        }
+      }
+    }
+    if (cjItems.length === 0) {
+      return res.status(400).json({
+        error: `Cannot fulfill: none of the products in this order are linked to CJ. Products without CJ link: ${missingVid.join(", ")}. Re-import these products from the CJ Import tab.`
+      });
+    }
+    if (missingVid.length > 0) {
+      console.warn(`Partial CJ fulfill for order ${orderId} \u2014 skipping non-CJ items: ${missingVid.join(", ")}`);
+    }
+    const referenceNo = `TRENDS-${orderId}-${Date.now()}`;
+    const result = await createCJOrder(referenceNo, shippingAddress, cjItems);
+    await db.update(orders).set({
+      cjOrderId: result.orderId,
+      cjOrderNum: result.orderNumber || result.orderNum || null,
+      shippingCountry: shippingAddress.country,
+      updatedAt: /* @__PURE__ */ new Date()
+    }).where(eq(orders.id, orderId));
+    res.json({
+      success: true,
+      cjOrderId: result.orderId,
+      cjOrderNum: result.orderNumber || result.orderNum,
+      skippedItems: missingVid.length > 0 ? missingVid : void 0
+    });
+  } catch (err) {
+    console.error("CJ order fulfillment error:", err);
+    res.status(500).json({ error: err.message || "CJ order fulfillment failed" });
+  }
+});
+router2.post("/orders/:orderId/sync-tracking", auth2, requireRole2("admin", "warehouse"), async (req, res) => {
+  if (!isCJConfigured()) {
+    return res.status(503).json({ error: "CJ API keys not configured" });
+  }
+  const orderId = Number(req.params.orderId);
+  const order = await storage.getOrderById(orderId);
+  if (!order) return res.status(404).json({ error: "Order not found" });
+  if (!order.cjOrderId) return res.status(400).json({ error: "Order has not been submitted to CJ yet" });
+  try {
+    const tracking = await getCJOrderTracking(order.cjOrderId);
+    await db.update(orders).set({
+      cjTrackingNo: tracking.trackNumber || null,
+      cjLogistic: tracking.logisticName || null,
+      updatedAt: /* @__PURE__ */ new Date()
+    }).where(eq(orders.id, orderId));
+    res.json({
+      trackingNumber: tracking.trackNumber,
+      carrier: tracking.logisticName,
+      status: tracking.status,
+      details: tracking.trackingDetails || []
+    });
+  } catch (err) {
+    console.error("CJ tracking sync error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+router2.get("/orders/:orderId/tracking", auth2, async (req, res) => {
+  const orderId = Number(req.params.orderId);
+  const order = await storage.getOrderById(orderId);
+  if (!order) return res.status(404).json({ error: "Order not found" });
+  if (req.user.role === "customer" && order.userId !== req.user.id) {
+    return res.status(403).json({ error: "Forbidden" });
+  }
+  res.json({
+    cjOrderId: order.cjOrderId || null,
+    cjOrderNum: order.cjOrderNum || null,
+    trackingNumber: order.cjTrackingNo || null,
+    carrier: order.cjLogistic || null,
+    shippingCountry: order.shippingCountry || null
+  });
+});
+var cj_routes_default = router2;
+
 // server/index.ts
 var import_fs = __toESM(require("fs"), 1);
 var import_path3 = __toESM(require("path"), 1);
 console.log("### SERVER_CHECKPOINT: Starting Trends Electronics Delivery App...");
-var app = (0, import_express2.default)();
+var app = (0, import_express3.default)();
 var httpServer = (0, import_http.createServer)(app);
 var io2 = new Server(httpServer, {
-  cors: {
-    origin: true,
-    credentials: true
-  },
+  cors: { origin: true, credentials: true },
   pingInterval: 1e4,
   pingTimeout: 5e3
 });
@@ -125360,32 +125871,25 @@ var chatHistory = /* @__PURE__ */ new Map();
 var PORT = Number(process.env.PORT) || Number(process.env.SERVER_PORT) || 3001;
 app.set("trust proxy", 1);
 app.use((0, import_cors.default)({ origin: true, credentials: true }));
-app.use(import_express2.default.json());
-app.use("/uploads", import_express2.default.static("public/uploads"));
+app.use(import_express3.default.json());
+app.use("/uploads", import_express3.default.static("public/uploads"));
 app.get("/api/health", (_req, res) => res.json({ status: "healthy", timestamp: (/* @__PURE__ */ new Date()).toISOString() }));
 var uploadDir = import_path3.default.join(process.cwd(), "public", "uploads");
 if (!import_fs.default.existsSync(uploadDir)) {
-  console.log("### SERVER_CHECKPOINT: Creating uploads directory...");
   import_fs.default.mkdirSync(uploadDir, { recursive: true });
 }
 io2.on("connection", (socket) => {
-  socket.on("join", (room) => {
-    socket.join(room);
-    console.log(`Socket ${socket.id} joined room: ${room}`);
-  });
+  socket.on("join", (room) => socket.join(room));
   socket.on("join_order_tracking", ({ orderId }) => {
-    const room = `order:${orderId}`;
-    socket.join(room);
-    console.log(`Socket ${socket.id} joined tracking room: ${room}`);
+    socket.join(`order:${orderId}`);
   });
   socket.on("chat:join", ({ orderId }) => {
-    const room = `order_chat:${orderId}`;
-    socket.join(room);
+    socket.join(`order_chat:${orderId}`);
     const history = chatHistory.get(orderId) || [];
     socket.emit("chat:history", history);
   });
   socket.on("chat:send", ({ orderId, text: text2, senderRole, senderName }) => {
-    if (!text2 || !text2.trim()) return;
+    if (!text2?.trim()) return;
     const message = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
       senderRole,
@@ -125400,11 +125904,10 @@ io2.on("connection", (socket) => {
     io2.to(`order_chat:${orderId}`).emit("chat:message", message);
   });
   socket.on("disconnect", () => {
-    console.log(`Socket ${socket.id} disconnected`);
   });
 });
 app.use("/api", routes_default);
-app.get("/api/health", (_req, res) => res.json({ ok: true }));
+app.use("/api/cj", cj_routes_default);
 if (process.env.NODE_ENV === "production" || process.env.RENDER) {
   const distPath = import_path3.default.resolve(process.cwd(), "dist");
   if (import_fs.default.existsSync(distPath)) {
@@ -125413,19 +125916,14 @@ if (process.env.NODE_ENV === "production" || process.env.RENDER) {
     if (import_fs.default.existsSync(assetsDir)) {
       const files = import_fs.default.readdirSync(assetsDir);
       console.log(`### SERVER_CHECKPOINT: Assets found: ${files.length} items`);
-      console.log(`### SERVER_CHECKPOINT: Main Asset: ${files.find((f3) => f3.startsWith("index-") && f3.endsWith(".js"))}`);
-    } else {
-      console.warn("### SERVER_ERROR: assets directory not found in dist!");
     }
   } else {
-    console.error("### SERVER_ERROR: dist directory not found! Frontend build might have failed.");
+    console.error("### SERVER_ERROR: dist directory not found!");
   }
-  app.use(import_express2.default.static(distPath));
+  app.use(import_express3.default.static(distPath));
   app.use((req, res, next) => {
     if (req.method === "GET" && !req.path.startsWith("/api")) {
-      if (req.path.includes(".")) {
-        return res.status(404).send("Not Found");
-      }
+      if (req.path.includes(".")) return res.status(404).send("Not Found");
       return res.sendFile(import_path3.default.resolve(distPath, "index.html"));
     }
     next();
@@ -125433,29 +125931,22 @@ if (process.env.NODE_ENV === "production" || process.env.RENDER) {
 }
 app.use((err, _req, res, _next) => {
   console.error("### GLOBAL ERROR ###", err);
-  const status = err.status || err.statusCode || 500;
-  res.status(status).json({
-    error: err.message || "Internal Server Error",
-    status
-  });
+  res.status(err.status || 500).json({ error: err.message || "Internal Server Error" });
 });
 async function seedSuperAdmin() {
   const email = "admin@trendselectronics.com";
   const existing = await db.select().from(users).where(eq(users.email, email));
   if (existing.length > 0) {
-    const user = existing[0];
-    const passwordHash2 = await bcryptjs_default.hash("trends-admin-2025", 10);
-    console.log(`### Updating existing admin account: ${email}`);
     await db.update(users).set({
       role: "admin",
-      passwordHash: passwordHash2
-    }).where(eq(users.id, user.id));
+      passwordHash: await bcryptjs_default.hash("trends-admin-2025", 10)
+    }).where(eq(users.id, existing[0].id));
+    console.log(`### Admin account verified: ${email}`);
     return;
   }
-  const passwordHash = await bcryptjs_default.hash("trends-admin-2025", 10);
   await db.insert(users).values({
     email,
-    passwordHash,
+    passwordHash: await bcryptjs_default.hash("trends-admin-2025", 10),
     name: "Trends Admin",
     role: "admin",
     createdAt: /* @__PURE__ */ new Date()
@@ -125466,86 +125957,71 @@ async function initializeDatabase() {
   console.log("### DB_CHECKPOINT: Running self-healing migrations...");
   try {
     const sqlite2 = db.session.client;
-    const userTableInfo = sqlite2.prepare("PRAGMA table_info(users)").all();
-    const userColumns = userTableInfo.map((c) => c.name);
-    if (!userColumns.includes("points")) {
-      sqlite2.prepare("ALTER TABLE users ADD COLUMN points INTEGER DEFAULT 0").run();
-    }
-    if (!userColumns.includes("interests")) {
-      if (userColumns.includes("allergies")) {
+    const userCols = sqlite2.prepare("PRAGMA table_info(users)").all().map((c) => c.name);
+    if (!userCols.includes("points")) sqlite2.prepare("ALTER TABLE users ADD COLUMN points INTEGER DEFAULT 0").run();
+    if (!userCols.includes("google_id")) sqlite2.prepare("ALTER TABLE users ADD COLUMN google_id TEXT").run();
+    if (!userCols.includes("interests")) {
+      if (userCols.includes("allergies")) {
         sqlite2.prepare("ALTER TABLE users RENAME COLUMN allergies TO interests").run();
       } else {
         sqlite2.prepare("ALTER TABLE users ADD COLUMN interests TEXT").run();
       }
     }
-    if (!userColumns.includes("google_id")) {
-      sqlite2.prepare("ALTER TABLE users ADD COLUMN google_id TEXT").run();
-    }
-    const menuTableInfo = sqlite2.prepare("PRAGMA table_info(menu_items)").all();
-    const menuColumns = menuTableInfo.map((c) => c.name);
-    if (!menuColumns.includes("specs")) {
-      if (menuColumns.includes("calories")) {
+    const menuCols = sqlite2.prepare("PRAGMA table_info(menu_items)").all().map((c) => c.name);
+    if (!menuCols.includes("specs")) {
+      if (menuCols.includes("calories")) {
         sqlite2.prepare("ALTER TABLE menu_items RENAME COLUMN calories TO specs").run();
-        sqlite2.prepare("UPDATE menu_items SET specs = CAST(specs AS TEXT)").run();
       } else {
         sqlite2.prepare("ALTER TABLE menu_items ADD COLUMN specs TEXT").run();
       }
     }
-    const favoritesTable = sqlite2.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='favorites'").get();
-    if (!favoritesTable) {
-      sqlite2.prepare(`
-        CREATE TABLE favorites (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          user_id INTEGER NOT NULL REFERENCES users(id),
-          menu_item_id INTEGER NOT NULL REFERENCES menu_items(id),
-          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )
-      `).run();
+    if (!menuCols.includes("cj_pid")) sqlite2.prepare("ALTER TABLE menu_items ADD COLUMN cj_pid TEXT").run();
+    if (!menuCols.includes("cj_vid")) sqlite2.prepare("ALTER TABLE menu_items ADD COLUMN cj_vid TEXT").run();
+    if (!menuCols.includes("cj_cost")) sqlite2.prepare("ALTER TABLE menu_items ADD COLUMN cj_cost TEXT").run();
+    const orderCols = sqlite2.prepare("PRAGMA table_info(orders)").all().map((c) => c.name);
+    if (!orderCols.includes("cj_order_id")) sqlite2.prepare("ALTER TABLE orders ADD COLUMN cj_order_id TEXT").run();
+    if (!orderCols.includes("cj_order_num")) sqlite2.prepare("ALTER TABLE orders ADD COLUMN cj_order_num TEXT").run();
+    if (!orderCols.includes("cj_tracking_no")) sqlite2.prepare("ALTER TABLE orders ADD COLUMN cj_tracking_no TEXT").run();
+    if (!orderCols.includes("cj_logistic")) sqlite2.prepare("ALTER TABLE orders ADD COLUMN cj_logistic TEXT").run();
+    if (!orderCols.includes("shipping_country")) sqlite2.prepare("ALTER TABLE orders ADD COLUMN shipping_country TEXT").run();
+    if (!orderCols.includes("currency")) sqlite2.prepare("ALTER TABLE orders ADD COLUMN currency TEXT DEFAULT 'USD'").run();
+    const favTable = sqlite2.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='favorites'").get();
+    if (!favTable) {
+      sqlite2.prepare(`CREATE TABLE favorites (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL REFERENCES users(id),
+        menu_item_id INTEGER NOT NULL REFERENCES menu_items(id),
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )`).run();
     }
     console.log("### DB_CHECKPOINT: Database structure verified");
   } catch (err) {
     console.error("### DB_ERROR: Self-healing migration failed:", err);
   }
 }
-async function seedStaffAccounts() {
-  const staff = [
-    { email: "support@trendselectronics.com", name: "Trends Support", role: "warehouse" },
-    { email: "delivery@trendselectronics.com", name: "Trends Courier", role: "courier" }
-  ];
-  const passwordHash = await bcryptjs_default.hash("trends-staff-2025", 10);
-  for (const s2 of staff) {
-    const [existing] = await db.select().from(users).where(eq(users.email, s2.email));
-    if (!existing) {
-      await db.insert(users).values({
-        email: s2.email,
-        passwordHash,
-        name: s2.name,
-        role: s2.role,
-        createdAt: /* @__PURE__ */ new Date()
-      });
-      console.log(`Staff seeded: ${s2.email}`);
-    }
-  }
-}
 async function seedMenuItems() {
-  const existing = await db.select().from(menuItems);
-  if (existing.length > 0) return;
+  const sqlite2 = db.session.client;
+  const row = sqlite2.prepare("SELECT COUNT(*) as cnt FROM menu_items").get();
+  if (row.cnt > 0) {
+    console.log(`### Skipping menu seed \u2014 ${row.cnt} product(s) already in database`);
+    return;
+  }
   await db.insert(menuItems).values([
     { name: "iPhone 15 Pro", description: "Titanium design, A17 Pro chip, Action button, and a more versatile Pro camera system", price: "999.00", imageUrl: "/assets/iphone-15.jpg", specs: "A17 Pro Chip, 48MP Camera, USB-C", tags: JSON.stringify(["Apple", "New"]), category: "Smartphones", rating: "4.9", reviews: 1200, isTop: 1, isAvailable: 1 },
     { name: "Samsung Galaxy S24 Ultra", description: "The ultimate Galaxy AI experience with a 200MP camera and built-in S Pen", price: "1299.00", imageUrl: "/assets/s24-ultra.jpg", specs: "Snapdragon 8 Gen 3, 200MP Zoom, S-Pen", tags: JSON.stringify(["Samsung", "AI"]), category: "Smartphones", rating: "4.8", reviews: 850, isTop: 1, isAvailable: 1 },
     { name: "MacBook Air M3", description: "Strikingly thin and fast, so you can work, play, or create anything \u2014 anywhere", price: "1099.00", imageUrl: "/assets/macbook-air.jpg", specs: 'M3 Chip, 13.6" Liquid Retina, 18hr Battery', tags: JSON.stringify(["Apple", "Laptop"]), category: "Laptops", rating: "4.9", reviews: 450, isTop: 1, isAvailable: 1 },
     { name: "Sony WH-1000XM5", description: "Industry-leading noise canceling headphones with exceptional sound quality", price: "399.00", imageUrl: "/assets/sony-xm5.jpg", specs: "30hr Battery, Multi-point Connection", tags: JSON.stringify(["Audio", "Noise Canceling"]), category: "Audio", rating: "4.7", reviews: 2100, isTop: 0, isAvailable: 1 },
-    { name: "iPad Pro M4", description: "The thinnest Apple product ever, featuring the world\u2019s most advanced display", price: "999.00", imageUrl: "/assets/ipad-pro.jpg", specs: "M4 Chip, Tandem OLED, Ultra-thin", tags: JSON.stringify(["Apple", "Tablet"]), category: "Tablets", rating: "4.8", reviews: 300, isTop: 0, isAvailable: 1 },
+    { name: "iPad Pro M4", description: "The thinnest Apple product ever, featuring the world's most advanced display", price: "999.00", imageUrl: "/assets/ipad-pro.jpg", specs: "M4 Chip, Tandem OLED, Ultra-thin", tags: JSON.stringify(["Apple", "Tablet"]), category: "Tablets", rating: "4.8", reviews: 300, isTop: 0, isAvailable: 1 },
     { name: "Home Entertainment Bundle", description: 'Sony 65" 4K TV + Soundbar + Subwoofer. Ultimate cinematic experience.', price: "1899.00", imageUrl: "/assets/tv-bundle.jpg", specs: "4K HDR, Dolby Atmos, Smart TV", category: "Bundles", isTop: 1, isAvailable: 1 },
     { name: "AirPods Pro (2nd Gen)", description: "MagSafe Charging Case (USB-C) and twice the noise cancellation", price: "249.00", imageUrl: "/assets/airpods-pro.jpg", specs: "H2 Chip, Adaptive Audio, USB-C", tags: JSON.stringify(["Apple", "Audio"]), category: "Audio", isTop: 0, isAvailable: 1 },
     { name: "Apple Watch Series 9", description: "Smarter, brighter, and mightier with the S9 SiP and double tap gesture", price: "399.00", imageUrl: "/assets/apple-watch.jpg", specs: "S9 SiP, Blood Oxygen, ECG", tags: JSON.stringify(["Apple", "Wearable"]), category: "Wearables", isTop: 0, isAvailable: 1 },
     { name: "Logitech MX Master 3S", description: "Performance wireless mouse with quiet clicks and 8K DPI tracking", price: "99.00", imageUrl: "/assets/mx-master.jpg", specs: "8000 DPI, Quiet Clicks, MagSpeed", tags: JSON.stringify(["Accessories", "Logitech"]), category: "Accessories", isTop: 0, isAvailable: 1 },
     { name: "Dell XPS 15", description: "Stunning 4K OLED display with high performance for creators", price: "1599.00", imageUrl: "/assets/dell-xps.jpg", specs: "i9 Processor, 32GB RAM, RTX 4060", tags: JSON.stringify(["Dell", "Laptop"]), category: "Laptops", isTop: 0, isAvailable: 1 }
   ]);
-  console.log("Menu items seeded");
+  console.log("### Menu items seeded (first run only)");
 }
 async function seedDemoCustomers() {
-  const demoCustomers = [
+  const demos = [
     { email: "kwame.asante@gmail.com", name: "Kwame Asante" },
     { email: "abena.mensah@outlook.com", name: "Abena Mensah" },
     { email: "kofi.boateng@yahoo.com", name: "Kofi Boateng" },
@@ -125553,7 +126029,7 @@ async function seedDemoCustomers() {
     { email: "yaw.owusu@gmail.com", name: "Yaw Owusu" }
   ];
   const passwordHash = await bcryptjs_default.hash("customer2025", 10);
-  for (const c of demoCustomers) {
+  for (const c of demos) {
     const [existing] = await db.select().from(users).where(eq(users.email, c.email));
     if (!existing) {
       await db.insert(users).values({
@@ -125567,22 +126043,16 @@ async function seedDemoCustomers() {
       });
     }
   }
-  console.log("Demo customers seeded");
 }
 console.log("### SERVER_CHECKPOINT: Attempting to listen on PORT:", PORT);
 httpServer.listen(PORT, "0.0.0.0", async () => {
   console.log(`### SERVER_SUCCESS: Backend running on 0.0.0.0:${PORT}`);
   try {
     const aiKey = process.env.GEMINI_API_KEY;
-    if (aiKey) {
-      console.log(`### AI_CHECK: Gemini key detected (Ends with ...${aiKey.slice(-4)})`);
-    } else {
-      console.error("### AI_CHECK: No GEMINI_API_KEY detected in environment!");
-    }
-    console.log("### SERVER_CHECKPOINT: Running initialization seeds...");
+    if (aiKey) console.log(`### AI_CHECK: Gemini key detected (...${aiKey.slice(-4)})`);
+    else console.error("### AI_CHECK: No GEMINI_API_KEY found!");
     await initializeDatabase();
     await seedSuperAdmin();
-    await seedStaffAccounts();
     await seedMenuItems();
     await seedDemoCustomers();
     console.log("### SERVER_CHECKPOINT: Startup complete");
@@ -125594,8 +126064,8 @@ process.on("uncaughtException", (err) => {
   console.error("### CRITICAL_ERROR: Uncaught Exception:", err);
   process.exit(1);
 });
-process.on("unhandledRejection", (reason, promise) => {
-  console.error("### CRITICAL_ERROR: Unhandled Rejection at:", promise, "reason:", reason);
+process.on("unhandledRejection", (reason) => {
+  console.error("### CRITICAL_ERROR: Unhandled Rejection:", reason);
   process.exit(1);
 });
 // Annotate the CommonJS export names for ESM import in node:
