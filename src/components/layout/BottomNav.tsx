@@ -16,7 +16,7 @@ const BottomNav = () => {
     }
     // Customer tabs
     return [
-      { icon: Home, label: "Home", path: "/home" },
+      { icon: Home, label: "Home", path: "/" },
       { icon: ClipboardList, label: "Orders", path: "/orders" },
       { icon: Truck, label: "Shipping", path: "/shipping" },
       { icon: User, label: "Profile", path: "/profile" },

@@ -43,13 +43,13 @@ const LoginPage = () => {
   const from = (location.state as { from?: string })?.from || "/";
 
   const roleHome: Record<string, string> = {
-    customer: "/home",
+    customer: "/",
     admin: "/admin",
   };
 
   useEffect(() => {
     if (!authLoading && user) {
-      const dest = (user.role === "customer" && from !== "/") ? from : (roleHome[user.role] || "/home");
+      const dest = (user.role === "customer" && from !== "/") ? from : (roleHome[user.role] || "/");
       navigate(dest, { replace: true });
     }
   }, [user, authLoading, navigate, from]);
@@ -59,7 +59,7 @@ const LoginPage = () => {
     setLoading(true);
     try {
       const user = await login(loginData.email, loginData.password);
-      const dest = (user.role === "customer" && from !== "/") ? from : (roleHome[user.role] || "/home");
+      const dest = (user.role === "customer" && from !== "/") ? from : (roleHome[user.role] || "/");
       navigate(dest, { replace: true });
     } catch (err: unknown) {
       toast({ title: "Login failed", description: err instanceof Error ? err.message : "Invalid credentials", variant: "destructive" });
@@ -73,7 +73,7 @@ const LoginPage = () => {
     setLoading(true);
     try {
       const user = await register(registerData);
-      navigate(roleHome[user.role] || "/home", { replace: true });
+      navigate(roleHome[user.role] || "/", { replace: true });
     } catch (err: unknown) {
       toast({ title: "Registration failed", description: err instanceof Error ? err.message : "Please try again", variant: "destructive" });
     } finally {

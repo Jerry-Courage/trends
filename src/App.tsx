@@ -51,10 +51,10 @@ function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode;
 
   if (allowedRoles && !allowedRoles.includes(user.role)) {
     const roleHome: Record<string, string> = {
-      customer: "/home",
+      customer: "/",
       admin: "/admin",
     };
-    return <Navigate to={roleHome[user.role] || "/home"} replace />;
+    return <Navigate to={roleHome[user.role] || "/"} replace />;
   }
 
   return <>{children}</>;
@@ -62,20 +62,14 @@ function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode;
 
 function RootRoute() {
   const { user, loading } = useAuth();
-  const location = useLocation();
 
   if (loading) return <SplashScreen />;
 
-  if (!user) {
-    return <Navigate to="/home" replace />;
+  if (user?.role === "admin") {
+    return <Navigate to="/admin" replace />;
   }
 
-  const roleHome: Record<string, string> = {
-    customer: "/home",
-    admin: "/admin",
-  };
-
-  return <Navigate to={roleHome[user.role] || "/home"} replace />;
+  return <AppShell><HomePage /></AppShell>;
 }
 
 function AppRoutes() {
@@ -87,7 +81,7 @@ function AppRoutes() {
       <Route path="/login" element={<LoginPage />} />
 
       {/* Customer Public Routes */}
-      <Route path="/home" element={<AppShell><HomePage /></AppShell>} />
+      <Route path="/home" element={<Navigate to="/" replace />} />
       <Route path="/menu" element={<AppShell><MenuPage /></AppShell>} />
       <Route path="/item/:id" element={<AppShell><ItemDetailPage /></AppShell>} />
       <Route path="/search" element={<AppShell><SearchPage /></AppShell>} />
@@ -107,10 +101,10 @@ function AppRoutes() {
       <Route path="/admin" element={<ProtectedRoute allowedRoles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
 
       {/* Redirect removed staff routes */}
-      <Route path="/management" element={<Navigate to="/home" replace />} />
-      <Route path="/courier" element={<Navigate to="/home" replace />} />
+      <Route path="/management" element={<Navigate to="/" replace />} />
+      <Route path="/courier" element={<Navigate to="/" replace />} />
       <Route path="/courier-onboarding" element={<Navigate to="/login" replace />} />
-      <Route path="/onboarding" element={<Navigate to="/home" replace />} />
+      <Route path="/onboarding" element={<Navigate to="/" replace />} />
 
       <Route path="*" element={<NotFound />} />
     </Routes>
