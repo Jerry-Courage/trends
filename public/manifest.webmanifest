@@ -8,12 +8,12 @@
   "description": "Premium products, latest trends, and lightning-fast delivery.",
   "icons": [
     {
-      "src": "/favicon.png",
+      "src": "/pwa-icon.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/favicon.png",
+      "src": "/pwa-icon.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
