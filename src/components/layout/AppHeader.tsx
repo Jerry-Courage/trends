@@ -20,8 +20,8 @@ const AppHeader = ({ title, showBack = false, rightIcon }: AppHeaderProps) => {
             <ChevronLeft className="w-6 h-6 text-foreground" />
           </button>
         ) : (
-          <div className="w-10 h-10 flex items-center justify-center overflow-hidden">
-            <img src={logo} alt="TRENDS" className="w-8 h-8 object-contain" />
+          <div className="w-8 h-8 rounded-lg bg-black flex items-center justify-center overflow-hidden border border-border">
+            <img src={logo} alt="TRENDS" className="w-full h-full object-contain scale-110" />
           </div>
         )}
       </div>

@@ -37,7 +37,7 @@ export default function SplashScreen() {
           
           <img 
             src={logo} 
-            alt="Fishing Panda Mascot" 
+            alt="TRENDS Logo" 
             className="w-full h-full object-contain relative z-10 drop-shadow-[0_0_20px_rgba(255,184,0,0.3)]"
           />
         </motion.div>
@@ -47,10 +47,10 @@ export default function SplashScreen() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.6 }}
-          className="text-center space-y-1"
+          className="text-center space-y-2"
         >
-          <h1 className="text-4xl font-black tracking-tighter text-white uppercase italic">Fishing Panda</h1>
-          <p className="text-[10px] font-black uppercase tracking-[0.6em] text-primary/80">Premium Seafood Delivery</p>
+          <h1 className="text-4xl font-black tracking-widest text-white uppercase italic">TRENDS</h1>
+          <p className="text-[10px] font-black uppercase tracking-[0.4em] text-primary/80">Premium Electronics & Custom Gadgets</p>
         </motion.div>
       </div>
 
@@ -61,7 +61,7 @@ export default function SplashScreen() {
         transition={{ delay: 0.5 }}
         className="absolute bottom-12 left-0 right-0 text-center"
       >
-        <p className="text-[9px] uppercase tracking-[0.5em] font-light text-white">Modern Delivery Infrastructure</p>
+        <p className="text-[9px] uppercase tracking-[0.5em] font-light text-white">Secure Worldwide Delivery Network</p>
       </motion.div>
     </div>
   );

@@ -154,8 +154,10 @@ const MenuPage = () => {
         <button onClick={() => navigate(-1)} className="text-gray-700 p-1">
           <ChevronRight className="w-5 h-5 rotate-180" />
         </button>
-        <div onClick={() => navigate("/")} className="flex items-center gap-2 cursor-pointer">
-          <img src={logo} alt="TRENDS Logo" className="h-8 object-contain rounded-lg" />
+        <div onClick={() => navigate("/")} className="flex items-center gap-2.5 cursor-pointer">
+          <div className="w-8 h-8 rounded-lg bg-black flex items-center justify-center overflow-hidden flex-shrink-0 border border-[#F0F0F0]">
+            <img src={logo} alt="TRENDS Logo" className="w-full h-full object-contain scale-110" />
+          </div>
           <span className="text-base font-black tracking-tight text-[#FB570B] uppercase italic">TRENDS</span>
         </div>
         <div className="flex items-center gap-3">

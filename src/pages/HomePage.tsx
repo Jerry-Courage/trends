@@ -170,9 +170,11 @@ const HomePage = () => {
           <div className="flex items-center gap-4 flex-shrink-0">
             <div 
               onClick={() => navigate("/")}
-              className="flex items-center gap-2.5 cursor-pointer"
+              className="flex items-center gap-3 cursor-pointer"
             >
-              <img src={logo} alt="TRENDS Logo" className="h-10 object-contain rounded-xl" />
+              <div className="w-9 h-9 rounded-xl bg-black flex items-center justify-center overflow-hidden flex-shrink-0 border border-[#F0F0F0]">
+                <img src={logo} alt="TRENDS Logo" className="w-full h-full object-contain scale-110" />
+              </div>
               <span className="text-xl font-black tracking-tight text-[#FB570B] uppercase italic">TRENDS</span>
             </div>
             
@@ -264,9 +266,11 @@ const HomePage = () => {
       <header className="md:hidden bg-white border-b border-[#EDEDED] px-3.5 py-2.5 sticky top-0 z-50 flex items-center justify-between gap-3">
         <div 
           onClick={() => navigate("/")}
-          className="flex items-center gap-2 cursor-pointer"
+          className="flex items-center gap-2.5 cursor-pointer"
         >
-          <img src={logo} alt="TRENDS Logo" className="h-8 object-contain rounded-lg" />
+          <div className="w-8 h-8 rounded-lg bg-black flex items-center justify-center overflow-hidden flex-shrink-0 border border-[#F0F0F0]">
+            <img src={logo} alt="TRENDS Logo" className="w-full h-full object-contain scale-110" />
+          </div>
           <span className="text-base font-black tracking-tight text-[#FB570B] uppercase italic">
             TRENDS
           </span>

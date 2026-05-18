@@ -133,8 +133,10 @@ const LoginPage = () => {
       
       {/* Top Header Row */}
       <header className="w-full bg-white border-b border-[#EDEDED] px-4 md:px-8 py-3 flex items-center justify-between">
-        <div onClick={() => navigate("/")} className="flex items-center gap-2 cursor-pointer active:opacity-90">
-          <img src={logo} alt="TRENDS Logo" className="h-8 object-contain rounded-lg" />
+        <div onClick={() => navigate("/")} className="flex items-center gap-2.5 cursor-pointer active:opacity-90">
+          <div className="w-8 h-8 rounded-lg bg-black flex items-center justify-center overflow-hidden flex-shrink-0 border border-[#F0F0F0]">
+            <img src={logo} alt="TRENDS Logo" className="w-full h-full object-contain scale-110" />
+          </div>
           <span className="text-sm font-black tracking-tight text-[#FB570B] uppercase italic">TRENDS</span>
         </div>
         <div className="flex items-center gap-1.5 text-[#00A854] text-xs font-bold">
