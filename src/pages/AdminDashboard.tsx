@@ -1346,7 +1346,25 @@ export default function AdminDashboard() {
                   <p className="text-xs text-muted-foreground font-semibold">{cjResults.length} products found · Sell price = CJ cost + {cjMarkup}% markup</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {cjResults.map(product => {
-                      const sellPrice = (product.sellPrice * (1 + cjMarkup / 100)).toFixed(2);
+                      const rawSellPrice = String(product.sellPrice);
+                      let displayYourPrice = "NaN";
+                      let displayCJCost = rawSellPrice;
+
+                      if (rawSellPrice.includes('--')) {
+                        const parts = rawSellPrice.split('--').map(p => parseFloat(p.trim()));
+                        if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+                          const minPrice = (parts[0] * (1 + cjMarkup / 100)).toFixed(2);
+                          const maxPrice = (parts[1] * (1 + cjMarkup / 100)).toFixed(2);
+                          displayYourPrice = `${minPrice} - ${maxPrice}`;
+                        }
+                      } else {
+                        const priceNum = parseFloat(rawSellPrice);
+                        if (!isNaN(priceNum)) {
+                          displayCJCost = priceNum.toFixed(2);
+                          displayYourPrice = (priceNum * (1 + cjMarkup / 100)).toFixed(2);
+                        }
+                      }
+
                       return (
                         <Card key={product.pid} className="bg-card border-border overflow-hidden group hover:border-primary/30 transition-all duration-300">
                           <div className="relative h-40 overflow-hidden bg-muted">
@@ -1368,11 +1386,11 @@ export default function AdminDashboard() {
                             <div className="flex items-center justify-between">
                               <div>
                                 <p className="text-[10px] text-muted-foreground">CJ Cost</p>
-                                <p className="text-xs font-semibold text-muted-foreground">${product.sellPrice}</p>
+                                <p className="text-xs font-semibold text-muted-foreground">${displayCJCost}</p>
                               </div>
                               <div className="text-right">
                                 <p className="text-[10px] text-muted-foreground">Your Price</p>
-                                <p className="text-sm font-black text-primary">${sellPrice}</p>
+                                <p className="text-sm font-black text-primary">${displayYourPrice}</p>
                               </div>
                             </div>
                             <Button
