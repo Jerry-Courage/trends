@@ -46,7 +46,7 @@ function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode;
   if (loading) return <SplashScreen />;
 
   if (!user) {
-    return <Navigate to="/" state={{ from: location.pathname }} replace />;
+    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
 
   if (allowedRoles && !allowedRoles.includes(user.role)) {
@@ -67,17 +67,13 @@ function RootRoute() {
   if (loading) return <SplashScreen />;
 
   if (!user) {
-    return <OnboardingPage />;
+    return <Navigate to="/home" replace />;
   }
 
   const roleHome: Record<string, string> = {
     customer: "/home",
     admin: "/admin",
   };
-
-  if (location.pathname === "/") {
-    return <Navigate to={roleHome[user.role] || "/home"} replace />;
-  }
 
   return <Navigate to={roleHome[user.role] || "/home"} replace />;
 }
@@ -88,13 +84,15 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<RootRoute />} />
-      <Route path="/onboarding" element={<OnboardingPage />} />
       <Route path="/login" element={<LoginPage />} />
 
-      {/* Customer Routes */}
-      <Route path="/home" element={<ProtectedRoute allowedRoles={customerOnly}><AppShell><HomePage /></AppShell></ProtectedRoute>} />
-      <Route path="/menu" element={<ProtectedRoute allowedRoles={customerOnly}><AppShell><MenuPage /></AppShell></ProtectedRoute>} />
-      <Route path="/item/:id" element={<ProtectedRoute allowedRoles={customerOnly}><AppShell><ItemDetailPage /></AppShell></ProtectedRoute>} />
+      {/* Customer Public Routes */}
+      <Route path="/home" element={<AppShell><HomePage /></AppShell>} />
+      <Route path="/menu" element={<AppShell><MenuPage /></AppShell>} />
+      <Route path="/item/:id" element={<AppShell><ItemDetailPage /></AppShell>} />
+      <Route path="/search" element={<AppShell><SearchPage /></AppShell>} />
+
+      {/* Customer Protected Routes */}
       <Route path="/checkout" element={<ProtectedRoute allowedRoles={customerOnly}><AppShell><CheckoutPage /></AppShell></ProtectedRoute>} />
       <Route path="/orders" element={<ProtectedRoute allowedRoles={customerOnly}><AppShell><OrdersPage /></AppShell></ProtectedRoute>} />
       <Route path="/tracking/:id" element={<ProtectedRoute allowedRoles={customerOnly}><AppShell><TrackingPage /></AppShell></ProtectedRoute>} />
@@ -104,7 +102,6 @@ function AppRoutes() {
       <Route path="/favorites" element={<ProtectedRoute allowedRoles={customerOnly}><AppShell><FavoritesPage /></AppShell></ProtectedRoute>} />
       <Route path="/payment-methods" element={<ProtectedRoute allowedRoles={customerOnly}><AppShell><PaymentMethodsPage /></AppShell></ProtectedRoute>} />
       <Route path="/help" element={<ProtectedRoute allowedRoles={customerOnly}><AppShell><HelpPage /></AppShell></ProtectedRoute>} />
-      <Route path="/search" element={<ProtectedRoute allowedRoles={customerOnly}><AppShell><SearchPage /></AppShell></ProtectedRoute>} />
 
       {/* Admin Routes */}
       <Route path="/admin" element={<ProtectedRoute allowedRoles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
@@ -112,7 +109,8 @@ function AppRoutes() {
       {/* Redirect removed staff routes */}
       <Route path="/management" element={<Navigate to="/home" replace />} />
       <Route path="/courier" element={<Navigate to="/home" replace />} />
-      <Route path="/courier-onboarding" element={<Navigate to="/onboarding" replace />} />
+      <Route path="/courier-onboarding" element={<Navigate to="/login" replace />} />
+      <Route path="/onboarding" element={<Navigate to="/home" replace />} />
 
       <Route path="*" element={<NotFound />} />
     </Routes>
