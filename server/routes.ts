@@ -103,7 +103,7 @@ router.post("/auth/register", async (req, res) => {
   }
 
   // Prevent hijacking the Super Admin email
-  if (lowerEmail === "admin@trendselectronics.com") {
+  if (lowerEmail === "admin@trends.com") {
     return res.status(403).json({ error: "Unauthorized email address" });
   }
   // Couriers and Customers are public (No secret required)
@@ -689,7 +689,7 @@ router.post("/ai/support", aiLimiter, async (req: AuthRequest, res) => {
     res.json({ reply });
   } catch (err) {
     console.error("### AI_SUPPORT_ROUTE_ERROR:", err);
-    res.json({ reply: "I'm here to help! Please contact us at support@trendselectronics.com or call our hotline for urgent issues." });
+    res.json({ reply: "I'm here to help! Please contact us at support@trends.com or call our hotline for urgent issues." });
   }
 });
 

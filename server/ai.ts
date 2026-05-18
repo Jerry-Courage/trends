@@ -175,7 +175,7 @@ export async function getRecommendations(
   const prompt = `Menu:\n${menuText}\nOrders: ${historyText}\nTime: ${timeOfDay}\nInterests: ${interests || "None"}.\nRespond with 4 best JSON recommendations only: [{"id":"1","name":"Item","reason":"reason","confidence":0.95}]`;
 
   const response = await chat([
-    { role: "system", content: "You are a tech product recommender. Respond with JSON arrays only." },
+    { role: "system", content: "You are a product recommender. Respond with JSON arrays only." },
     { role: "user", content: prompt },
   ]);
 
@@ -195,7 +195,7 @@ export async function getOrderETA(
   itemCount: number
 ): Promise<{ minutes: number; message: string }> {
   const minutesSinceOrder = Math.floor((Date.now() - createdAt.getTime()) / 60000);
-  const prompt = `Order: status="${status}", placed ${minutesSinceOrder} min ago, ${itemCount} items. Estimate remaining delivery time. Respond with valid JSON only: {"minutes":15,"message":"Your gadgets are being secured for transport!"}`;
+  const prompt = `Order: status="${status}", placed ${minutesSinceOrder} min ago, ${itemCount} items. Estimate remaining delivery time. Respond with valid JSON only: {"minutes":15,"message":"Your items are being secured for transport!"}`;
 
   const response = await chat([
     { role: "system", content: "You are a delivery ETA AI. Respond with valid JSON only." },
@@ -206,9 +206,9 @@ export async function getOrderETA(
     return JSON.parse(response.trim().replace(/^```json\n?|```$/g, ""));
   } catch {
     const fallbacks: Record<string, { minutes: number; message: string }> = {
-      pending:   { minutes: 35, message: "Order received! Processing your tech request." },
+      pending:   { minutes: 35, message: "Order received! Processing your request." },
       confirmed: { minutes: 28, message: "Inventory confirmed! Preparing for dispatch." },
-      packaging: { minutes: 20, message: "Your gadgets are being carefully packed!" },
+      packaging: { minutes: 20, message: "Your items are being carefully packed!" },
       ready:     { minutes: 12, message: "Order is ready for the courier!" },
       assigned:  { minutes: 10, message: "Courier is arriving at the warehouse!" },
       picked_up: { minutes: 8,  message: "Your order is out for delivery!" },
@@ -248,7 +248,7 @@ export async function searchMenu(
     .join("\n");
 
   const response = await chat([
-    { role: "system", content: "You are a tech retail assistant. Always respond with valid JSON only." },
+    { role: "system", content: "You are a retail assistant. Always respond with valid JSON only." },
     { role: "user", content: `Menu:\n${menuText}\nQuery: "${query}"\nRespond: {"message":"Msg","itemIds":[1,3]}` },
   ]);
 
@@ -287,7 +287,7 @@ export async function getSupportResponse(
   activeOrders: (any & { items: any[] })[] = []
 ): Promise<string> {
   const query = userQuery.toLowerCase();
-  const techKeywords = ["shop", "recommend", "buy", "product", "gadget", "device", "phone", "laptop", "audio", "watch", "gaming", "accessories", "price", "cost", "warranty", "spec", "stock"];
+  const techKeywords = ["shop", "recommend", "buy", "product", "gadget", "device", "clothing", "dress", "shirt", "home", "kitchen", "beauty", "electronics", "sports", "toys", "price", "cost", "warranty", "spec", "stock"];
   const trackingKeywords = ["where", "track", "status", "delivery", "arrival", "eta", "location", "coming", "package"];
 
   const hasTechIntent = techKeywords.some(w => query.includes(w));
@@ -307,11 +307,11 @@ export async function getSupportResponse(
   let systemPrompt: string;
 
   if (hasTrackingIntent && activeOrders.length > 0) {
-    systemPrompt = `You are Trends Electronics' support assistant. Give a brief order status update using: ${orderContext}. Be under 30 words.`;
+    systemPrompt = `You are TRENDS' support assistant. Give a brief order status update using: ${orderContext}. Be under 30 words.`;
   } else if (hasTechIntent) {
-    systemPrompt = `You are Trends Electronics' tech concierge. Recommend products from this catalog using [PRODUCT:id] tags. Interests: "${interests || "None"}". Be brief (under 30 words).\n\nCATALOG:\n${menuText}`;
+    systemPrompt = `You are TRENDS' shopping concierge. Recommend products from this catalog using [PRODUCT:id] tags. Interests: "${interests || "None"}". Be brief (under 30 words).\n\nCATALOG:\n${menuText}`;
   } else {
-    systemPrompt = `You are Trends Electronics' friendly AI assistant. Handle greetings warmly. Be very short (under 20 words).`;
+    systemPrompt = `You are TRENDS' friendly AI assistant. Handle greetings warmly. Be very short (under 20 words).`;
   }
 
   return chat([

@@ -68,8 +68,8 @@ const ProfilePage = () => {
   const accountItems = [
     { icon: MapPin, label: "Saved Addresses", desc: user?.address || "Add worldwide delivery address", action: openEdit },
     { icon: CreditCard, label: "Payment Providers", desc: "Mobile Money, Card, Paystack", action: () => navigate("/payment-methods") },
-    { icon: Heart, label: "Favorite Tech", desc: "Your top premium electronics", action: () => navigate("/favorites") },
-    { icon: AlertTriangle, label: "Gadget Preferences", desc: user?.allergies || "No specialized specifications set", action: openEdit },
+    { icon: Heart, label: "Favorite Items", desc: "Your top premium products", action: () => navigate("/favorites") },
+    { icon: AlertTriangle, label: "Shopping Preferences", desc: user?.allergies || "No specialized specifications set", action: openEdit },
   ];
 
   const settingsItems = [
@@ -94,7 +94,7 @@ const ProfilePage = () => {
             <User className="w-10 h-10 text-[#737373]" />
           </div>
           <h3 className="font-black uppercase tracking-tight text-lg text-white mb-2">Access Profile Details</h3>
-          <p className="text-[#A3A3A3] text-xs max-w-xs mb-8 leading-relaxed font-semibold">Sign in or register an account to view your past electronics orders, track deliveries, and redeem rewards.</p>
+          <p className="text-[#A3A3A3] text-xs max-w-xs mb-8 leading-relaxed font-semibold">Sign in or register an account to view your past orders, track deliveries, and redeem rewards.</p>
           <button 
             data-testid="button-signin" 
             onClick={() => navigate("/login")} 

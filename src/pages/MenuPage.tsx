@@ -205,7 +205,7 @@ const MenuPage = () => {
 
         {filtered.length === 0 ? (
           <div className="text-center py-16 bg-white border border-[#EDEDED] rounded-3xl p-6 shadow-sm">
-            <p className="text-[#888] text-sm">No electronics found in this category.</p>
+            <p className="text-[#888] text-sm">No items found in this category.</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3.5">

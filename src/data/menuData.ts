@@ -90,4 +90,4 @@ export const menuItems: MenuItem[] = [
   }
 ];
 
-export const categories = ["All", "Laptops", "Phones", "Audio", "Tablets", "Accessories"];
+export const categories = ["All", "Electronics", "Fashion & Apparel", "Home & Kitchen", "Beauty & Care", "Sports & Outdoors", "Toys & Hobbies", "Accessories"];

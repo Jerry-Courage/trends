@@ -1,11 +1,11 @@
 {
-  "name": "Trends Electronics Premium Delivery",
-  "short_name": "Trends Electronics",
+  "name": "TRENDS Premium E-Commerce",
+  "short_name": "TRENDS",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0a0a0a",
   "theme_color": "#0EA5E9",
-  "description": "Latest tech, premium gadgets, and lightning-fast delivery.",
+  "description": "Premium products, latest trends, and lightning-fast delivery.",
   "icons": [
     {
       "src": "/favicon.png",

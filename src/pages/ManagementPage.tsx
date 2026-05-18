@@ -158,11 +158,11 @@ const ManagementPage = () => {
           
           <div className="relative flex items-center gap-3 md:gap-4">
             <div className="w-10 h-10 md:w-12 md:h-12 bg-primary/20 rounded-xl md:rounded-2xl flex items-center justify-center border border-primary/20 overflow-hidden">
-              <img src={logo} alt="Trends Electronics" className="w-8 h-8 object-contain" />
+              <img src={logo} alt="TRENDS Logo" className="w-8 h-8 object-contain" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="font-black text-lg md:text-xl tracking-tight uppercase italic italic-shadow">Trends Warehouse</h1>
+                <h1 className="font-black text-lg md:text-xl tracking-tight uppercase italic italic-shadow">TRENDS Warehouse</h1>
                 <div className="hidden xs:flex items-center gap-1.5 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
                   <div className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse" />
                   <span className="text-[8px] font-bold text-emerald-500 uppercase tracking-widest">Live</span>

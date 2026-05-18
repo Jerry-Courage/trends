@@ -111,7 +111,7 @@ const EMPTY_PRODUCT_FORM: ProductForm = {
   isAvailable: true,
 };
 
-const CATEGORIES = ["Laptops", "Phones", "Tablets", "Audio", "Accessories", "Gaming", "Wearables", "Smart Home"];
+const CATEGORIES = ["Electronics", "Fashion & Apparel", "Home & Kitchen", "Beauty & Personal Care", "Sports & Outdoors", "Toys & Hobbies", "Office & School", "Accessories"];
 
 
 function ProductModal({
@@ -653,10 +653,10 @@ export default function AdminDashboard() {
       {/* Desktop Sidebar */}
       <aside className="fixed left-0 top-0 bottom-0 w-64 bg-card  border-r border-border hidden lg:flex flex-col p-6 space-y-8 z-50">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 flex items-center justify-center overflow-hidden">
-            <img src={logo} alt="Trends Electronics" className="w-10 h-10 object-contain" />
+          <div className="w-9 h-9 rounded-lg bg-black flex items-center justify-center overflow-hidden border border-white/5 flex-shrink-0">
+            <img src={logo} alt="TRENDS Logo" className="w-full h-full object-contain scale-110" />
           </div>
-          <span className="font-extrabold text-xl tracking-tighter text-foreground">Trends Electronics</span>
+          <span className="font-extrabold text-xl tracking-tighter text-foreground">TRENDS</span>
         </div>
 
         <nav className="flex-1 space-y-2">
@@ -1304,7 +1304,7 @@ export default function AdminDashboard() {
                       onChange={e => setBulkCategory(e.target.value)}
                       className="bg-card border border-border rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none"
                     >
-                      {["Phones","Laptops","Audio","Tablets","Accessories","Gaming","Wearables","Smart Home","Electronics"].map(c => (
+                      {CATEGORIES.map(c => (
                         <option key={c} value={c}>{c}</option>
                       ))}
                     </select>
@@ -1497,7 +1497,7 @@ export default function AdminDashboard() {
                                 value={newStaff.email}
                                 onChange={e => setNewStaff({...newStaff, email: e.target.value})}
                                 type="email" 
-                                placeholder="admin@trendselectronics.com" 
+                                placeholder="admin@trends.com" 
                                 className="w-full bg-slate-800 border-border rounded-2xl pl-10 pr-4 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none transition-all"
                               />
                             </div>

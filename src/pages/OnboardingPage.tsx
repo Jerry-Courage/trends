@@ -19,7 +19,7 @@ const roles = [
   {
     id: "customer",
     title: "Customer",
-    description: "Shop high-end gadgets from Trends Electronics, shipped worldwide via CJ Dropshipping.",
+    description: "Shop premium products from TRENDS, shipped worldwide via CJ Dropshipping.",
     icon: ShoppingBag,
     color: "from-blue-500 to-blue-600",
     shadow: "shadow-blue-500/20",
@@ -115,7 +115,7 @@ export default function OnboardingPage() {
                     <h1 className="text-[2.25rem] font-black tracking-tighter uppercase italic leading-[1] text-white">
                       Choose Your <br/> <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-blue-600">Journey</span>
                     </h1>
-                    <p className="text-neutral-400 text-sm font-medium px-4">How would you like to use Trends Electronics today?</p>
+                    <p className="text-neutral-400 text-sm font-medium px-4">How would you like to use TRENDS today?</p>
                   </div>
 
                   <div className="grid grid-cols-1 gap-4 flex-1 content-center">

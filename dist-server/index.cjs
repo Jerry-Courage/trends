@@ -124676,7 +124676,7 @@ Time: ${timeOfDay}
 Interests: ${interests || "None"}.
 Respond with 4 best JSON recommendations only: [{"id":"1","name":"Item","reason":"reason","confidence":0.95}]`;
   const response = await chat([
-    { role: "system", content: "You are a tech product recommender. Respond with JSON arrays only." },
+    { role: "system", content: "You are a product recommender. Respond with JSON arrays only." },
     { role: "user", content: prompt }
   ]);
   try {
@@ -124693,7 +124693,7 @@ Respond with 4 best JSON recommendations only: [{"id":"1","name":"Item","reason"
 }
 async function getOrderETA(status, createdAt, itemCount) {
   const minutesSinceOrder = Math.floor((Date.now() - createdAt.getTime()) / 6e4);
-  const prompt = `Order: status="${status}", placed ${minutesSinceOrder} min ago, ${itemCount} items. Estimate remaining delivery time. Respond with valid JSON only: {"minutes":15,"message":"Your gadgets are being secured for transport!"}`;
+  const prompt = `Order: status="${status}", placed ${minutesSinceOrder} min ago, ${itemCount} items. Estimate remaining delivery time. Respond with valid JSON only: {"minutes":15,"message":"Your items are being secured for transport!"}`;
   const response = await chat([
     { role: "system", content: "You are a delivery ETA AI. Respond with valid JSON only." },
     { role: "user", content: prompt }
@@ -124702,9 +124702,9 @@ async function getOrderETA(status, createdAt, itemCount) {
     return JSON.parse(response.trim().replace(/^```json\n?|```$/g, ""));
   } catch {
     const fallbacks = {
-      pending: { minutes: 35, message: "Order received! Processing your tech request." },
+      pending: { minutes: 35, message: "Order received! Processing your request." },
       confirmed: { minutes: 28, message: "Inventory confirmed! Preparing for dispatch." },
-      packaging: { minutes: 20, message: "Your gadgets are being carefully packed!" },
+      packaging: { minutes: 20, message: "Your items are being carefully packed!" },
       ready: { minutes: 12, message: "Order is ready for the courier!" },
       assigned: { minutes: 10, message: "Courier is arriving at the warehouse!" },
       picked_up: { minutes: 8, message: "Your order is out for delivery!" },
@@ -124733,7 +124733,7 @@ Give a 1-2 sentence briefing. Flag orders waiting >15 min.` }
 async function searchMenu(query, menuItems2) {
   const menuText = menuItems2.map((i2) => `ID:${i2.id} "${i2.name}" (${i2.category}, ${i2.price}) - ${i2.description}${i2.tags?.length ? " [" + i2.tags.join(", ") + "]" : ""}`).join("\n");
   const response = await chat([
-    { role: "system", content: "You are a tech retail assistant. Always respond with valid JSON only." },
+    { role: "system", content: "You are a retail assistant. Always respond with valid JSON only." },
     { role: "user", content: `Menu:
 ${menuText}
 Query: "${query}"
@@ -124756,7 +124756,7 @@ async function getAdminInsights(stats) {
 }
 async function getSupportResponse(userQuery, history = [], menuItems2 = [], interests, activeOrders = []) {
   const query = userQuery.toLowerCase();
-  const techKeywords = ["shop", "recommend", "buy", "product", "gadget", "device", "phone", "laptop", "audio", "watch", "gaming", "accessories", "price", "cost", "warranty", "spec", "stock"];
+  const techKeywords = ["shop", "recommend", "buy", "product", "gadget", "device", "clothing", "dress", "shirt", "home", "kitchen", "beauty", "electronics", "sports", "toys", "price", "cost", "warranty", "spec", "stock"];
   const trackingKeywords = ["where", "track", "status", "delivery", "arrival", "eta", "location", "coming", "package"];
   const hasTechIntent = techKeywords.some((w) => query.includes(w));
   const hasTrackingIntent = trackingKeywords.some((w) => query.includes(w));
@@ -124767,14 +124767,14 @@ async function getSupportResponse(userQuery, history = [], menuItems2 = [], inte
   }).join("\n") : "No active orders.";
   let systemPrompt;
   if (hasTrackingIntent && activeOrders.length > 0) {
-    systemPrompt = `You are Trends Electronics' support assistant. Give a brief order status update using: ${orderContext}. Be under 30 words.`;
+    systemPrompt = `You are TRENDS' support assistant. Give a brief order status update using: ${orderContext}. Be under 30 words.`;
   } else if (hasTechIntent) {
-    systemPrompt = `You are Trends Electronics' tech concierge. Recommend products from this catalog using [PRODUCT:id] tags. Interests: "${interests || "None"}". Be brief (under 30 words).
+    systemPrompt = `You are TRENDS' shopping concierge. Recommend products from this catalog using [PRODUCT:id] tags. Interests: "${interests || "None"}". Be brief (under 30 words).
 
 CATALOG:
 ${menuText}`;
   } else {
-    systemPrompt = `You are Trends Electronics' friendly AI assistant. Handle greetings warmly. Be very short (under 20 words).`;
+    systemPrompt = `You are TRENDS' friendly AI assistant. Handle greetings warmly. Be very short (under 20 words).`;
   }
   return chat([
     { role: "system", content: systemPrompt },
@@ -124861,7 +124861,7 @@ router.post("/auth/register", async (req, res) => {
   if (role === "admin") {
     return res.status(403).json({ error: "Admin accounts are managed by the super admin" });
   }
-  if (lowerEmail === "admin@trendselectronics.com") {
+  if (lowerEmail === "admin@trends.com") {
     return res.status(403).json({ error: "Unauthorized email address" });
   }
   const existing = await storage.getUserByEmail(email);
@@ -125317,7 +125317,7 @@ router.post("/ai/support", aiLimiter, async (req, res) => {
     res.json({ reply });
   } catch (err) {
     console.error("### AI_SUPPORT_ROUTE_ERROR:", err);
-    res.json({ reply: "I'm here to help! Please contact us at support@trendselectronics.com or call our hotline for urgent issues." });
+    res.json({ reply: "I'm here to help! Please contact us at support@trends.com or call our hotline for urgent issues." });
   }
 });
 router.post("/ai/admin-insights", aiLimiter, auth, requireRole("admin"), async (req, res) => {
@@ -125869,7 +125869,7 @@ var cj_routes_default = router2;
 // server/index.ts
 var import_fs = __toESM(require("fs"), 1);
 var import_path3 = __toESM(require("path"), 1);
-console.log("### SERVER_CHECKPOINT: Starting Trends Electronics Delivery App...");
+console.log("### SERVER_CHECKPOINT: Starting TRENDS Delivery App...");
 var app = (0, import_express3.default)();
 var httpServer = (0, import_http.createServer)(app);
 var io2 = new Server(httpServer, {
@@ -125944,7 +125944,7 @@ app.use((err, _req, res, _next) => {
   res.status(err.status || 500).json({ error: err.message || "Internal Server Error" });
 });
 async function seedSuperAdmin() {
-  const email = "admin@trendselectronics.com";
+  const email = "admin@trends.com";
   const existing = await db.select().from(users).where(eq(users.email, email));
   if (existing.length > 0) {
     await db.update(users).set({
@@ -125961,7 +125961,7 @@ async function seedSuperAdmin() {
     role: "admin",
     createdAt: /* @__PURE__ */ new Date()
   });
-  console.log("Super Admin seeded: admin@trendselectronics.com / trends-admin-2025");
+  console.log("Super Admin seeded: admin@trends.com / trends-admin-2025");
 }
 async function initializeDatabase() {
   console.log("### DB_CHECKPOINT: Running self-healing migrations...");

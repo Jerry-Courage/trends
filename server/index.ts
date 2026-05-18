@@ -1,5 +1,5 @@
 import "dotenv/config";
-console.log("### SERVER_CHECKPOINT: Starting Trends Electronics Delivery App...");
+console.log("### SERVER_CHECKPOINT: Starting TRENDS Delivery App...");
 import express from "express";
 import cors from "cors";
 import { createServer } from "http";
@@ -103,7 +103,7 @@ app.use((err: any, _req: express.Request, res: express.Response, _next: express.
 // ─── Seed Functions ───────────────────────────────────────────────────────────
 
 async function seedSuperAdmin() {
-  const email = "admin@trendselectronics.com";
+  const email = "admin@trends.com";
   const existing = await db.select().from(users).where(eq(users.email, email));
   if (existing.length > 0) {
     await db.update(users).set({
@@ -120,7 +120,7 @@ async function seedSuperAdmin() {
     role: "admin",
     createdAt: new Date(),
   });
-  console.log("Super Admin seeded: admin@trendselectronics.com / trends-admin-2025");
+  console.log("Super Admin seeded: admin@trends.com / trends-admin-2025");
 }
 
 async function initializeDatabase() {

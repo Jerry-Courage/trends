@@ -14,19 +14,21 @@ import SupportChat from "@/components/support/SupportChat";
 import { motion, AnimatePresence } from "framer-motion";
 
 const categories = [
-  { icon: "📱", label: "Phones" },
-  { icon: "💻", label: "Laptops" },
-  { icon: "🎧", label: "Audio" },
-  { icon: "⌚", label: "Watches" },
-  { icon: "🎮", label: "Gaming" },
+  { icon: "👗", label: "Fashion & Apparel" },
+  { icon: "🏠", label: "Home & Kitchen" },
+  { icon: "📱", label: "Electronics" },
+  { icon: "💄", label: "Beauty & Care" },
+  { icon: "⚽", label: "Sports & Outdoors" },
+  { icon: "🧸", label: "Toys & Hobbies" },
 ];
 
 const searchPlaceholders = [
-  "Search 'iPhone 15 Pro Max'...",
-  "Search 'PlayStation 5 Slim'...",
-  "Search 'MacBook Air M3'...",
-  "Search 'Sony Noise Cancelling headphones'...",
-  "Search 'Smartwatches under $100'...",
+  "Search 'Summer fashion dresses'...",
+  "Search 'Ergonomic office chair'...",
+  "Search 'Noise cancelling headphones'...",
+  "Search 'Waterproof camping tent'...",
+  "Search 'Premium makeup brushes'...",
+  "Search 'Kids learning toys'...",
 ];
 
 interface AIRecommendation {

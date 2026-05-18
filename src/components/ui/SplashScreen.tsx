@@ -50,7 +50,7 @@ export default function SplashScreen() {
           className="text-center space-y-2"
         >
           <h1 className="text-4xl font-black tracking-widest text-white uppercase italic">TRENDS</h1>
-          <p className="text-[10px] font-black uppercase tracking-[0.4em] text-primary/80">Premium Electronics & Custom Gadgets</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.4em] text-primary/80">Premium Worldwide E-Commerce</p>
         </motion.div>
       </div>
 
