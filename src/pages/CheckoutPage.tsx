@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Trash2, Minus, Plus, MapPin, Globe, CreditCard, Smartphone, Loader2, Package } from "lucide-react";
+import { Trash2, Minus, Plus, MapPin, Globe, CreditCard, Smartphone, Loader2, Sparkles, Heart } from "lucide-react";
 import AppHeader from "@/components/layout/AppHeader";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
@@ -46,7 +46,7 @@ const CheckoutPage = () => {
   const [paymentMethod, setPaymentMethod] = useState<"paystack" | "card">("paystack");
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Shipping address fields
+  // Worldwide shipping address fields
   const [fullName, setFullName] = useState(user?.name || "");
   const [phone, setPhone] = useState(user?.phone || "");
   const [addressLine, setAddressLine] = useState(user?.address || "");
@@ -55,11 +55,33 @@ const CheckoutPage = () => {
   const [zip, setZip] = useState("");
   const [country, setCountry] = useState(currency.countryCode);
 
-  // All prices are in USD (CJ base currency) — convert for display using live rate
-  const shippingFee = 4.99;           // USD
-  const tax = subtotal * 0.0;
-  const total = subtotal + shippingFee + tax;  // USD total stored in DB
-  const totalLocal = total * rate;             // converted for display & payment
+  // Functional Coupon Discount States
+  const [couponInput, setCouponInput] = useState("");
+  const [discountPercent, setDiscountPercent] = useState(0); // e.g. 0.10 for 10%
+
+  const handleApplyCoupon = () => {
+    if (couponInput.trim().toUpperCase() === "TRENDS10") {
+      setDiscountPercent(0.10);
+      toast({
+        title: "Coupon Applied! 🏷️",
+        description: "10% instant discount deducted from your subtotal.",
+      });
+    } else {
+      toast({
+        title: "Invalid Coupon Code",
+        description: "Please use voucher 'TRENDS10' to get 10% off your purchase.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Pricing calculations in USD (stored in DB as USD)
+  const discountAmount = subtotal * discountPercent;
+  const discountedSubtotal = subtotal - discountAmount;
+  const shippingFee = 4.99; // USD flat shipping worldwide
+  const tax = discountedSubtotal * 0.0;
+  const total = discountedSubtotal + shippingFee + tax; // USD total stored in DB
+  const totalLocal = total * rate; // converted to local currency for Paystack
 
   const fullAddress = [addressLine, city, province, zip, country].filter(Boolean).join(", ");
 
@@ -67,7 +89,7 @@ const CheckoutPage = () => {
     mutationFn: () =>
       api.post<{ id: number }>("/orders", {
         deliveryAddress: fullAddress || "Address not provided",
-        subtotal: subtotal.toFixed(2),
+        subtotal: discountedSubtotal.toFixed(2),
         deliveryFee: shippingFee.toFixed(2),
         tax: tax.toFixed(2),
         tip: "0.00",
@@ -115,7 +137,7 @@ const CheckoutPage = () => {
         key: config.publicKey,
         email: user.email,
         amount: Math.round(totalLocal * 100),
-        currency: "GHS", // Paystack processes in GHS; update to your live currency when using live keys
+        currency: "GHS", // Paystack GHS processor
         ref: init.reference,
         onClose: () => {
           toast({ title: "Payment cancelled", description: "Your order was saved. Try again.", variant: "destructive" });
@@ -129,7 +151,7 @@ const CheckoutPage = () => {
                 orderId: order.id,
               });
               clearCart();
-              toast({ title: "Order Placed!", description: "We'll submit your order to CJ Dropshipping for fulfillment." });
+              toast({ title: "Order Confirmed!", description: "We have submitted your order to CJ Dropshipping for worldwide fulfillment." });
               navigate(`/tracking/${order.id}`);
             } catch {
               toast({ title: "Payment verification failed", description: "Contact support with ref: " + response.reference, variant: "destructive" });
@@ -149,50 +171,65 @@ const CheckoutPage = () => {
   };
 
   return (
-    <div className="pb-28">
-      <AppHeader title="Checkout" showBack />
+    <div className="pb-28 bg-[#0A0A0A] text-white min-h-screen text-left">
+      <AppHeader title="Checkout - TRENDS" showBack />
 
-      <div className="md:grid md:grid-cols-2 md:gap-6 md:px-4">
-        {/* Left: Cart Items */}
+      <div className="md:grid md:grid-cols-2 md:gap-8 md:px-4 mt-5">
+        {/* Left column: Cart Items & Shipping Details */}
         <div>
-          <div className="px-4 md:px-0 mt-5">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="font-bold text-foreground">Your Order</h2>
-              <button onClick={() => navigate("/menu")} className="text-sm text-primary font-semibold">Add more</button>
+          <div className="px-4 md:px-0">
+            <div className="flex items-center justify-between mb-3.5">
+              <h2 className="text-xs font-black uppercase tracking-widest text-white">Your Orders</h2>
+              <button onClick={() => navigate("/menu")} className="text-xs text-amber-500 font-extrabold uppercase hover:underline">Add items</button>
             </div>
+
             {items.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <p>Your cart is empty</p>
-                <button onClick={() => navigate("/menu")} className="text-primary font-semibold mt-2">Explore Store</button>
+              <div className="text-center py-10 bg-[#121212] border border-[#222] rounded-3xl p-6">
+                <p className="text-[#A3A3A3] text-sm font-semibold">Your active cart is empty</p>
+                <button 
+                  onClick={() => navigate("/menu")} 
+                  className="mt-4 bg-gradient-to-r from-amber-500 to-yellow-400 text-black text-xs font-black px-5 py-3 rounded-2xl shadow-lg active:scale-95 transition-transform"
+                >
+                  Explore Catalog
+                </button>
               </div>
             ) : (
               <div className="space-y-3">
                 {items.map(({ item, quantity }) => (
-                  <div key={item.id} className="flex items-center gap-3 bg-card border border-border rounded-xl p-3">
+                  <div key={item.id} className="flex items-center gap-3.5 bg-[#121212] border border-[#222] hover:border-white/5 rounded-2xl p-3.5 shadow-md">
                     {item.image ? (
-                      <img src={item.image} alt={item.name} className="w-16 h-16 rounded-lg object-cover flex-shrink-0" loading="lazy" />
+                      <img src={item.image} alt={item.name} className="w-16 h-16 rounded-xl object-cover border border-white/5 flex-shrink-0" loading="lazy" />
                     ) : (
-                      <div className="w-16 h-16 rounded-lg bg-muted flex items-center justify-center text-2xl flex-shrink-0">📱</div>
+                      <div className="w-16 h-16 rounded-xl bg-[#1A1A1A] flex items-center justify-center text-3xl flex-shrink-0">💻</div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <h4 className="text-sm font-semibold text-foreground">{item.name}</h4>
-                          <p className="text-xs text-muted-foreground">{item.description?.slice(0, 35)}...</p>
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <h4 className="text-xs font-black uppercase text-white truncate tracking-wider">{item.name}</h4>
+                          <p className="text-[10px] text-[#A3A3A3] line-clamp-1 mt-0.5 font-medium">{item.description}</p>
                         </div>
-                        <button onClick={() => removeItem(item.id)} className="text-muted-foreground p-1">
+                        <button 
+                          onClick={() => removeItem(item.id)} 
+                          className="text-[#737373] hover:text-red-500 p-1 transition-colors flex-shrink-0"
+                        >
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
-                      <div className="flex items-center justify-between mt-2">
-                        <span className="font-bold text-primary text-sm">{fmt(item.price * quantity)}</span>
-                        <div className="flex items-center gap-2 border border-border rounded-lg">
-                          <button onClick={() => updateQuantity(item.id, quantity - 1)} className="p-1.5">
-                            <Minus className="w-3.5 h-3.5 text-foreground" />
+                      <div className="flex items-center justify-between mt-2.5">
+                        <span className="font-black text-amber-400 text-xs">{fmt(item.price * quantity)}</span>
+                        <div className="flex items-center gap-2.5 bg-[#1C1C1C] border border-[#333] rounded-lg p-0.5">
+                          <button 
+                            onClick={() => updateQuantity(item.id, quantity - 1)} 
+                            className="w-6 h-6 flex items-center justify-center text-white hover:text-amber-500 transition-colors font-bold"
+                          >
+                            <Minus className="w-3 h-3" />
                           </button>
-                          <span className="text-sm font-semibold text-foreground w-5 text-center">{quantity}</span>
-                          <button onClick={() => updateQuantity(item.id, quantity + 1)} className="p-1.5">
-                            <Plus className="w-3.5 h-3.5 text-foreground" />
+                          <span className="text-xs font-black text-white w-4 text-center">{quantity}</span>
+                          <button 
+                            onClick={() => updateQuantity(item.id, quantity + 1)} 
+                            className="w-6 h-6 flex items-center justify-center text-white hover:text-amber-500 transition-colors font-bold"
+                          >
+                            <Plus className="w-3 h-3" />
                           </button>
                         </div>
                       </div>
@@ -203,177 +240,200 @@ const CheckoutPage = () => {
             )}
           </div>
 
-          {/* Shipping Address */}
+          {/* Worldwide Shipping Form */}
           <div className="px-4 md:px-0 mt-6">
-            <h2 className="font-bold text-foreground mb-3 flex items-center gap-2">
-              <Globe className="w-4 h-4 text-primary" /> Shipping Address
+            <h2 className="text-xs font-black uppercase tracking-widest text-white mb-3 flex items-center gap-2 ml-1">
+              <Globe className="w-4 h-4 text-amber-500" /> Worldwide Shipping Address
             </h2>
-            <div className="bg-card border border-border rounded-xl p-4 space-y-3">
-              <div className="grid grid-cols-2 gap-3">
+            <div className="bg-[#121212] border border-[#222] rounded-3xl p-5 space-y-4 shadow-md">
+              <div className="grid grid-cols-2 gap-3.5">
                 <div>
-                  <label className="text-xs text-muted-foreground font-medium">Full Name *</label>
+                  <label className="text-[9px] font-black uppercase tracking-widest text-[#737373] block mb-1 ml-1">Full Name *</label>
                   <input
                     type="text"
                     value={fullName}
                     onChange={e => setFullName(e.target.value)}
-                    placeholder="John Doe"
-                    className="w-full mt-1 text-sm text-foreground bg-muted rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
+                    placeholder="Recipient name..."
+                    className="w-full border border-[#222] focus:border-amber-500/50 rounded-2xl px-4 py-3 text-xs bg-[#1A1A1A] text-white outline-none font-bold"
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-muted-foreground font-medium">Phone *</label>
+                  <label className="text-[9px] font-black uppercase tracking-widest text-[#737373] block mb-1 ml-1">Phone *</label>
                   <input
                     type="tel"
                     value={phone}
                     onChange={e => setPhone(e.target.value)}
-                    placeholder="+1 555 000 0000"
-                    className="w-full mt-1 text-sm text-foreground bg-muted rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
+                    placeholder="+1 (555) 000-0000"
+                    className="w-full border border-[#222] focus:border-amber-500/50 rounded-2xl px-4 py-3 text-xs bg-[#1A1A1A] text-white outline-none font-bold"
                   />
                 </div>
               </div>
               <div>
-                <label className="text-xs text-muted-foreground font-medium">Street Address *</label>
+                <label className="text-[9px] font-black uppercase tracking-widest text-[#737373] block mb-1 ml-1">Street Address *</label>
                 <input
                   type="text"
                   value={addressLine}
                   onChange={e => setAddressLine(e.target.value)}
-                  placeholder="123 Main Street, Apt 4B"
-                  className="w-full mt-1 text-sm text-foreground bg-muted rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
+                  placeholder="Street name, building, apartment..."
+                  className="w-full border border-[#222] focus:border-amber-500/50 rounded-2xl px-4 py-3 text-xs bg-[#1A1A1A] text-white outline-none font-bold"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3.5">
                 <div>
-                  <label className="text-xs text-muted-foreground font-medium">City *</label>
+                  <label className="text-[9px] font-black uppercase tracking-widest text-[#737373] block mb-1 ml-1">City *</label>
                   <input
                     type="text"
                     value={city}
                     onChange={e => setCity(e.target.value)}
-                    placeholder="New York"
-                    className="w-full mt-1 text-sm text-foreground bg-muted rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
+                    placeholder="Accra / London"
+                    className="w-full border border-[#222] focus:border-amber-500/50 rounded-2xl px-4 py-3 text-xs bg-[#1A1A1A] text-white outline-none font-bold"
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-muted-foreground font-medium">State / Province</label>
+                  <label className="text-[9px] font-black uppercase tracking-widest text-[#737373] block mb-1 ml-1">State / Province</label>
                   <input
                     type="text"
                     value={province}
                     onChange={e => setProvince(e.target.value)}
-                    placeholder="NY"
-                    className="w-full mt-1 text-sm text-foreground bg-muted rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
+                    placeholder="Region..."
+                    className="w-full border border-[#222] focus:border-amber-500/50 rounded-2xl px-4 py-3 text-xs bg-[#1A1A1A] text-white outline-none font-bold"
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3.5">
                 <div>
-                  <label className="text-xs text-muted-foreground font-medium">ZIP / Postal Code</label>
+                  <label className="text-[9px] font-black uppercase tracking-widest text-[#737373] block mb-1 ml-1">ZIP / Postal Code</label>
                   <input
                     type="text"
                     value={zip}
                     onChange={e => setZip(e.target.value)}
-                    placeholder="10001"
-                    className="w-full mt-1 text-sm text-foreground bg-muted rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
+                    placeholder="00233 / SW1A 1AA"
+                    className="w-full border border-[#222] focus:border-amber-500/50 rounded-2xl px-4 py-3 text-xs bg-[#1A1A1A] text-white outline-none font-bold"
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-muted-foreground font-medium">Country *</label>
+                  <label className="text-[9px] font-black uppercase tracking-widest text-[#737373] block mb-1 ml-1">Country ISO Code *</label>
                   <input
                     type="text"
                     value={country}
                     onChange={e => setCountry(e.target.value.toUpperCase())}
-                    placeholder="US"
+                    placeholder="e.g. GH, GB, US"
                     maxLength={2}
-                    className="w-full mt-1 text-sm text-foreground bg-muted rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary uppercase"
+                    className="w-full border border-[#222] focus:border-amber-500/50 rounded-2xl px-4 py-3 text-xs bg-[#1A1A1A] text-white outline-none font-black uppercase tracking-wider"
                   />
                 </div>
               </div>
-              <div className="flex items-center gap-2 text-xs text-muted-foreground bg-primary/5 rounded-lg px-3 py-2">
-                <MapPin className="w-3.5 h-3.5 text-primary flex-shrink-0" />
-                <span>Detected region: <strong className="text-foreground">{currency.name} ({currency.code})</strong> — shipping worldwide via CJ Dropshipping</span>
+              <div className="flex items-center gap-2 text-[10px] text-[#A3A3A3] bg-amber-500/5 rounded-2xl px-4.5 py-3 border border-amber-500/10">
+                <MapPin className="w-4 h-4 text-amber-500 flex-shrink-0 animate-pulse" />
+                <span>Detected region: <strong className="text-white">{currency.name} ({currency.code})</strong> — orders are dynamically synced and fulfilled by CJ Dropshipping worldwide.</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Right: Payment + Summary */}
+        {/* Right column: Payment Methods & Receipt Cost Summary */}
         <div>
+          {/* Apply Coupon code block */}
+          <div className="px-4 md:px-0 mt-6 md:mt-0">
+            <h2 className="text-xs font-black uppercase tracking-widest text-white mb-3">Apply Promos / Coupons</h2>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={couponInput}
+                onChange={e => setCouponInput(e.target.value)}
+                placeholder="Voucher Code (e.g. TRENDS10)"
+                className="flex-1 bg-[#121212] border border-[#222] focus:border-amber-500/40 rounded-2xl px-4 py-3 text-xs text-white placeholder:text-[#525252] outline-none font-bold uppercase tracking-wide transition-colors"
+              />
+              <button
+                onClick={handleApplyCoupon}
+                className="bg-[#1C1C1C] border border-[#333] hover:border-amber-500/40 text-amber-500 hover:text-white px-5 rounded-2xl text-xs font-black uppercase tracking-wider transition-all active:scale-95"
+              >
+                Apply
+              </button>
+            </div>
+            {discountPercent > 0 && (
+              <p className="text-[10px] text-amber-500 font-extrabold uppercase mt-1.5 flex items-center gap-1">
+                <Sparkles className="w-3.5 h-3.5" /> 10% Voucher Code Active!
+              </p>
+            )}
+          </div>
+
+          {/* Payment Providers selection list */}
           <div className="px-4 md:px-0 mt-6">
-            <h2 className="font-bold text-foreground mb-3">Payment Method</h2>
+            <h2 className="text-xs font-black uppercase tracking-widest text-white mb-3">Select Payment Provider</h2>
             <div className="space-y-2">
               {[
-                { key: "paystack" as const, label: "Paystack", sub: "Card, mobile money & bank transfer", icon: Smartphone },
-                { key: "card" as const, label: "Card (Direct)", sub: "Visa, Mastercard", icon: CreditCard },
+                { key: "paystack" as const, label: "Paystack Checkout", sub: "Pay securely via Mobile Money, Cards & Transfers", icon: Smartphone },
+                { key: "card" as const, label: "Debit / Credit Card", sub: "Visa, Mastercard, AMEX", icon: CreditCard },
               ].map(({ key, label, sub, icon: Icon }) => (
                 <button
                   key={key}
                   onClick={() => setPaymentMethod(key)}
-                  className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-colors ${paymentMethod === key ? "border-primary bg-primary/5" : "border-border bg-card"}`}
+                  className={`w-full flex items-center gap-3.5 p-3.5 rounded-3xl border transition-all ${
+                    paymentMethod === key 
+                      ? "border-amber-500 bg-amber-500/5" 
+                      : "border-[#222] bg-[#121212] hover:border-[#333]"
+                  }`}
                 >
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${paymentMethod === key ? "bg-primary" : "bg-muted"}`}>
-                    <Icon className={`w-4 h-4 ${paymentMethod === key ? "text-primary-foreground" : "text-muted-foreground"}`} />
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${paymentMethod === key ? "bg-amber-500 text-black animate-pulse" : "bg-[#1A1A1A] text-[#737373]"}`}>
+                    <Icon className="w-4.5 h-4.5" />
                   </div>
-                  <div className="flex-1 text-left">
-                    <p className="text-sm font-semibold text-foreground">{label}</p>
-                    <p className="text-xs text-muted-foreground">{sub}</p>
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-xs font-black uppercase tracking-wider ${paymentMethod === key ? "text-amber-400" : "text-white"}`}>{label}</p>
+                    <p className="text-[10px] text-[#737373] truncate mt-0.5 font-semibold">{sub}</p>
                   </div>
-                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${paymentMethod === key ? "border-primary" : "border-muted-foreground"}`}>
-                    {paymentMethod === key && <div className="w-2.5 h-2.5 bg-primary rounded-full" />}
+                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${paymentMethod === key ? "border-amber-500" : "border-[#444]"}`}>
+                    {paymentMethod === key && <div className="w-2.5 h-2.5 bg-amber-500 rounded-full" />}
                   </div>
                 </button>
               ))}
             </div>
+            <p className="text-[10px] text-[#737373] mt-2.5 px-1 leading-normal font-semibold">All transaction tokens are parsed and fully encrypted. Paystack supports local network options like MTN, Telecel, AT Money, and global VISA cards.</p>
           </div>
 
-          {/* Shipping info banner */}
-          <div className="mx-4 md:mx-0 mt-4 bg-card border border-border rounded-xl p-3 flex items-start gap-3">
-            <Package className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="text-xs font-semibold text-foreground">Fulfilled by CJ Dropshipping</p>
-              <p className="text-xs text-muted-foreground mt-0.5">Ships in 1–3 business days · Delivered in 7–15 days · Tracked worldwide</p>
-            </div>
-          </div>
-
-          {/* Order Summary */}
-          <div className="mx-4 md:mx-0 mt-4 bg-muted rounded-2xl p-4">
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Subtotal ({items.length} item{items.length !== 1 ? "s" : ""})</span>
-                <span className="text-foreground">{fmt(subtotal)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Shipping</span>
-                <span className="text-foreground">{fmt(shippingFee)}</span>
-              </div>
-              {tax > 0 && (
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Tax</span>
-                  <span className="text-foreground">{fmt(tax)}</span>
-                </div>
+          {/* Receipt Costs Summary Box */}
+          <div className="mx-4 md:mx-0 mt-6 bg-[#0E0E0E] border border-[#1C1C1C] rounded-3xl p-4.5 shadow-md">
+            <div className="space-y-2.5 text-xs">
+              <div className="flex justify-between font-semibold"><span className="text-[#A3A3A3] font-bold">Subtotal</span><span className="text-white font-extrabold">{fmt(subtotal)}</span></div>
+              {discountPercent > 0 && (
+                <div className="flex justify-between font-semibold text-amber-500"><span className="font-black uppercase tracking-wide">Promo Discount</span><span className="font-extrabold">-{fmt(discountAmount)}</span></div>
               )}
-              <div className="border-t border-border my-2" />
+              <div className="flex justify-between font-semibold"><span className="text-[#A3A3A3] font-bold">CJ Flat Shipping Fee</span><span className="text-white font-extrabold">{fmt(shippingFee)}</span></div>
+              <div className="flex justify-between font-semibold"><span className="text-[#A3A3A3] font-bold">Estimated VAT (0%)</span><span className="text-white font-extrabold">{fmt(tax)}</span></div>
+              <div className="border-t border-[#1C1C1C] my-3" />
               <div className="flex justify-between items-end">
                 <div>
-                  <p className="text-xs text-primary font-semibold uppercase">Total</p>
-                  <p className="text-2xl font-bold text-foreground">{fmt(total)}</p>
+                  <p className="text-[9px] text-amber-500 font-black uppercase tracking-widest">TOTAL VALUE</p>
+                  <p className="text-2xl font-black text-white mt-0.5">{fmt(total)}</p>
                 </div>
-                <p className="text-xs text-muted-foreground">Prices shown in {currency.code}</p>
+                <div className="flex items-center gap-1 text-[10px] text-[#737373] font-bold uppercase tracking-wider">
+                  <Globe className="w-3.5 h-3.5 text-amber-500 animate-spin" /> CJ Worldwide Express
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Sticky Place Order Button */}
-      <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border px-4 py-3 z-50">
-        <div className="max-w-5xl mx-auto">
+      {/* Bottom Sticky Action CTAs bar */}
+      <div className="fixed bottom-0 left-0 right-0 bg-[#0E0E0E] border-t border-[#1A1A1A] px-4 py-4 z-40 shadow-2xl safe-bottom">
+        <div className="max-w-5xl mx-auto flex items-center justify-between gap-4">
+          <button 
+            onClick={() => navigate(-1)} 
+            className="flex items-center gap-1.5 text-[#737373] hover:text-white text-xs font-black uppercase tracking-widest px-4 transition-colors"
+          >
+            <Heart className="w-4 h-4 text-amber-500" /> Save Draft
+          </button>
           <button
+            data-testid="button-place-order"
             onClick={handlePlaceOrder}
             disabled={isProcessing || items.length === 0}
-            className="w-full bg-primary text-primary-foreground font-bold py-3.5 rounded-xl text-base disabled:opacity-60 flex items-center justify-center gap-2"
+            className="flex-1 bg-gradient-to-r from-amber-500 to-yellow-400 hover:brightness-110 text-black font-black py-4 rounded-2xl text-xs uppercase tracking-widest shadow-xl shadow-amber-500/10 disabled:opacity-60 flex items-center justify-center gap-2 active:scale-[0.99] transition-all"
           >
             {isProcessing ? (
-              <><Loader2 className="w-4 h-4 animate-spin" /> Processing...</>
+              <><Loader2 className="w-4 h-4 animate-spin text-black" /> Processing Payment...</>
             ) : (
-              `Place Order · ${fmt(total)}`
+              `Secure Payment: ${fmt(total)}`
             )}
           </button>
         </div>
