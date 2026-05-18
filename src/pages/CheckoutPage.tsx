@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Trash2, Minus, Plus, MapPin, Globe, CreditCard, Smartphone, Loader2, Sparkles, Heart } from "lucide-react";
+import { Trash2, Minus, Plus, MapPin, Globe, CreditCard, Smartphone, Loader2, Sparkles, Heart, ChevronLeft } from "lucide-react";
 import AppHeader from "@/components/layout/AppHeader";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
@@ -172,13 +172,18 @@ const CheckoutPage = () => {
   return (
     <div className="pb-28 bg-[#F7F7F7] text-[#222] min-h-screen text-left font-sans">
       <header className="w-full bg-white border-b border-[#EDEDED] px-4 md:px-8 py-3 flex items-center justify-between sticky top-0 z-40">
-        <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => navigate(-1)}>
+        <div className="flex items-center gap-3">
+          <button onClick={() => navigate(-1)} className="p-1 -ml-1 text-[#222] hover:text-[#FB570B] transition-colors">
+            <ChevronLeft className="w-6 h-6" />
+          </button>
+          <div onClick={() => navigate("/")} className="flex items-center gap-2.5 cursor-pointer">
             <div className="w-8 h-8 rounded-lg bg-black flex items-center justify-center overflow-hidden flex-shrink-0 border border-[#F0F0F0]">
               <img src="/assets/logo.png" alt="TRENDS Logo" className="w-full h-full object-contain scale-110" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
             </div>
-            <span className="text-sm font-black tracking-tight text-[#FB570B] uppercase italic">TRENDS</span>
+            <span className="text-sm font-black tracking-tight text-[#FB570B] uppercase italic hidden sm:inline-block">TRENDS</span>
+          </div>
         </div>
-        <span className="text-xs font-black text-[#888] uppercase tracking-widest">Secure Checkout</span>
+        <span className="text-xs font-black text-[#888] uppercase tracking-widest hidden sm:inline-block">Secure Checkout</span>
         <div className="w-16" />
       </header>
 

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, SlidersHorizontal, Sparkles, Star, ChevronRight, ChevronDown, List, User, ShoppingCart, HelpCircle } from "lucide-react";
+import { Plus, SlidersHorizontal, Sparkles, Star, ChevronRight, ChevronLeft, ChevronDown, List, User, ShoppingCart, HelpCircle } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import AppHeader from "@/components/layout/AppHeader";
@@ -120,6 +120,9 @@ const MenuPage = () => {
       <header className="hidden md:block bg-white border-b border-[#EDEDED] sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between gap-6">
           <div className="flex items-center gap-4 flex-shrink-0">
+            <button onClick={() => navigate(-1)} className="p-1 -ml-1 text-[#222] hover:text-[#FB570B] transition-colors">
+              <ChevronLeft className="w-6 h-6" />
+            </button>
             <div onClick={() => navigate("/")} className="flex items-center gap-2.5 cursor-pointer">
               <img src={logo} alt="TRENDS Logo" className="h-10 object-contain rounded-xl" />
               <span className="text-xl font-black tracking-tight text-[#FB570B] uppercase italic">TRENDS</span>

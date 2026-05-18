@@ -1,6 +1,6 @@
 import { useState } from "react";
 import {
-  ChevronRight, MapPin, CreditCard, Heart, Bell, Languages, Shield,
+  ChevronRight, ChevronLeft, MapPin, CreditCard, Heart, Bell, Languages, Shield,
   HelpCircle, FileText, LogOut, Gift, User, X, Save, Loader2,
   Award, Moon, Sun, AlertTriangle, ShoppingBag, Settings, Package,
 } from "lucide-react";
@@ -83,13 +83,18 @@ const ProfilePage = () => {
       <div className="min-h-screen bg-white text-[#222] flex flex-col font-sans">
         {/* Header */}
         <header className="w-full bg-white border-b border-[#EDEDED] px-4 md:px-8 py-3 flex items-center justify-between sticky top-0 z-50">
-          <div onClick={() => navigate("/")} className="flex items-center gap-2.5 cursor-pointer">
-            <div className="w-8 h-8 rounded-lg bg-black flex items-center justify-center overflow-hidden flex-shrink-0 border border-[#F0F0F0]">
-              <img src={logo} alt="TRENDS Logo" className="w-full h-full object-contain scale-110" />
+          <div className="flex items-center gap-3">
+            <button onClick={() => navigate(-1)} className="p-1 -ml-1 text-[#222] hover:text-[#FB570B] transition-colors">
+              <ChevronLeft className="w-6 h-6" />
+            </button>
+            <div onClick={() => navigate("/")} className="flex items-center gap-2.5 cursor-pointer">
+              <div className="w-8 h-8 rounded-lg bg-black flex items-center justify-center overflow-hidden flex-shrink-0 border border-[#F0F0F0]">
+                <img src={logo} alt="TRENDS Logo" className="w-full h-full object-contain scale-110" />
+              </div>
+              <span className="text-sm font-black tracking-tight text-[#FB570B] uppercase italic hidden sm:inline-block">TRENDS</span>
             </div>
-            <span className="text-sm font-black tracking-tight text-[#FB570B] uppercase italic">TRENDS</span>
           </div>
-          <span className="text-xs font-black text-[#888] uppercase tracking-widest">My Profile</span>
+          <span className="text-xs font-black text-[#888] uppercase tracking-widest hidden sm:inline-block">My Profile</span>
           <div className="w-16" />
         </header>
 
@@ -194,13 +199,18 @@ const ProfilePage = () => {
 
       {/* Header */}
       <header className="w-full bg-white border-b border-[#EDEDED] px-4 md:px-8 py-3 flex items-center justify-between sticky top-0 z-40">
-        <div onClick={() => navigate("/")} className="flex items-center gap-2.5 cursor-pointer">
-          <div className="w-8 h-8 rounded-lg bg-black flex items-center justify-center overflow-hidden flex-shrink-0 border border-[#F0F0F0]">
-            <img src={logo} alt="TRENDS Logo" className="w-full h-full object-contain scale-110" />
+        <div className="flex items-center gap-3">
+          <button onClick={() => navigate(-1)} className="p-1 -ml-1 text-[#222] hover:text-[#FB570B] transition-colors">
+            <ChevronLeft className="w-6 h-6" />
+          </button>
+          <div onClick={() => navigate("/")} className="flex items-center gap-2.5 cursor-pointer">
+            <div className="w-8 h-8 rounded-lg bg-black flex items-center justify-center overflow-hidden flex-shrink-0 border border-[#F0F0F0]">
+              <img src={logo} alt="TRENDS Logo" className="w-full h-full object-contain scale-110" />
+            </div>
+            <span className="text-sm font-black tracking-tight text-[#FB570B] uppercase italic hidden sm:inline-block">TRENDS</span>
           </div>
-          <span className="text-sm font-black tracking-tight text-[#FB570B] uppercase italic">TRENDS</span>
         </div>
-        <span className="text-xs font-black text-[#888] uppercase tracking-widest">My Profile</span>
+        <span className="text-xs font-black text-[#888] uppercase tracking-widest hidden sm:inline-block">My Profile</span>
         <button onClick={openEdit} className="text-xs text-[#FB570B] font-black uppercase tracking-wider hover:underline">
           Edit
         </button>
