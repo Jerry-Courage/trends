@@ -44,18 +44,7 @@ function dbToCart(item: DBMenuItem): CartMenuItem {
   };
 }
 
-const configurations = [
-  { label: "Standard Edition", price: 0 },
-  { label: "Pro/Enterprise Edition", price: 150.00 },
-  { label: "Refurbished (Grade A)", price: -100.00 },
-];
 
-const warrantyPeriods = [1, 2, 3];
-const protectionPlans = [
-  { label: "Extended Warranty (2yr)", price: 49.99 },
-  { label: "Accidental Damage Protection", price: 79.99 },
-  { label: "Premium Tech Support", price: 29.99 },
-];
 
 const ItemDetailPage = () => {
   const { id } = useParams();
@@ -64,9 +53,7 @@ const ItemDetailPage = () => {
   const { fmt } = useCurrency();
   const { toast } = useToast();
 
-  const [selectedSize, setSelectedSize] = useState(0);
-  const [warrantyYears, setWarrantyYears] = useState(2);
-  const [selectedExtras, setSelectedExtras] = useState<number[]>([]);
+
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState<string | null>(null);
 
@@ -98,8 +85,7 @@ const ItemDetailPage = () => {
   }
 
   const item = dbToCart(dbItem);
-  const protectionCost = selectedExtras.reduce((sum, i) => sum + protectionPlans[i].price, 0);
-  const totalPrice = (item.price + configurations[selectedSize].price + protectionCost) * quantity;
+  const totalPrice = item.price * quantity;
 
   useSEO({
     title: item.name,
@@ -248,76 +234,7 @@ const ItemDetailPage = () => {
               </div>
             )}
 
-            {/* Edition Selection Grid */}
-            <div>
-              <h3 className="text-[10px] font-black uppercase tracking-widest text-[#888] mb-3">Select System Configuration</h3>
-              <div className="space-y-2">
-                {configurations.map((config, idx) => (
-                  <button
-                    key={config.label}
-                    onClick={() => setSelectedSize(idx)}
-                    className={`w-full flex items-center justify-between p-3.5 rounded-2xl border text-left transition-all ${
-                      selectedSize === idx 
-                        ? "border-[#FB570B] bg-[#FFF2EB]/20" 
-                        : "border-[#EBEBEB] bg-white hover:border-gray-300"
-                    }`}
-                  >
-                    <span className={`text-xs font-black uppercase tracking-wider ${selectedSize === idx ? "text-[#FB570B]" : "text-[#222]"}`}>{config.label}</span>
-                    <span className="text-xs font-black text-[#FB570B]">
-                      {config.price === 0 ? "Included" : config.price > 0 ? `+${fmt(config.price)}` : `-${fmt(Math.abs(config.price))}`}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
 
-            {/* Warranty Selection */}
-            <div>
-              <h3 className="text-[10px] font-black uppercase tracking-widest text-[#888] mb-3">Select Warranty Extension</h3>
-              <div className="flex gap-2">
-                {warrantyPeriods.map(years => (
-                  <button
-                    key={years}
-                    onClick={() => setWarrantyYears(years)}
-                    className={`flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all border ${
-                      warrantyYears === years 
-                        ? "bg-[#FB570B] text-white border-transparent shadow" 
-                        : "bg-white text-gray-500 border-[#EBEBEB] hover:border-gray-300"
-                    }`}
-                  >
-                    {years} Year{years > 1 ? "s" : ""}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Protection Plan Selection Grid */}
-            <div>
-              <h3 className="text-[10px] font-black uppercase tracking-widest text-[#888] mb-3">Available Protection Services</h3>
-              <div className="space-y-2">
-                {protectionPlans.map((plan, idx) => {
-                  const isActive = selectedExtras.includes(idx);
-                  return (
-                    <button
-                      key={plan.label}
-                      onClick={() => {
-                        setSelectedExtras(prev =>
-                          isActive ? prev.filter(i => i !== idx) : [...prev, idx]
-                        );
-                      }}
-                      className={`w-full flex items-center justify-between p-3.5 rounded-2xl border text-left transition-all ${
-                        isActive 
-                          ? "border-[#FB570B] bg-[#FFF2EB]/20" 
-                          : "border-[#EBEBEB] bg-white hover:border-gray-300"
-                      }`}
-                    >
-                      <span className={`text-xs font-black uppercase tracking-wider ${isActive ? "text-[#FB570B]" : "text-[#222]"}`}>{plan.label}</span>
-                      <span className="text-xs font-black text-[#FB570B]">+{fmt(plan.price)}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
           </div>
         </section>
 
