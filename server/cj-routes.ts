@@ -18,6 +18,7 @@ import { storage } from "./storage";
 import { db } from "./db";
 import { orders, menuItems } from "../shared/schema";
 import { eq } from "drizzle-orm";
+import { runBotImport, botState } from "./cj-bot";
 
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET || "trends-electronics-secret-key-change-in-production";
@@ -429,6 +430,21 @@ router.get("/orders/:orderId/tracking", auth, async (req: AuthRequest, res) => {
     carrier: order.cjLogistic || null,
     shippingCountry: order.shippingCountry || null,
   });
+});
+
+// ─── CJ Automation Bot (Admin only) ───────────────────────────────────────────
+
+router.get("/bot/status", auth, requireRole("admin"), (_req, res) => {
+  res.json(botState);
+});
+
+router.post("/bot/trigger", auth, requireRole("admin"), (req, res) => {
+  const { limit = 100, markup = 30 } = req.body;
+  if (botState.running) {
+    return res.status(409).json({ error: "Bot is already running" });
+  }
+  runBotImport(Number(limit), Number(markup));
+  res.json({ message: "Bot triggered successfully in the background", status: botState });
 });
 
 export default router;

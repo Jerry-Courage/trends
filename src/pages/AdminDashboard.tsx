@@ -35,7 +35,8 @@ import {
   Clock,
   MapPin,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Bot
 } from "lucide-react";import { 
   AreaChart, 
   Area, 
@@ -320,6 +321,19 @@ export default function AdminDashboard() {
   const [bulkCategory, setBulkCategory] = useState("Electronics");
   const [bulkResult, setBulkResult] = useState<{ imported: number; skipped: number; message: string } | null>(null);
 
+  // CJ Auto Importer Bot state
+  const [botState, setBotState] = useState<any>({
+    running: false,
+    currentCategory: "",
+    importedCount: 0,
+    skippedCount: 0,
+    errors: [],
+    logs: [],
+    lastRun: null,
+  });
+  const [botLimit, setBotLimit] = useState(100);
+  const [triggeringBot, setTriggeringBot] = useState(false);
+
   // Orders state
   const [orderSearch, setOrderSearch] = useState("");
   const [orderStatusFilter, setOrderStatusFilter] = useState("all");
@@ -371,6 +385,41 @@ export default function AdminDashboard() {
         .catch(() => setCjConfigured(false));
     }
   }, [activeTab, cjConfigured]);
+
+  // Poll CJ Auto Importer Bot status when CJ tab is open
+  useEffect(() => {
+    if (activeTab !== "cj" || cjConfigured !== true) return;
+
+    const fetchBotStatus = () => {
+      api.get("/cj/bot/status")
+        .then(r => setBotState(r))
+        .catch(err => console.error("Error fetching bot status:", err));
+    };
+
+    fetchBotStatus();
+    const interval = setInterval(fetchBotStatus, 2000);
+    return () => clearInterval(interval);
+  }, [activeTab, cjConfigured]);
+
+  const handleTriggerBot = async () => {
+    try {
+      setTriggeringBot(true);
+      const res = await api.post<any>("/cj/bot/trigger", { limit: botLimit, markup: cjMarkup });
+      setBotState(res.status);
+      toast({
+        title: "Bot Started",
+        description: "The category import bot is now running in the background.",
+      });
+    } catch (err: any) {
+      toast({
+        variant: "destructive",
+        title: "Trigger Failed",
+        description: err.message || "Failed to trigger the import bot.",
+      });
+    } finally {
+      setTriggeringBot(false);
+    }
+  };
 
   // Profit data — computed from orders + menu item CJ costs
   // Profit data + Orders data — shared query, used by both overview and orders tab
@@ -1266,9 +1315,109 @@ export default function AdminDashboard() {
               )}
 
               {cjConfigured === true && (
-                <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-4 flex items-center gap-3">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="text-sm font-bold text-emerald-400">CJ Dropshipping API Connected</span>
+                <div className="space-y-6">
+                  <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-4 flex items-center gap-3">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="text-sm font-bold text-emerald-400">CJ Dropshipping API Connected</span>
+                  </div>
+
+                  {/* Automator Bot Grid */}
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Bot Controls Panel */}
+                    <div className="lg:col-span-1 bg-card border border-border rounded-2xl p-5 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Bot className={`text-primary ${botState.running ? 'animate-bounce' : ''}`} size={20} />
+                          <h3 className="font-bold text-base text-foreground">CJ Automator Bot</h3>
+                        </div>
+                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${botState.running ? 'bg-primary/20 text-primary animate-pulse' : 'bg-muted text-muted-foreground'}`}>
+                          {botState.running ? 'Running' : 'Idle'}
+                        </span>
+                      </div>
+
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        Automatically scans all product categories on CJ Dropshipping, maps them to local store categories (Electronics, Fashion, etc.), and imports items in the background.
+                      </p>
+
+                      <div className="border-t border-border/60 pt-3 space-y-2">
+                        <div className="flex justify-between text-xs">
+                          <span className="text-muted-foreground">New Imported:</span>
+                          <span className="font-bold text-emerald-400">{botState.importedCount} products</span>
+                        </div>
+                        <div className="flex justify-between text-xs">
+                          <span className="text-muted-foreground">Skipped / Duplicates:</span>
+                          <span className="font-bold text-muted-foreground/80">{botState.skippedCount} products</span>
+                        </div>
+                        {botState.running && (
+                          <div className="flex justify-between text-xs items-center">
+                            <span className="text-muted-foreground">Category:</span>
+                            <span className="font-bold text-primary max-w-[150px] truncate">{botState.currentCategory}</span>
+                          </div>
+                        )}
+                        {botState.lastRun && (
+                          <div className="flex justify-between text-xs">
+                            <span className="text-muted-foreground">Last Ran:</span>
+                            <span className="font-bold">{new Date(botState.lastRun).toLocaleTimeString()}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="border-t border-border/60 pt-3 space-y-3">
+                        <div>
+                          <label className="text-[11px] text-muted-foreground font-semibold block mb-1">Limit Per Category</label>
+                          <select
+                            value={botLimit}
+                            onChange={e => setBotLimit(Number(e.target.value))}
+                            disabled={botState.running}
+                            className="w-full h-10 bg-card border border-border rounded-xl px-3 py-1 text-xs text-foreground focus:outline-none focus:border-primary/50"
+                          >
+                            <option value={20}>20 products</option>
+                            <option value={50}>50 products</option>
+                            <option value={100}>100 products (Recommended)</option>
+                            <option value={200}>200 products</option>
+                          </select>
+                        </div>
+
+                        <Button
+                          onClick={handleTriggerBot}
+                          disabled={botState.running || triggeringBot}
+                          className="w-full h-10 rounded-xl bg-primary hover:bg-primary/90 text-xs font-bold gap-2"
+                        >
+                          {botState.running ? (
+                            <>
+                              <Loader2 className="animate-spin" size={14} /> Importing...
+                            </>
+                          ) : (
+                            <>
+                              <Play size={14} /> Start Importer Bot
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Bot Console Logs Terminal */}
+                    <div className="lg:col-span-2 bg-[#090d16] border border-border rounded-2xl p-4 flex flex-col h-[320px] lg:h-auto min-h-[300px]">
+                      <div className="flex items-center justify-between border-b border-border/10 pb-2 mb-3">
+                        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Live Bot Console Logs</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className={`w-1.5 h-1.5 rounded-full ${botState.running ? 'bg-primary animate-ping' : 'bg-muted-foreground'}`} />
+                          <span className="text-[10px] text-muted-foreground">{botState.running ? 'Live Feed' : 'Idle'}</span>
+                        </div>
+                      </div>
+                      <div className="flex-1 overflow-y-auto font-mono text-[11px] text-emerald-400 space-y-1.5 pr-2 max-h-[220px]">
+                        {botState.logs && botState.logs.length > 0 ? (
+                          botState.logs.map((log: string, idx: number) => (
+                            <div key={idx} className="whitespace-pre-wrap leading-relaxed border-l border-emerald-500/10 pl-2">{log}</div>
+                          ))
+                        ) : (
+                          <div className="text-muted-foreground italic text-center py-16">
+                            Console idle. Click "Start Importer Bot" to run automated discovery.
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
 
