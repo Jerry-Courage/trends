@@ -84,11 +84,12 @@ const HomePage = () => {
     return () => clearInterval(timer);
   }, []);
 
-  const { data: dbItems = [] } = useQuery<DBMenuItem[]>({
-    queryKey: ["/api/menu"],
-    queryFn: () => api.get("/menu"),
+  const { data: dbItemsResponse, isLoading: menuLoading } = useQuery<{items: DBMenuItem[], total: number}>({
+    queryKey: ["/api/menu", "home_page_trending"],
+    queryFn: () => api.get("/menu?page=1&limit=20"),
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
+  const dbItems = dbItemsResponse?.items || [];
 
   const { data: aiRecs, isLoading: aiLoading } = useQuery<AIRecommendation[]>({
     queryKey: ["/api/ai/recommendations"],

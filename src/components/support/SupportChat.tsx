@@ -71,6 +71,17 @@ interface SupportChatProps {
   onClose: () => void;
 }
 
+const LazyChatProduct = ({ id, onAdd }: { id: number, onAdd: (item: any) => void }) => {
+  const { data: item } = useQuery<DBMenuItem>({
+    queryKey: [`/api/menu/${id}`],
+    queryFn: () => api.get(`/menu/${id}`),
+    staleTime: 60000,
+  });
+  
+  if (!item) return <div className="p-2 text-xs italic text-muted-foreground">Loading product...</div>;
+  return <ChatProductCard item={item} onAdd={onAdd} />;
+};
+
 const SupportChat = ({ isOpen, onClose }: SupportChatProps) => {
   const { user } = useAuth();
   const { addItem } = useCart();
@@ -80,26 +91,16 @@ const SupportChat = ({ isOpen, onClose }: SupportChatProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const { data: menuItems = [] } = useQuery<DBMenuItem[]>({
-    queryKey: ["/api/menu"],
-    queryFn: () => api.get("/menu"),
-    staleTime: 60000,
-  });
-
   const renderContent = (content: string) => {
     const parts = content.split(/(\[PRODUCT:\d+\])/g);
     return parts.map((part, index) => {
       const match = part.match(/\[PRODUCT:(\d+)\]/);
       if (match) {
         const id = parseInt(match[1]);
-        const item = menuItems.find(i => i.id === id);
-        if (item) {
-          return <ChatProductCard key={index} item={item} onAdd={(item) => {
-            addItem(item);
-            toast({ title: `${item.name} added to cart` });
-          }} />;
-        }
-        return null;
+        return <LazyChatProduct key={index} id={id} onAdd={(item) => {
+          addItem(item);
+          toast({ title: `${item.name} added to cart` });
+        }} />;
       }
       return <span key={index}>{part}</span>;
     });

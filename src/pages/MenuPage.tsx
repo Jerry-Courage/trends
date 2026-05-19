@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Plus, SlidersHorizontal, Sparkles, Star, ChevronRight, ChevronLeft, ChevronDown, List, User, ShoppingCart, HelpCircle, Search } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import AppHeader from "@/components/layout/AppHeader";
 import { useCart } from "@/context/CartContext";
 import { useCurrency } from "@/context/CurrencyContext";
@@ -146,28 +146,32 @@ const MenuPage = () => {
     keywords: `${activeCategory}, online shopping, product catalog, dropship collection, Trends`,
   });
 
-  const { data: dbItems = [], isLoading } = useQuery<DBMenuItem[]>({
-    queryKey: ["/api/menu"],
-    queryFn: () => api.get("/menu"),
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useInfiniteQuery({
+    queryKey: ["/api/menu", activeCategory, searchQuery],
+    queryFn: async ({ pageParam = 1 }) => {
+      let url = `/menu?page=${pageParam}&limit=40`;
+      if (activeCategory !== "All") url += `&cat=${encodeURIComponent(activeCategory)}`;
+      if (searchQuery) url += `&q=${encodeURIComponent(searchQuery)}`;
+      return api.get<{ items: DBMenuItem[], total: number }>(url);
+    },
+    getNextPageParam: (lastPage, allPages) => {
+      const loaded = allPages.reduce((acc, p) => acc + p.items.length, 0);
+      return loaded < lastPage.total ? allPages.length + 1 : undefined;
+    },
+    initialPageParam: 1,
+    staleTime: 5 * 60 * 1000,
   });
 
+  const dbItems = data?.pages.flatMap(p => p.items) || [];
   const menuItems = dbItems.map(dbToCart);
-  const categories = ["All", ...Array.from(new Set(menuItems.map(i => i.category)))];
   
-  const filtered = menuItems.filter(item => {
-    const matchesCategory = activeCategory === "All" || item.category === activeCategory;
-    const matchesSearch = !searchQuery || 
-      item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (item.specs && item.specs.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      item.category.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
-  });
-
-  // Paginate: only render the first `visibleCount` items
-  const visibleItems = filtered.slice(0, visibleCount);
-  const hasMore = visibleCount < filtered.length;
+  // The backend handles filtering and searching now
+  const filtered = menuItems;
+  const visibleItems = filtered;
+  const hasMore = !!hasNextPage;
+  
+  const totalAvailable = data?.pages[0]?.total || 0;
+  const categories = ["All", "Fashion & Apparel", "Home & Kitchen", "Electronics", "Beauty & Care", "Sports & Outdoors", "Other"];
 
   const handleAddToCart = (e: React.MouseEvent, item: CartMenuItem) => {
     e.stopPropagation();
@@ -420,10 +424,11 @@ const MenuPage = () => {
           {hasMore && (
             <div className="flex justify-center mt-8 mb-4">
               <button
-                onClick={() => setVisibleCount(c => c + 40)}
-                className="px-8 py-3 bg-[#FB570B] text-white text-sm font-black uppercase tracking-wider rounded-full hover:bg-orange-600 active:scale-95 transition-all shadow-md"
+                onClick={() => fetchNextPage()}
+                disabled={isFetchingNextPage}
+                className="px-8 py-3 bg-[#FB570B] text-white text-sm font-black uppercase tracking-wider rounded-full hover:bg-orange-600 active:scale-95 transition-all shadow-md disabled:opacity-50 flex items-center gap-2"
               >
-                Load More ({filtered.length - visibleCount} remaining)
+                {isFetchingNextPage ? 'Loading...' : `Load More (${totalAvailable - visibleItems.length} remaining)`}
               </button>
             </div>
           )}

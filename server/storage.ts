@@ -1,4 +1,4 @@
-import { eq, desc, and, sql } from "drizzle-orm";
+import { eq, desc, and, sql, or, like } from "drizzle-orm";
 import { db } from "./db";
 import {
   users, orders, orderItems, menuItems, favorites,
@@ -38,10 +38,12 @@ export interface IStorage {
 
   // Menu
   getMenuItems(includeUnavailable?: boolean): Promise<MenuItem[]>;
+  getPaginatedMenuItems(page: number, limit: number, category?: string, search?: string): Promise<{ items: MenuItem[], total: number }>;
   getMenuItem(id: number): Promise<MenuItem | null>;
   createMenuItem(data: any): Promise<MenuItem>;
   updateMenuItem(id: number, data: any): Promise<MenuItem>;
   deleteMenuItem(id: number): Promise<void>;
+  addRating(id: number, rating: number): Promise<MenuItem>;
 
   // Orders
   createOrder(data: {
@@ -143,6 +145,45 @@ export class Storage implements IStorage {
     return db.select().from(menuItems).where(eq(menuItems.isAvailable, 1)).orderBy(desc(menuItems.createdAt));
   }
 
+  async getPaginatedMenuItems(page: number, limit: number, category?: string, search?: string): Promise<{ items: MenuItem[], total: number }> {
+    const offset = (page - 1) * limit;
+    
+    const conditions = [eq(menuItems.isAvailable, 1)];
+    if (category && category !== "All") {
+      conditions.push(eq(menuItems.category, category));
+    }
+    if (search) {
+      const s = `%${search}%`;
+      conditions.push(
+        or(
+          like(menuItems.name, s),
+          like(menuItems.description, s)
+        )
+      );
+    }
+    
+    const whereClause = and(...conditions);
+    
+    // Count total
+    const [countResult] = await db
+      .select({ count: sql`count(*)` })
+      .from(menuItems)
+      .where(whereClause);
+      
+    const total = Number(countResult.count);
+    
+    // Fetch page
+    const items = await db
+      .select()
+      .from(menuItems)
+      .where(whereClause)
+      .orderBy(desc(menuItems.createdAt))
+      .limit(limit)
+      .offset(offset);
+      
+    return { items, total };
+  }
+
   async getMenuItem(id: number): Promise<MenuItem | null> {
     const [item] = await db.select().from(menuItems).where(eq(menuItems.id, id));
     return item ?? null;
@@ -169,6 +210,28 @@ export class Storage implements IStorage {
       .returning();
     if (!item) throw new Error("Menu item not found");
     return item;
+  }
+
+  async addRating(id: number, newRating: number): Promise<MenuItem> {
+    const item = await this.getMenuItem(id);
+    if (!item) throw new Error("Menu item not found");
+    
+    const currentRating = item.rating ? parseFloat(item.rating) : 0;
+    const currentReviews = item.reviews || 0;
+    
+    const nextReviews = currentReviews + 1;
+    const nextRating = ((currentRating * currentReviews) + newRating) / nextReviews;
+    
+    const [updated] = await db.update(menuItems)
+      .set({
+        rating: nextRating.toFixed(1),
+        reviews: nextReviews,
+        updatedAt: new Date()
+      })
+      .where(eq(menuItems.id, id))
+      .returning();
+      
+    return updated;
   }
 
   async deleteMenuItem(id: number): Promise<void> {

@@ -206,11 +206,37 @@ router.patch("/auth/profile", auth, async (req: AuthRequest, res) => {
 // ─── Menu ────────────────────────────────────────────────────────────────────
 
 router.get("/menu", async (req, res) => {
-  const items = await storage.getMenuItems();
-  // Support optional category filter on server to reduce payload
+  const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
+  const page = req.query.page ? parseInt(req.query.page as string) : undefined;
   const cat = req.query.cat as string | undefined;
-  const filtered = cat ? items.filter(i => i.category === cat) : items;
+  const search = req.query.q as string | undefined;
+
+  if (page && limit) {
+    const result = await storage.getPaginatedMenuItems(page, limit, cat, search);
+    return res.json(result);
+  }
+
+  // Fallback for non-paginated legacy clients (Admin Dashboard, etc)
+  const items = await storage.getMenuItems();
+  let filtered = cat ? items.filter(i => i.category === cat) : items;
+  if (search) {
+    const s = search.toLowerCase();
+    filtered = filtered.filter(i => i.name.toLowerCase().includes(s) || (i.description && i.description.toLowerCase().includes(s)));
+  }
   res.json(filtered);
+});
+
+router.post("/menu/:id/rate", async (req, res) => {
+  const { rating } = req.body;
+  if (!rating || rating < 1 || rating > 5) {
+    return res.status(400).json({ error: "Invalid rating. Must be between 1 and 5." });
+  }
+  try {
+    const item = await storage.addRating(Number(req.params.id), Number(rating));
+    res.json(item);
+  } catch (err) {
+    res.status(404).json({ error: "Product not found" });
+  }
 });
 
 router.get("/menu/:id", async (req, res) => {
