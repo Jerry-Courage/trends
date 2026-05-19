@@ -180,19 +180,7 @@ const ItemDetailPage = () => {
             })()}
           </div>
 
-          <div className="grid grid-cols-3 gap-3.5 mt-5">
-            {[
-              { label: "Performance", val: "A17 Chip", icon: Zap },
-              { label: "Connected", val: "5G LTE", icon: Shield },
-              { label: "Warranty Period", val: `${warrantyYears} Years`, icon: Star },
-            ].map(({ label, val, icon: Icon }) => (
-              <div key={label} className="bg-white border border-[#EDEDED] rounded-2xl p-3.5 shadow-sm">
-                <Icon className="w-4 h-4 text-[#FB570B] mb-1.5" />
-                <p className="text-[9px] text-[#A3A3A3] uppercase font-black leading-none">{label}</p>
-                <p className="text-xs font-black text-[#222] mt-1 leading-none">{val}</p>
-              </div>
-            ))}
-          </div>
+
 
           {/* Product Video Showcase */}
           {dbItem.videoUrl && (
