@@ -229,20 +229,71 @@ const ItemDetailPage = () => {
         {/* Left: Product Media Gallery */}
         <section className="px-4 md:px-0 space-y-5">
           <div className="bg-white rounded-[2rem] p-4 border border-[#EDEDED] shadow-sm">
-            {activeImage || item.image ? (
-              <div className="aspect-[4/3] w-full rounded-2xl overflow-hidden bg-[#FAFAFA]">
-                <img src={activeImage || item.image} alt={item.name} className="w-full h-full object-contain" />
-              </div>
-            ) : (
-              <div className="aspect-[4/3] w-full bg-[#FAFAFA] border border-[#EDEDED] rounded-2xl flex items-center justify-center text-4xl">💻</div>
-            )}
+            {(() => {
+              let gallery: string[] = [];
+              if (dbItem?.galleryImages) {
+                try {
+                  gallery = JSON.parse(dbItem.galleryImages);
+                } catch { }
+              }
+              if (dbItem?.imageUrl && !gallery.includes(dbItem.imageUrl)) {
+                gallery.unshift(dbItem.imageUrl);
+              }
+              
+              const currentIdx = activeImage ? gallery.indexOf(activeImage) : 0;
+              const hasMultiple = gallery.length > 1;
 
-            {/* Thumbnail Gallery Slider */}
-            {dbItem.galleryImages && (() => {
-              try {
-                const gallery = JSON.parse(dbItem.galleryImages) as string[];
-                if (gallery && gallery.length > 1) {
-                  return (
+              const handlePrev = () => {
+                if (!hasMultiple) return;
+                const newIdx = currentIdx <= 0 ? gallery.length - 1 : currentIdx - 1;
+                setActiveImage(gallery[newIdx]);
+              };
+
+              const handleNext = () => {
+                if (!hasMultiple) return;
+                const newIdx = currentIdx >= gallery.length - 1 ? 0 : currentIdx + 1;
+                setActiveImage(gallery[newIdx]);
+              };
+
+              return (
+                <>
+                  <div className="relative aspect-[4/3] w-full rounded-2xl overflow-hidden bg-[#FAFAFA] group">
+                    {gallery.length > 0 ? (
+                      <img src={gallery[Math.max(0, currentIdx)]} alt={item.name} className="w-full h-full object-contain transition-opacity duration-300" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-4xl">💻</div>
+                    )}
+
+                    {hasMultiple && (
+                      <>
+                        <button
+                          onClick={handlePrev}
+                          className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 backdrop-blur-md rounded-full shadow-lg flex items-center justify-center text-gray-700 hover:text-[#FB570B] hover:scale-110 transition-all opacity-0 group-hover:opacity-100"
+                        >
+                          <ChevronLeft className="w-6 h-6" />
+                        </button>
+                        <button
+                          onClick={handleNext}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 backdrop-blur-md rounded-full shadow-lg flex items-center justify-center text-gray-700 hover:text-[#FB570B] hover:scale-110 transition-all opacity-0 group-hover:opacity-100"
+                        >
+                          <ChevronRight className="w-6 h-6" />
+                        </button>
+                        
+                        {/* Dots */}
+                        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-black/20 backdrop-blur px-2.5 py-1.5 rounded-full">
+                          {gallery.map((_, idx) => (
+                            <div 
+                              key={idx} 
+                              className={`w-1.5 h-1.5 rounded-full transition-all ${idx === Math.max(0, currentIdx) ? "bg-white w-3" : "bg-white/50"}`} 
+                            />
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Thumbnail Gallery Slider */}
+                  {hasMultiple && (
                     <div className="flex gap-2 mt-4 overflow-x-auto pb-2 scrollbar-thin">
                       {gallery.map((img, idx) => (
                         <button
@@ -250,18 +301,16 @@ const ItemDetailPage = () => {
                           type="button"
                           onClick={() => setActiveImage(img)}
                           className={`w-16 h-16 rounded-xl border-2 flex-shrink-0 overflow-hidden transition-all ${
-                            activeImage === img ? 'border-[#FB570B] shadow-md scale-105' : 'border-transparent hover:border-gray-200 opacity-70 hover:opacity-100'
+                            (activeImage === img || (!activeImage && idx === 0)) ? 'border-[#FB570B] shadow-md scale-105' : 'border-transparent hover:border-gray-200 opacity-70 hover:opacity-100'
                           }`}
                         >
                           <img src={img} alt={`Gallery ${idx}`} className="w-full h-full object-cover" />
                         </button>
                       ))}
                     </div>
-                  );
-                }
-              } catch (e) {
-                return null;
-              }
+                  )}
+                </>
+              );
             })()}
           </div>
 

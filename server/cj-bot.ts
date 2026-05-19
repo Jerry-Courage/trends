@@ -162,24 +162,12 @@ export async function runBotImport(limitPerCategory = 100, markup = 30) {
                       if (detail.productImageSet && detail.productImageSet.length > 0) {
                         galleryImages = JSON.stringify(detail.productImageSet);
                       }
-                      let videoUrl: string | null = null;
-                      let rawVideo: any = (detail as any).productVideo;
-                      if (rawVideo) {
-                        if (Array.isArray(rawVideo) && rawVideo.length > 0) {
-                          videoUrl = rawVideo[0];
-                        } else if (typeof rawVideo === "string") {
-                          videoUrl = rawVideo;
-                        }
-                      }
-                      if (videoUrl && videoUrl.startsWith("//")) {
-                        videoUrl = "https:" + videoUrl;
-                      }
                       await storage.updateMenuItem(existing[0].id, {
                         galleryImages,
-                        videoUrl,
+                        videoUrl: null,
                         cjVid: vid,
                       });
-                      logMessage(`Backfilled gallery & video for existing item: ${product.productNameEn}`);
+                      logMessage(`Backfilled gallery for existing item: ${product.productNameEn}`);
                     } catch (e) {
                       // ignore backfill errors
                     }
@@ -193,7 +181,7 @@ export async function runBotImport(limitPerCategory = 100, markup = 30) {
                 // Fetch variants, gallery images, and video for details
                 let vid: string | null = null;
                 let galleryImages: string | null = null;
-                let videoUrl: string | null = null;
+                let videoUrl: string | null = null; // Always null as requested
                 try {
                   const detail = await getCJProductDetail(product.pid);
                   if (detail.variants?.length > 0) {
@@ -201,17 +189,6 @@ export async function runBotImport(limitPerCategory = 100, markup = 30) {
                   }
                   if (detail.productImageSet && detail.productImageSet.length > 0) {
                     galleryImages = JSON.stringify(detail.productImageSet);
-                  }
-                  let rawVideo: any = (detail as any).productVideo;
-                  if (rawVideo) {
-                    if (Array.isArray(rawVideo) && rawVideo.length > 0) {
-                      videoUrl = rawVideo[0];
-                    } else if (typeof rawVideo === "string") {
-                      videoUrl = rawVideo;
-                    }
-                  }
-                  if (videoUrl && videoUrl.startsWith("//")) {
-                    videoUrl = "https:" + videoUrl;
                   }
                 } catch {
                   // Ignore details failure

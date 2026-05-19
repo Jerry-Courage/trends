@@ -119,17 +119,6 @@ router.post("/products/import", auth, requireRole("admin"), async (req, res) => 
       if (detail.productImageSet && detail.productImageSet.length > 0) {
         galleryImages = JSON.stringify(detail.productImageSet);
       }
-      let rawVideo: any = (detail as any).productVideo;
-      if (rawVideo) {
-        if (Array.isArray(rawVideo) && rawVideo.length > 0) {
-          videoUrl = rawVideo[0];
-        } else if (typeof rawVideo === "string") {
-          videoUrl = rawVideo;
-        }
-      }
-      if (videoUrl && videoUrl.startsWith("//")) {
-        videoUrl = "https:" + videoUrl;
-      }
     } catch (err) {
       console.warn(`Could not fetch details/variants for CJ product ${pid}`, err);
     }
@@ -238,23 +227,12 @@ router.post("/products/bulk-import", auth, requireRole("admin"), async (req, res
           // Try to get variant ID, gallery images, and video URL
           let vid: string | null = null;
           let galleryImages: string | null = null;
-          let videoUrl: string | null = null;
+          let videoUrl: string | null = null; // Always null as requested
           try {
             const detail = await getCJProductDetail(product.pid);
             if (detail.variants?.length > 0) vid = detail.variants[0].vid;
             if (detail.productImageSet && detail.productImageSet.length > 0) {
               galleryImages = JSON.stringify(detail.productImageSet);
-            }
-            let rawVideo: any = (detail as any).productVideo;
-            if (rawVideo) {
-              if (Array.isArray(rawVideo) && rawVideo.length > 0) {
-                videoUrl = rawVideo[0];
-              } else if (typeof rawVideo === "string") {
-                videoUrl = rawVideo;
-              }
-            }
-            if (videoUrl && videoUrl.startsWith("//")) {
-              videoUrl = "https:" + videoUrl;
             }
           } catch { /* skip if details fetch fails */ }
 
