@@ -37,22 +37,25 @@ function mapToStoreCategory(parentName: string, subName: string): string {
   const p = (parentName || "").toLowerCase();
   const s = (subName || "").toLowerCase();
 
-  if (p.includes("computer") || p.includes("phone") || p.includes("electronic") || s.includes("electronic")) {
+  if (p.includes("computer") || p.includes("phone") || p.includes("electronic") || s.includes("electronic") || p.includes("office") || s.includes("office")) {
     return "Electronics";
   }
-  if (p.includes("apparel") || p.includes("bag") || p.includes("shoe") || p.includes("jewelry") || p.includes("watch") || p.includes("clothing")) {
+  if (p.includes("apparel") || p.includes("bag") || p.includes("shoe") || p.includes("jewelry") || p.includes("watch") || p.includes("clothing") || p.includes("accessory") || s.includes("accessory")) {
     return "Fashion & Apparel";
   }
-  if (p.includes("home") || p.includes("garden") || p.includes("kitchen") || s.includes("kitchen")) {
+  if (p.includes("home") || p.includes("garden") || p.includes("kitchen") || s.includes("kitchen") || p.includes("furniture") || s.includes("furniture")) {
     return "Home & Kitchen";
   }
-  if (p.includes("sport") || p.includes("outdoor") || p.includes("toy") || s.includes("outdoor")) {
+  if (p.includes("sport") || p.includes("outdoor") || s.includes("outdoor") || p.includes("fitness") || s.includes("fitness")) {
     return "Sports & Outdoors";
   }
-  if (p.includes("beauty") || p.includes("health") || p.includes("hair") || s.includes("beauty")) {
-    return "Beauty & Personal Care";
+  if (p.includes("beauty") || p.includes("health") || p.includes("hair") || s.includes("beauty") || s.includes("care")) {
+    return "Beauty & Care";
   }
-  return "General";
+  if (p.includes("toy") || s.includes("toy") || p.includes("hobby") || s.includes("hobby") || p.includes("game") || s.includes("game") || p.includes("baby") || s.includes("baby")) {
+    return "Toys & Hobbies";
+  }
+  return "Electronics";
 }
 
 export async function runBotImport(limitPerCategory = 100, markup = 30) {

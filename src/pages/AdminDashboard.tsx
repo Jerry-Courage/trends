@@ -112,7 +112,7 @@ const EMPTY_PRODUCT_FORM: ProductForm = {
   isAvailable: true,
 };
 
-const CATEGORIES = ["Electronics", "Fashion & Apparel", "Home & Kitchen", "Beauty & Personal Care", "Sports & Outdoors", "Toys & Hobbies", "Office & School", "Accessories"];
+const CATEGORIES = ["Electronics", "Fashion & Apparel", "Home & Kitchen", "Beauty & Care", "Sports & Outdoors", "Toys & Hobbies", "Accessories"];
 
 
 function ProductModal({
