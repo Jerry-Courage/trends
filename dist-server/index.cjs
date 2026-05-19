@@ -121599,6 +121599,14 @@ var renderDiskPath = "/data";
 var isRenderDisk = import_fs.default.existsSync(renderDiskPath);
 var dbPath = isRenderDisk ? import_path.default.join(renderDiskPath, "sqlite_v2.db") : import_path.default.resolve(process.cwd(), "sqlite_v2.db");
 console.log("### DB_CHECKPOINT: Initializing database at", dbPath);
+try {
+  console.log("### DB_CHECKPOINT: Running drizzle-kit push programmatically...");
+  const execSync = require("child_process").execSync;
+  execSync("npx drizzle-kit push", { stdio: "inherit" });
+  console.log("### DB_CHECKPOINT: drizzle-kit push completed successfully");
+} catch (err) {
+  console.error("### DB_ERROR: Programmatic drizzle-kit push failed:", err.message || err);
+}
 var sqlite;
 try {
   sqlite = new import_better_sqlite33.default(dbPath);

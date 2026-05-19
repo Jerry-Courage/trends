@@ -16,6 +16,16 @@ const dbPath = isRenderDisk
 
 console.log("### DB_CHECKPOINT: Initializing database at", dbPath);
 
+// Programmatically run drizzle-kit push before establishing database connection to ensure self-healing schemas
+try {
+  console.log("### DB_CHECKPOINT: Running drizzle-kit push programmatically...");
+  const execSync = require("child_process").execSync;
+  execSync("npx drizzle-kit push", { stdio: "inherit" });
+  console.log("### DB_CHECKPOINT: drizzle-kit push completed successfully");
+} catch (err: any) {
+  console.error("### DB_ERROR: Programmatic drizzle-kit push failed:", err.message || err);
+}
+
 let sqlite;
 try {
   sqlite = new Database(dbPath);
