@@ -29,6 +29,15 @@ interface DBMenuItem {
 }
 
 function dbToCart(item: DBMenuItem): CartMenuItem {
+  let parsedTags: string[] | undefined;
+  try {
+    if (item.tags) {
+      parsedTags = JSON.parse(item.tags);
+    }
+  } catch (e) {
+    console.warn("Failed to parse tags for item", item.id);
+  }
+
   return {
     id: String(item.id),
     name: item.name,
@@ -36,7 +45,7 @@ function dbToCart(item: DBMenuItem): CartMenuItem {
     price: parseFloat(item.price),
     image: item.imageUrl || "",
     specs: item.specs ?? undefined,
-    tags: item.tags ? JSON.parse(item.tags) : undefined,
+    tags: parsedTags,
     category: item.category,
     rating: item.rating ? parseFloat(item.rating) : undefined,
     reviews: item.reviews ?? undefined,
