@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, SlidersHorizontal, Sparkles, Star, ChevronRight, ChevronLeft, ChevronDown, List, User, ShoppingCart, HelpCircle } from "lucide-react";
+import { Plus, SlidersHorizontal, Sparkles, Star, ChevronRight, ChevronLeft, ChevronDown, List, User, ShoppingCart, HelpCircle, Search } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import AppHeader from "@/components/layout/AppHeader";
@@ -130,8 +130,9 @@ function dbToCart(item: DBMenuItem): CartMenuItem {
 
 const MenuPage = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const initialCat = searchParams.get("cat") || "All";
+  const searchQuery = searchParams.get("search") || "";
 
   const { items, addItem, totalItems } = useCart();
   const { fmt } = useCurrency();
@@ -152,7 +153,16 @@ const MenuPage = () => {
 
   const menuItems = dbItems.map(dbToCart);
   const categories = ["All", ...Array.from(new Set(menuItems.map(i => i.category)))];
-  const filtered = activeCategory === "All" ? menuItems : menuItems.filter(i => i.category === activeCategory);
+  
+  const filtered = menuItems.filter(item => {
+    const matchesCategory = activeCategory === "All" || item.category === activeCategory;
+    const matchesSearch = !searchQuery || 
+      item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (item.specs && item.specs.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      item.category.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
 
   const handleAddToCart = (e: React.MouseEvent, item: CartMenuItem) => {
     e.stopPropagation();
@@ -270,6 +280,30 @@ const MenuPage = () => {
           </button>
         </div>
       </header>
+
+      {/* Search Input Bar */}
+      <div className="max-w-7xl mx-auto px-4 mt-4">
+        <div className="relative flex items-center bg-white border border-[#EDEDED] rounded-2xl px-4 py-2.5 shadow-sm">
+          <Search className="w-4.5 h-4.5 text-gray-400 mr-2.5 flex-shrink-0" />
+          <input
+            type="text"
+            placeholder="Search products in catalog..."
+            value={searchQuery}
+            onChange={e => {
+              const val = e.target.value;
+              setSearchParams(prev => {
+                if (val) {
+                  prev.set("search", val);
+                } else {
+                  prev.delete("search");
+                }
+                return prev;
+              });
+            }}
+            className="w-full bg-transparent text-sm text-[#222] focus:outline-none placeholder:text-gray-400 font-bold"
+          />
+        </div>
+      </div>
 
       {/* Pill Category Scroller */}
       <div className="max-w-7xl mx-auto px-4 py-4 flex gap-2 overflow-x-auto scrollbar-none">
