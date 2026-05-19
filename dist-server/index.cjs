@@ -35,7 +35,7 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 // node_modules/dotenv/lib/main.js
 var require_main = __commonJS({
   "node_modules/dotenv/lib/main.js"(exports2, module2) {
-    var fs3 = require("fs");
+    var fs4 = require("fs");
     var path4 = require("path");
     var os = require("os");
     var crypto2 = require("crypto");
@@ -167,7 +167,7 @@ var require_main = __commonJS({
       if (options && options.path && options.path.length > 0) {
         if (Array.isArray(options.path)) {
           for (const filepath of options.path) {
-            if (fs3.existsSync(filepath)) {
+            if (fs4.existsSync(filepath)) {
               possibleVaultPath = filepath.endsWith(".vault") ? filepath : `${filepath}.vault`;
             }
           }
@@ -177,7 +177,7 @@ var require_main = __commonJS({
       } else {
         possibleVaultPath = path4.resolve(process.cwd(), ".env.vault");
       }
-      if (fs3.existsSync(possibleVaultPath)) {
+      if (fs4.existsSync(possibleVaultPath)) {
         return possibleVaultPath;
       }
       return null;
@@ -230,7 +230,7 @@ var require_main = __commonJS({
       const parsedAll = {};
       for (const path5 of optionPaths) {
         try {
-          const parsed = DotenvModule.parse(fs3.readFileSync(path5, { encoding }));
+          const parsed = DotenvModule.parse(fs4.readFileSync(path5, { encoding }));
           DotenvModule.populate(parsedAll, parsed, options);
         } catch (e2) {
           if (debug) {
@@ -22860,7 +22860,7 @@ var require_view = __commonJS({
     "use strict";
     var debug = require_src()("express:view");
     var path4 = require("node:path");
-    var fs3 = require("node:fs");
+    var fs4 = require("node:fs");
     var dirname = path4.dirname;
     var basename2 = path4.basename;
     var extname = path4.extname;
@@ -22940,7 +22940,7 @@ var require_view = __commonJS({
     function tryStat(path5) {
       debug('stat "%s"', path5);
       try {
-        return fs3.statSync(path5);
+        return fs4.statSync(path5);
       } catch (e2) {
         return void 0;
       }
@@ -55095,7 +55095,7 @@ var require_send = __commonJS({
     var escapeHtml = require_escape_html();
     var etag = require_etag();
     var fresh = require_fresh();
-    var fs3 = require("fs");
+    var fs4 = require("fs");
     var mime = require_mime_types4();
     var ms = require_ms();
     var onFinished = require_on_finished();
@@ -55377,7 +55377,7 @@ var require_send = __commonJS({
       var i2 = 0;
       var self2 = this;
       debug('stat "%s"', path5);
-      fs3.stat(path5, function onstat(err, stat2) {
+      fs4.stat(path5, function onstat(err, stat2) {
         var pathEndsWithSep = path5[path5.length - 1] === sep;
         if (err && err.code === "ENOENT" && !extname(path5) && !pathEndsWithSep) {
           return next(err);
@@ -55394,7 +55394,7 @@ var require_send = __commonJS({
         }
         var p = path5 + "." + self2._extensions[i2++];
         debug('stat "%s"', p);
-        fs3.stat(p, function(err2, stat2) {
+        fs4.stat(p, function(err2, stat2) {
           if (err2) return next(err2);
           if (stat2.isDirectory()) return next();
           self2.emit("file", p, stat2);
@@ -55412,7 +55412,7 @@ var require_send = __commonJS({
         }
         var p = join(path5, self2._index[i2]);
         debug('stat "%s"', p);
-        fs3.stat(p, function(err2, stat2) {
+        fs4.stat(p, function(err2, stat2) {
           if (err2) return next(err2);
           if (stat2.isDirectory()) return next();
           self2.emit("file", p, stat2);
@@ -55424,7 +55424,7 @@ var require_send = __commonJS({
     SendStream.prototype.stream = function stream(path5, options) {
       var self2 = this;
       var res = this.res;
-      var stream2 = fs3.createReadStream(path5, options);
+      var stream2 = fs4.createReadStream(path5, options);
       this.emit("stream", stream2);
       stream2.pipe(res);
       function cleanup() {
@@ -91786,7 +91786,7 @@ var require_make_middleware = __commonJS({
 // node_modules/multer/storage/disk.js
 var require_disk = __commonJS({
   "node_modules/multer/storage/disk.js"(exports2, module2) {
-    var fs3 = require("fs");
+    var fs4 = require("fs");
     var os = require("os");
     var path4 = require("path");
     var crypto2 = require("crypto");
@@ -91801,7 +91801,7 @@ var require_disk = __commonJS({
     function DiskStorage(opts) {
       this.getFilename = opts.filename || getFilename;
       if (typeof opts.destination === "string") {
-        fs3.mkdirSync(opts.destination, { recursive: true });
+        fs4.mkdirSync(opts.destination, { recursive: true });
         this.getDestination = function($0, $1, cb) {
           cb(null, opts.destination);
         };
@@ -91816,7 +91816,7 @@ var require_disk = __commonJS({
         that.getFilename(req, file, function(err2, filename) {
           if (err2) return cb(err2);
           var finalPath = path4.join(destination, filename);
-          var outStream = fs3.createWriteStream(finalPath);
+          var outStream = fs4.createWriteStream(finalPath);
           file.stream.pipe(outStream);
           outStream.on("error", cb);
           outStream.on("finish", function() {
@@ -91835,7 +91835,7 @@ var require_disk = __commonJS({
       delete file.destination;
       delete file.filename;
       delete file.path;
-      fs3.unlink(path5, cb);
+      fs4.unlink(path5, cb);
     };
     module2.exports = function(opts) {
       return new DiskStorage(opts);
@@ -106117,7 +106117,7 @@ var require_util2 = __commonJS({
     exports2.removeUndefinedValuesInObject = removeUndefinedValuesInObject;
     exports2.isValidFile = isValidFile;
     exports2.getWellKnownCertificateConfigFileLocation = getWellKnownCertificateConfigFileLocation;
-    var fs3 = require("fs");
+    var fs4 = require("fs");
     var os = require("os");
     var path4 = require("path");
     var WELL_KNOWN_CERTIFICATE_CONFIG_FILE = "certificate_config.json";
@@ -106205,7 +106205,7 @@ var require_util2 = __commonJS({
     }
     async function isValidFile(filePath) {
       try {
-        const stats = await fs3.promises.lstat(filePath);
+        const stats = await fs4.promises.lstat(filePath);
         return stats.isFile();
       } catch (e2) {
         return false;
@@ -107619,10 +107619,10 @@ var require_getCredentials = __commonJS({
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.getCredentials = getCredentials;
     var path4 = require("path");
-    var fs3 = require("fs");
+    var fs4 = require("fs");
     var util_1 = require("util");
     var errorWithCode_1 = require_errorWithCode();
-    var readFile = fs3.readFile ? (0, util_1.promisify)(fs3.readFile) : async () => {
+    var readFile = fs4.readFile ? (0, util_1.promisify)(fs4.readFile) : async () => {
       throw new errorWithCode_1.ErrorWithCode("use key rather than keyFile.", "MISSING_CREDENTIALS");
     };
     var ExtensionFiles;
@@ -109299,12 +109299,12 @@ var require_filesubjecttokensupplier = __commonJS({
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.FileSubjectTokenSupplier = void 0;
     var util_1 = require("util");
-    var fs3 = require("fs");
-    var readFile = (0, util_1.promisify)(fs3.readFile ?? (() => {
+    var fs4 = require("fs");
+    var readFile = (0, util_1.promisify)(fs4.readFile ?? (() => {
     }));
-    var realpath = (0, util_1.promisify)(fs3.realpath ?? (() => {
+    var realpath = (0, util_1.promisify)(fs4.realpath ?? (() => {
     }));
-    var lstat = (0, util_1.promisify)(fs3.lstat ?? (() => {
+    var lstat = (0, util_1.promisify)(fs4.lstat ?? (() => {
     }));
     var FileSubjectTokenSupplier = class {
       filePath;
@@ -109422,7 +109422,7 @@ var require_certificatesubjecttokensupplier = __commonJS({
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.CertificateSubjectTokenSupplier = exports2.InvalidConfigurationError = exports2.CertificateSourceUnavailableError = exports2.CERTIFICATE_CONFIGURATION_ENV_VARIABLE = void 0;
     var util_1 = require_util2();
-    var fs3 = require("fs");
+    var fs4 = require("fs");
     var crypto_1 = require("crypto");
     var https2 = require("https");
     exports2.CERTIFICATE_CONFIGURATION_ENV_VARIABLE = "GOOGLE_API_CERTIFICATE_CONFIG";
@@ -109516,7 +109516,7 @@ var require_certificatesubjecttokensupplier = __commonJS({
         const configPath = this.certificateConfigPath;
         let fileContents;
         try {
-          fileContents = await fs3.promises.readFile(configPath, "utf8");
+          fileContents = await fs4.promises.readFile(configPath, "utf8");
         } catch (err) {
           throw new CertificateSourceUnavailableError(`Failed to read certificate config file at: ${configPath}`);
         }
@@ -109541,14 +109541,14 @@ var require_certificatesubjecttokensupplier = __commonJS({
       async #getKeyAndCert(certPath, keyPath) {
         let cert, key;
         try {
-          cert = await fs3.promises.readFile(certPath);
+          cert = await fs4.promises.readFile(certPath);
           new crypto_1.X509Certificate(cert);
         } catch (err) {
           const message = err instanceof Error ? err.message : String(err);
           throw new CertificateSourceUnavailableError(`Failed to read certificate file at ${certPath}: ${message}`);
         }
         try {
-          key = await fs3.promises.readFile(keyPath);
+          key = await fs4.promises.readFile(keyPath);
           (0, crypto_1.createPrivateKey)(key);
         } catch (err) {
           const message = err instanceof Error ? err.message : String(err);
@@ -109567,7 +109567,7 @@ var require_certificatesubjecttokensupplier = __commonJS({
           return JSON.stringify([leafCert.raw.toString("base64")]);
         }
         try {
-          const chainPems = await fs3.promises.readFile(this.trustChainPath, "utf8");
+          const chainPems = await fs4.promises.readFile(this.trustChainPath, "utf8");
           const pemBlocks = chainPems.match(/-----BEGIN CERTIFICATE-----[^-]+-----END CERTIFICATE-----/g) ?? [];
           const chainCerts = pemBlocks.map((pem, index) => {
             try {
@@ -110269,7 +110269,7 @@ var require_pluggable_auth_handler = __commonJS({
     exports2.PluggableAuthHandler = exports2.ExecutableError = void 0;
     var executable_response_1 = require_executable_response();
     var childProcess = require("child_process");
-    var fs3 = require("fs");
+    var fs4 = require("fs");
     var ExecutableError = class extends Error {
       /**
        * The exit code returned by the executable.
@@ -110354,14 +110354,14 @@ var require_pluggable_auth_handler = __commonJS({
         }
         let filePath;
         try {
-          filePath = await fs3.promises.realpath(this.outputFile);
+          filePath = await fs4.promises.realpath(this.outputFile);
         } catch {
           return void 0;
         }
-        if (!(await fs3.promises.lstat(filePath)).isFile()) {
+        if (!(await fs4.promises.lstat(filePath)).isFile()) {
           return void 0;
         }
-        const responseString = await fs3.promises.readFile(filePath, {
+        const responseString = await fs4.promises.readFile(filePath, {
           encoding: "utf8"
         });
         if (responseString === "") {
@@ -110772,7 +110772,7 @@ var require_googleauth = __commonJS({
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.GoogleAuth = exports2.GoogleAuthExceptionMessages = void 0;
     var child_process_1 = require("child_process");
-    var fs3 = require("fs");
+    var fs4 = require("fs");
     var gaxios_1 = require_src2();
     var gcpMetadata = require_src4();
     var os = require("os");
@@ -111067,7 +111067,7 @@ var require_googleauth = __commonJS({
         }
         if (location) {
           location = path4.join(location, "gcloud", "application_default_credentials.json");
-          if (!fs3.existsSync(location)) {
+          if (!fs4.existsSync(location)) {
             location = null;
           }
         }
@@ -111088,8 +111088,8 @@ var require_googleauth = __commonJS({
           throw new Error("The file path is invalid.");
         }
         try {
-          filePath = fs3.realpathSync(filePath);
-          if (!fs3.lstatSync(filePath).isFile()) {
+          filePath = fs4.realpathSync(filePath);
+          if (!fs4.lstatSync(filePath).isFile()) {
             throw new Error();
           }
         } catch (err) {
@@ -111098,7 +111098,7 @@ var require_googleauth = __commonJS({
           }
           throw err;
         }
-        const readStream = fs3.createReadStream(filePath);
+        const readStream = fs4.createReadStream(filePath);
         return this.fromStream(readStream, options);
       }
       /**
@@ -111411,7 +111411,7 @@ var require_googleauth = __commonJS({
           return this._cacheClientFromJSON(this.jsonContent, this.clientOptions);
         } else if (this.keyFilename) {
           const filePath = path4.resolve(this.keyFilename);
-          const stream = fs3.createReadStream(filePath);
+          const stream = fs4.createReadStream(filePath);
           return await this.fromStreamAsync(stream, this.clientOptions);
         } else if (this.apiKey) {
           const client2 = await this.fromAPIKey(this.apiKey, this.clientOptions);
@@ -121499,6 +121499,10 @@ var menuItems = sqliteTable("menu_items", {
   // CJ default variant ID
   cjCost: text("cj_cost"),
   // CJ wholesale cost (for margin tracking)
+  galleryImages: text("gallery_images"),
+  // JSON string array of URLs
+  videoUrl: text("video_url"),
+  // Product video URL
   createdAt: integer("created_at", { mode: "timestamp" }).default(sql`(unixepoch())`).notNull(),
   updatedAt: integer("updated_at", { mode: "timestamp" }).default(sql`(unixepoch())`).notNull()
 });
@@ -121590,7 +121594,10 @@ var insertFavoriteSchema = external_exports.object({
 
 // server/db.ts
 var import_path = __toESM(require("path"), 1);
-var dbPath = import_path.default.resolve(process.cwd(), "sqlite_v2.db");
+var import_fs = __toESM(require("fs"), 1);
+var renderDiskPath = "/data";
+var isRenderDisk = import_fs.default.existsSync(renderDiskPath);
+var dbPath = isRenderDisk ? import_path.default.join(renderDiskPath, "sqlite_v2.db") : import_path.default.resolve(process.cwd(), "sqlite_v2.db");
 console.log("### DB_CHECKPOINT: Initializing database at", dbPath);
 var sqlite;
 try {
@@ -125575,6 +125582,190 @@ function isCJConfigured() {
   return !!process.env.CJ_API_KEY;
 }
 
+// server/cj-bot.ts
+var botState = {
+  running: false,
+  currentCategory: "",
+  importedCount: 0,
+  skippedCount: 0,
+  errors: [],
+  logs: [],
+  lastRun: null
+};
+function logMessage(msg) {
+  const time = (/* @__PURE__ */ new Date()).toLocaleTimeString();
+  const fullMsg = `[${time}] ${msg}`;
+  botState.logs.push(fullMsg);
+  if (botState.logs.length > 100) botState.logs.shift();
+  console.log(`[CJ Bot] ${msg}`);
+}
+function mapToStoreCategory(parentName, subName) {
+  const p = (parentName || "").toLowerCase();
+  const s2 = (subName || "").toLowerCase();
+  if (p.includes("computer") || p.includes("phone") || p.includes("electronic") || s2.includes("electronic")) {
+    return "Electronics";
+  }
+  if (p.includes("apparel") || p.includes("bag") || p.includes("shoe") || p.includes("jewelry") || p.includes("watch") || p.includes("clothing")) {
+    return "Fashion & Apparel";
+  }
+  if (p.includes("home") || p.includes("garden") || p.includes("kitchen") || s2.includes("kitchen")) {
+    return "Home & Kitchen";
+  }
+  if (p.includes("sport") || p.includes("outdoor") || p.includes("toy") || s2.includes("outdoor")) {
+    return "Sports & Outdoors";
+  }
+  if (p.includes("beauty") || p.includes("health") || p.includes("hair") || s2.includes("beauty")) {
+    return "Beauty & Personal Care";
+  }
+  return "General";
+}
+async function runBotImport(limitPerCategory = 100, markup = 30) {
+  if (botState.running) {
+    logMessage("Bot is already running!");
+    return;
+  }
+  botState.running = true;
+  botState.importedCount = 0;
+  botState.skippedCount = 0;
+  botState.errors = [];
+  botState.logs = [];
+  botState.currentCategory = "Initializing...";
+  logMessage("Starting automated category import bot...");
+  (async () => {
+    try {
+      logMessage("Fetching categories from CJ...");
+      const allCategories = await getCJCategories();
+      if (!allCategories || allCategories.length === 0) {
+        logMessage("No categories returned from CJ API.");
+        botState.running = false;
+        return;
+      }
+      logMessage(`Found ${allCategories.length} categories on CJ. Grouping categories...`);
+      const categoriesByParent = {};
+      for (const cat of allCategories) {
+        const parent = cat.categoryFirstName || "General";
+        if (!categoriesByParent[parent]) {
+          categoriesByParent[parent] = [];
+        }
+        categoriesByParent[parent].push(cat);
+      }
+      const parentNames = Object.keys(categoriesByParent);
+      logMessage(`Found ${parentNames.length} major root categories: ${parentNames.join(", ")}`);
+      for (const parent of parentNames) {
+        const subCats = categoriesByParent[parent];
+        const storeCat = mapToStoreCategory(parent, "");
+        logMessage(`=== Processing Parent Category: ${parent} (Mapping to Store Category: ${storeCat}) ===`);
+        let categoryImported = 0;
+        for (const sub of subCats) {
+          if (categoryImported >= limitPerCategory) break;
+          botState.currentCategory = `${parent} -> ${sub.categoryName}`;
+          logMessage(`Querying products for subcategory: ${sub.categoryName} (ID: ${sub.categoryId})...`);
+          let page = 1;
+          const pageSize = 50;
+          let consecutiveEmptyPages = 0;
+          while (categoryImported < limitPerCategory && consecutiveEmptyPages < 2) {
+            logMessage(`Fetching page ${page} of subcategory ${sub.categoryName}...`);
+            let productsResult;
+            try {
+              productsResult = await getCJProductsByCategory(sub.categoryId, page, pageSize);
+            } catch (err) {
+              logMessage(`Error fetching subcategory ${sub.categoryName} page ${page}: ${err.message}`);
+              break;
+            }
+            const products = productsResult.list || [];
+            if (products.length === 0) {
+              consecutiveEmptyPages++;
+              page++;
+              continue;
+            }
+            consecutiveEmptyPages = 0;
+            logMessage(`Retrieved ${products.length} products. Starting import process...`);
+            for (const product of products) {
+              if (categoryImported >= limitPerCategory) break;
+              try {
+                const costPrice = parseFloat(product.sellPrice || "0");
+                if (costPrice <= 0) {
+                  botState.skippedCount++;
+                  continue;
+                }
+                const existing = await db.select().from(menuItems).where(eq(menuItems.cjPid, product.pid));
+                if (existing.length > 0) {
+                  botState.skippedCount++;
+                  continue;
+                }
+                const sellPrice = (costPrice * (1 + Number(markup) / 100)).toFixed(2);
+                let vid = null;
+                let galleryImages = null;
+                let videoUrl = null;
+                try {
+                  const detail = await getCJProductDetail(product.pid);
+                  if (detail.variants?.length > 0) {
+                    vid = detail.variants[0].vid;
+                  }
+                  if (detail.productImageSet && detail.productImageSet.length > 0) {
+                    galleryImages = JSON.stringify(detail.productImageSet);
+                  }
+                  let rawVideo = detail.productVideo;
+                  if (rawVideo) {
+                    if (Array.isArray(rawVideo) && rawVideo.length > 0) {
+                      videoUrl = rawVideo[0];
+                    } else if (typeof rawVideo === "string") {
+                      videoUrl = rawVideo;
+                    }
+                  }
+                  if (videoUrl && videoUrl.startsWith("//")) {
+                    videoUrl = "https:" + videoUrl;
+                  }
+                } catch {
+                }
+                await storage.createMenuItem({
+                  name: product.productNameEn,
+                  description: `${product.productNameEn} \u2014 Sourced from ${sub.categoryName}`,
+                  price: sellPrice,
+                  imageUrl: product.productImage || null,
+                  category: storeCat,
+                  cjPid: product.pid,
+                  cjVid: vid,
+                  cjCost: costPrice.toFixed(2),
+                  galleryImages,
+                  videoUrl,
+                  isAvailable: 1,
+                  isTop: 0
+                });
+                botState.importedCount++;
+                categoryImported++;
+                if (botState.importedCount % 10 === 0) {
+                  logMessage(`Imported ${botState.importedCount} total products so far.`);
+                }
+                await new Promise((r2) => setTimeout(r2, 200));
+              } catch (err) {
+                botState.skippedCount++;
+                botState.errors.push(`${product.productNameEn}: ${err.message}`);
+              }
+            }
+            page++;
+            if (page > 3) break;
+          }
+        }
+        logMessage(`Finished parent category ${parent}. Imported ${categoryImported} products.`);
+      }
+      logMessage("=============================================");
+      logMessage(`Bot run completed successfully!`);
+      logMessage(`Total Imported: ${botState.importedCount}`);
+      logMessage(`Total Skipped/Duplicates: ${botState.skippedCount}`);
+      logMessage("=============================================");
+      botState.running = false;
+      botState.lastRun = /* @__PURE__ */ new Date();
+      botState.currentCategory = "";
+    } catch (globalErr) {
+      logMessage(`Fatal bot error: ${globalErr.message}`);
+      botState.running = false;
+      botState.lastRun = /* @__PURE__ */ new Date();
+      botState.currentCategory = "";
+    }
+  })();
+}
+
 // server/cj-routes.ts
 var router2 = (0, import_express2.Router)();
 var JWT_SECRET2 = process.env.JWT_SECRET || "trends-electronics-secret-key-change-in-production";
@@ -125642,15 +125833,29 @@ router2.post("/products/import", auth2, requireRole2("admin"), async (req, res) 
     const costPrice = parseFloat(price);
     const sellPrice = (costPrice * (1 + Number(markup) / 100)).toFixed(2);
     let resolvedVid = vid || null;
-    if (!resolvedVid) {
-      try {
-        const detail = await getCJProductDetail(pid);
-        if (detail.variants && detail.variants.length > 0) {
-          resolvedVid = detail.variants[0].vid;
-        }
-      } catch {
-        console.warn(`Could not fetch variants for CJ product ${pid}`);
+    let galleryImages = null;
+    let videoUrl = null;
+    try {
+      const detail = await getCJProductDetail(pid);
+      if (detail.variants && detail.variants.length > 0) {
+        resolvedVid = detail.variants[0].vid;
       }
+      if (detail.productImageSet && detail.productImageSet.length > 0) {
+        galleryImages = JSON.stringify(detail.productImageSet);
+      }
+      let rawVideo = detail.productVideo;
+      if (rawVideo) {
+        if (Array.isArray(rawVideo) && rawVideo.length > 0) {
+          videoUrl = rawVideo[0];
+        } else if (typeof rawVideo === "string") {
+          videoUrl = rawVideo;
+        }
+      }
+      if (videoUrl && videoUrl.startsWith("//")) {
+        videoUrl = "https:" + videoUrl;
+      }
+    } catch (err) {
+      console.warn(`Could not fetch details/variants for CJ product ${pid}`, err);
     }
     const existing = await db.select().from(menuItems).where(eq(menuItems.cjPid, pid));
     let item;
@@ -125663,6 +125868,8 @@ router2.post("/products/import", auth2, requireRole2("admin"), async (req, res) 
         category,
         cjVid: resolvedVid,
         cjCost: costPrice.toFixed(2),
+        galleryImages,
+        videoUrl,
         isAvailable: 1
       });
     } else {
@@ -125675,6 +125882,8 @@ router2.post("/products/import", auth2, requireRole2("admin"), async (req, res) 
         cjPid: pid,
         cjVid: resolvedVid,
         cjCost: costPrice.toFixed(2),
+        galleryImages,
+        videoUrl,
         isAvailable: 1,
         isTop: 0
       });
@@ -125734,9 +125943,25 @@ router2.post("/products/bulk-import", auth2, requireRole2("admin"), async (req, 
           }
           const sellPrice = (costPrice * (1 + Number(markup) / 100)).toFixed(2);
           let vid = null;
+          let galleryImages = null;
+          let videoUrl = null;
           try {
             const detail = await getCJProductDetail(product.pid);
             if (detail.variants?.length > 0) vid = detail.variants[0].vid;
+            if (detail.productImageSet && detail.productImageSet.length > 0) {
+              galleryImages = JSON.stringify(detail.productImageSet);
+            }
+            let rawVideo = detail.productVideo;
+            if (rawVideo) {
+              if (Array.isArray(rawVideo) && rawVideo.length > 0) {
+                videoUrl = rawVideo[0];
+              } else if (typeof rawVideo === "string") {
+                videoUrl = rawVideo;
+              }
+            }
+            if (videoUrl && videoUrl.startsWith("//")) {
+              videoUrl = "https:" + videoUrl;
+            }
           } catch {
           }
           await storage.createMenuItem({
@@ -125748,6 +125973,8 @@ router2.post("/products/bulk-import", auth2, requireRole2("admin"), async (req, 
             cjPid: product.pid,
             cjVid: vid,
             cjCost: costPrice.toFixed(2),
+            galleryImages,
+            videoUrl,
             isAvailable: 1,
             isTop: 0
           });
@@ -125899,10 +126126,21 @@ router2.get("/orders/:orderId/tracking", auth2, async (req, res) => {
     shippingCountry: order.shippingCountry || null
   });
 });
+router2.get("/bot/status", auth2, requireRole2("admin"), (_req, res) => {
+  res.json(botState);
+});
+router2.post("/bot/trigger", auth2, requireRole2("admin"), (req, res) => {
+  const { limit = 100, markup = 30 } = req.body;
+  if (botState.running) {
+    return res.status(409).json({ error: "Bot is already running" });
+  }
+  runBotImport(Number(limit), Number(markup));
+  res.json({ message: "Bot triggered successfully in the background", status: botState });
+});
 var cj_routes_default = router2;
 
 // server/index.ts
-var import_fs = __toESM(require("fs"), 1);
+var import_fs2 = __toESM(require("fs"), 1);
 var import_path3 = __toESM(require("path"), 1);
 console.log("### SERVER_CHECKPOINT: Starting TRENDS Delivery App...");
 var app = (0, import_express3.default)();
@@ -125920,8 +126158,8 @@ app.use(import_express3.default.json());
 app.use("/uploads", import_express3.default.static("public/uploads"));
 app.get("/api/health", (_req, res) => res.json({ status: "healthy", timestamp: (/* @__PURE__ */ new Date()).toISOString() }));
 var uploadDir = import_path3.default.join(process.cwd(), "public", "uploads");
-if (!import_fs.default.existsSync(uploadDir)) {
-  import_fs.default.mkdirSync(uploadDir, { recursive: true });
+if (!import_fs2.default.existsSync(uploadDir)) {
+  import_fs2.default.mkdirSync(uploadDir, { recursive: true });
 }
 io2.on("connection", (socket) => {
   socket.on("join", (room) => socket.join(room));
@@ -125955,11 +126193,11 @@ app.use("/api", routes_default);
 app.use("/api/cj", cj_routes_default);
 if (process.env.NODE_ENV === "production" || process.env.RENDER) {
   const distPath = import_path3.default.resolve(process.cwd(), "dist");
-  if (import_fs.default.existsSync(distPath)) {
+  if (import_fs2.default.existsSync(distPath)) {
     console.log(`### SERVER_CHECKPOINT: Serving static files from ${distPath}`);
     const assetsDir = import_path3.default.join(distPath, "assets");
-    if (import_fs.default.existsSync(assetsDir)) {
-      const files = import_fs.default.readdirSync(assetsDir);
+    if (import_fs2.default.existsSync(assetsDir)) {
+      const files = import_fs2.default.readdirSync(assetsDir);
       console.log(`### SERVER_CHECKPOINT: Assets found: ${files.length} items`);
     }
   } else {

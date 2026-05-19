@@ -4,7 +4,16 @@ import * as schema from "../shared/schema";
 import path from "path";
 
 // On Render free tier there's no persistent disk — DB lives in the project root
-const dbPath = path.resolve(process.cwd(), "sqlite_v2.db");
+import fs from "fs";
+
+// Use persistent disk path on Render if available, otherwise fallback to local root
+const renderDiskPath = "/data";
+const isRenderDisk = fs.existsSync(renderDiskPath);
+
+const dbPath = isRenderDisk 
+  ? path.join(renderDiskPath, "sqlite_v2.db") 
+  : path.resolve(process.cwd(), "sqlite_v2.db");
+
 console.log("### DB_CHECKPOINT: Initializing database at", dbPath);
 
 let sqlite;
