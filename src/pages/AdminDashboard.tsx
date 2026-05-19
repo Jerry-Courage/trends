@@ -465,20 +465,15 @@ export default function AdminDashboard() {
   };
 
   const handleBulkImport = async () => {
-    if (!cjQuery.trim() && !selectedCjCategory) {
-      toast({
-        title: "Select a category or enter a keyword first",
-        description: "Choose a CJ category or type a keyword to bulk import",
-        variant: "destructive"
-      });
-      return;
-    }
     setBulkImporting(true);
     setBulkResult(null);
     try {
+      const keyword = cjQuery.trim() || (!selectedCjCategory ? bulkCategory : undefined);
+      const categoryId = selectedCjCategory || undefined;
+
       const result = await api.post<any>("/cj/products/bulk-import", {
-        keyword: cjQuery.trim() || undefined,
-        categoryId: selectedCjCategory || undefined,
+        keyword,
+        categoryId: categoryId,
         limit: bulkLimit,
         markup: cjMarkup,
         storeCategory: bulkCategory,
@@ -1335,7 +1330,7 @@ export default function AdminDashboard() {
                 <div className="flex items-center gap-2 mb-3">
                   <Download size={16} className="text-primary" />
                   <span className="text-sm font-bold text-foreground">Bulk Import</span>
-                  <span className="text-xs text-muted-foreground">— import multiple products at once from your selection or search above</span>
+                  <span className="text-xs text-muted-foreground">— choose a store category below to import popular items directly, or search/select above</span>
                 </div>
                 <div className="flex flex-wrap gap-3 items-end">
                   <div>
@@ -1362,7 +1357,7 @@ export default function AdminDashboard() {
                   </div>
                   <Button
                     onClick={handleBulkImport}
-                    disabled={bulkImporting || (!cjQuery.trim() && !selectedCjCategory)}
+                    disabled={bulkImporting}
                     className="h-10 px-5 rounded-xl bg-primary hover:bg-primary/90 gap-2 text-sm font-bold"
                   >
                     {bulkImporting ? <><Loader2 size={14} className="animate-spin" /> Importing...</> : <><Download size={14} /> Bulk Import</>}
