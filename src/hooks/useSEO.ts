@@ -30,7 +30,7 @@ export function useSEO({ title, description, keywords, ogImage }: SEOProps) {
       updateMetaTag("name", "keywords", keywords);
     } else {
       // Default fallback keywords
-      updateMetaTag("name", "keywords", "delivery app, dropshipping store, order online, food delivery, fast delivery, local courier");
+      updateMetaTag("name", "keywords", "trends store, trends ecommerce ghana, trends marketplace, online shopping accra, electronics store ghana, buy tech accra, Ghana online market, trends ghana");
     }
 
     // 3. Update OpenGraph tags

@@ -70,9 +70,9 @@ const HomePage = () => {
   const [searchQuery, setSearchQuery] = useState("");
 
   useSEO({
-    title: "Best Local & Sourced Delivery",
-    description: "Get the fastest delivery on hot meals, electronics, apparel, and dropshipped products near you. Browse, search, and order on Trends Electronics.",
-    keywords: "food delivery, electronics dropshipping, local delivery, Trends dropshipping, online shopping",
+    title: "Trends Store | Premium Electronics & Online Shopping Ghana",
+    description: "Welcome to Trends Store, the leading e-commerce marketplace in Ghana. Buy premium electronics, laptops, phones, and more with fast delivery in Accra and nationwide.",
+    keywords: "trends store, trends ecommerce ghana, trends marketplace, online shopping accra, electronics store ghana, buy tech accra, Ghana online market, trends ghana",
   });
 
   // Animated Search Placeholder index
