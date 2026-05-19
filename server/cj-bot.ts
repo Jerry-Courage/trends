@@ -153,15 +153,31 @@ export async function runBotImport(limitPerCategory = 100, markup = 30) {
 
                 const sellPrice = (costPrice * (1 + Number(markup) / 100)).toFixed(2);
 
-                // Fetch variants for details
+                // Fetch variants, gallery images, and video for details
                 let vid: string | null = null;
+                let galleryImages: string | null = null;
+                let videoUrl: string | null = null;
                 try {
                   const detail = await getCJProductDetail(product.pid);
                   if (detail.variants?.length > 0) {
                     vid = detail.variants[0].vid;
                   }
+                  if (detail.productImageSet && detail.productImageSet.length > 0) {
+                    galleryImages = JSON.stringify(detail.productImageSet);
+                  }
+                  let rawVideo: any = (detail as any).productVideo;
+                  if (rawVideo) {
+                    if (Array.isArray(rawVideo) && rawVideo.length > 0) {
+                      videoUrl = rawVideo[0];
+                    } else if (typeof rawVideo === "string") {
+                      videoUrl = rawVideo;
+                    }
+                  }
+                  if (videoUrl && videoUrl.startsWith("//")) {
+                    videoUrl = "https:" + videoUrl;
+                  }
                 } catch {
-                  // Ignore vid failure
+                  // Ignore details failure
                 }
 
                 await storage.createMenuItem({
@@ -173,6 +189,8 @@ export async function runBotImport(limitPerCategory = 100, markup = 30) {
                   cjPid: product.pid,
                   cjVid: vid,
                   cjCost: costPrice.toFixed(2),
+                  galleryImages,
+                  videoUrl,
                   isAvailable: 1,
                   isTop: 0,
                 });

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ChevronLeft, ShoppingCart, Star, Zap, Shield, AlertTriangle, Minus, Plus, Share2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -24,6 +24,8 @@ interface DBMenuItem {
   reviews: number | null;
   isTop: number | null;
   isAvailable: number | null;
+  galleryImages: string | null;
+  videoUrl: string | null;
 }
 
 function dbToCart(item: DBMenuItem): CartMenuItem {
@@ -66,6 +68,7 @@ const ItemDetailPage = () => {
   const [warrantyYears, setWarrantyYears] = useState(2);
   const [selectedExtras, setSelectedExtras] = useState<number[]>([]);
   const [quantity, setQuantity] = useState(1);
+  const [activeImage, setActiveImage] = useState<string | null>(null);
 
   const { data: dbItems = [], isLoading } = useQuery<DBMenuItem[]>({
     queryKey: ["/api/menu"],
@@ -78,6 +81,13 @@ const ItemDetailPage = () => {
   }
 
   const dbItem = dbItems.find(i => String(i.id) === id);
+
+  useEffect(() => {
+    if (dbItem?.imageUrl) {
+      setActiveImage(dbItem.imageUrl);
+    }
+  }, [dbItem]);
+
   if (!dbItem) {
     return (
       <div className="p-8 text-center bg-[#F7F7F7] text-[#222] min-h-screen">
@@ -150,11 +160,38 @@ const ItemDetailPage = () => {
         {/* Left: Product Images */}
         <section className="px-4 md:px-0">
           <div className="bg-white rounded-3xl p-4 border border-[#EDEDED] shadow-sm">
-            {item.image ? (
-              <img src={item.image} alt={item.name} className="w-full h-80 rounded-2xl object-cover border border-gray-100" />
+            {activeImage || item.image ? (
+              <img src={activeImage || item.image} alt={item.name} className="w-full h-80 rounded-2xl object-cover border border-gray-100" />
             ) : (
               <div className="w-full h-80 bg-[#FAFAFA] border border-[#EDEDED] rounded-2xl flex items-center justify-center text-4xl">💻</div>
             )}
+
+            {/* Thumbnail Gallery Slider */}
+            {dbItem.galleryImages && (() => {
+              try {
+                const gallery = JSON.parse(dbItem.galleryImages) as string[];
+                if (gallery && gallery.length > 1) {
+                  return (
+                    <div className="flex gap-2 mt-4 overflow-x-auto pb-1 scrollbar-thin">
+                      {gallery.map((img, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => setActiveImage(img)}
+                          className={`w-16 h-16 rounded-xl border flex-shrink-0 overflow-hidden transition-all ${
+                            activeImage === img ? 'border-[#FB570B] ring-2 ring-[#FB570B]/20' : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          <img src={img} alt={`Gallery ${idx}`} className="w-full h-full object-cover" />
+                        </button>
+                      ))}
+                    </div>
+                  );
+                }
+              } catch (e) {
+                return null;
+              }
+            })()}
           </div>
 
           <div className="grid grid-cols-3 gap-3.5 mt-5">
@@ -170,6 +207,19 @@ const ItemDetailPage = () => {
               </div>
             ))}
           </div>
+
+          {/* Product Video Showcase */}
+          {dbItem.videoUrl && (
+            <div className="mt-5 bg-white rounded-3xl p-4 border border-[#EDEDED] shadow-sm">
+              <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2.5 font-bold">Showcase Video</p>
+              <video 
+                src={dbItem.videoUrl} 
+                controls 
+                preload="metadata"
+                className="w-full rounded-2xl border border-gray-100 bg-black aspect-video object-contain"
+              />
+            </div>
+          )}
         </section>
 
         {/* Right: Selection Grids */}

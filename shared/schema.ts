@@ -47,6 +47,8 @@ export const menuItems = sqliteTable("menu_items", {
   cjPid: text("cj_pid"),       // CJ product ID
   cjVid: text("cj_vid"),       // CJ default variant ID
   cjCost: text("cj_cost"),     // CJ wholesale cost (for margin tracking)
+  galleryImages: text("gallery_images"), // JSON string array of URLs
+  videoUrl: text("video_url"),           // Product video URL
   createdAt: integer("created_at", { mode: 'timestamp' }).default(sql`(unixepoch())`).notNull(),
   updatedAt: integer("updated_at", { mode: 'timestamp' }).default(sql`(unixepoch())`).notNull(),
 });

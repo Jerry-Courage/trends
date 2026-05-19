@@ -107,18 +107,31 @@ router.post("/products/import", auth, requireRole("admin"), async (req, res) => 
     const costPrice = parseFloat(price);
     const sellPrice = (costPrice * (1 + Number(markup) / 100)).toFixed(2);
 
-    // If no vid provided, fetch product detail to get the first variant's vid
+    // Fetch product detail to get variants, gallery images, and video URL
     let resolvedVid = vid || null;
-    if (!resolvedVid) {
-      try {
-        const detail = await getCJProductDetail(pid);
-        if (detail.variants && detail.variants.length > 0) {
-          resolvedVid = detail.variants[0].vid;
-        }
-      } catch {
-        // If we can't fetch variants, continue without vid — user can still manually fulfill
-        console.warn(`Could not fetch variants for CJ product ${pid}`);
+    let galleryImages: string | null = null;
+    let videoUrl: string | null = null;
+    try {
+      const detail = await getCJProductDetail(pid);
+      if (detail.variants && detail.variants.length > 0) {
+        resolvedVid = detail.variants[0].vid;
       }
+      if (detail.productImageSet && detail.productImageSet.length > 0) {
+        galleryImages = JSON.stringify(detail.productImageSet);
+      }
+      let rawVideo: any = (detail as any).productVideo;
+      if (rawVideo) {
+        if (Array.isArray(rawVideo) && rawVideo.length > 0) {
+          videoUrl = rawVideo[0];
+        } else if (typeof rawVideo === "string") {
+          videoUrl = rawVideo;
+        }
+      }
+      if (videoUrl && videoUrl.startsWith("//")) {
+        videoUrl = "https:" + videoUrl;
+      }
+    } catch (err) {
+      console.warn(`Could not fetch details/variants for CJ product ${pid}`, err);
     }
 
     const existing = await db.select().from(menuItems).where(eq(menuItems.cjPid, pid));
@@ -132,6 +145,8 @@ router.post("/products/import", auth, requireRole("admin"), async (req, res) => 
         category,
         cjVid: resolvedVid,
         cjCost: costPrice.toFixed(2),
+        galleryImages,
+        videoUrl,
         isAvailable: 1,
       });
     } else {
@@ -144,6 +159,8 @@ router.post("/products/import", auth, requireRole("admin"), async (req, res) => 
         cjPid: pid,
         cjVid: resolvedVid,
         cjCost: costPrice.toFixed(2),
+        galleryImages,
+        videoUrl,
         isAvailable: 1,
         isTop: 0,
       });
@@ -218,12 +235,28 @@ router.post("/products/bulk-import", auth, requireRole("admin"), async (req, res
 
           const sellPrice = (costPrice * (1 + Number(markup) / 100)).toFixed(2);
 
-          // Try to get variant ID
+          // Try to get variant ID, gallery images, and video URL
           let vid: string | null = null;
+          let galleryImages: string | null = null;
+          let videoUrl: string | null = null;
           try {
             const detail = await getCJProductDetail(product.pid);
             if (detail.variants?.length > 0) vid = detail.variants[0].vid;
-          } catch { /* skip vid if fetch fails */ }
+            if (detail.productImageSet && detail.productImageSet.length > 0) {
+              galleryImages = JSON.stringify(detail.productImageSet);
+            }
+            let rawVideo: any = (detail as any).productVideo;
+            if (rawVideo) {
+              if (Array.isArray(rawVideo) && rawVideo.length > 0) {
+                videoUrl = rawVideo[0];
+              } else if (typeof rawVideo === "string") {
+                videoUrl = rawVideo;
+              }
+            }
+            if (videoUrl && videoUrl.startsWith("//")) {
+              videoUrl = "https:" + videoUrl;
+            }
+          } catch { /* skip if details fetch fails */ }
 
           await storage.createMenuItem({
             name: product.productNameEn,
@@ -234,6 +267,8 @@ router.post("/products/bulk-import", auth, requireRole("admin"), async (req, res
             cjPid: product.pid,
             cjVid: vid,
             cjCost: costPrice.toFixed(2),
+            galleryImages,
+            videoUrl,
             isAvailable: 1,
             isTop: 0,
           });
