@@ -502,41 +502,59 @@ router.post("/bot/backfill-media", auth, requireRole("admin"), async (_req, res)
     let failed = 0;
 
     for (const item of allItems) {
-      try {
-        const detail = await getCJProductDetail(item.cjPid!);
+      let success = false;
+      let retries = 0;
+      
+      while (!success && retries < 3) {
+        try {
+          const detail = await getCJProductDetail(item.cjPid!);
 
-        let galleryImages: string | null = null;
-        if (detail.productImageSet && detail.productImageSet.length > 0) {
-          galleryImages = JSON.stringify(detail.productImageSet);
-        }
+          let galleryImages: string | null = null;
+          if (detail.productImageSet && detail.productImageSet.length > 0) {
+            galleryImages = JSON.stringify(detail.productImageSet);
+          }
 
-        let videoUrl: string | null = null;
-        const rawVideo: any = (detail as any).productVideo;
-        if (rawVideo) {
-          if (Array.isArray(rawVideo) && rawVideo.length > 0) {
-            videoUrl = rawVideo[0];
-          } else if (typeof rawVideo === "string") {
-            videoUrl = rawVideo;
+          let videoUrl: string | null = null;
+          const rawVideo: any = (detail as any).productVideo;
+          if (rawVideo) {
+            if (Array.isArray(rawVideo) && rawVideo.length > 0) {
+              videoUrl = rawVideo[0];
+            } else if (typeof rawVideo === "string") {
+              videoUrl = rawVideo;
+            }
+          }
+          if (videoUrl && videoUrl.startsWith("//")) {
+            videoUrl = "https:" + videoUrl;
+          }
+
+          let vid = item.cjVid;
+          if (!vid && detail.variants?.length > 0) {
+            vid = detail.variants[0].vid;
+          }
+
+          await storage.updateMenuItem(item.id, { galleryImages, videoUrl, cjVid: vid });
+          patched++;
+          console.log(`### BACKFILL [${patched}/${allItems.length}]: ${item.name}`);
+          success = true;
+
+          // Rate-limit: 1 request per 1500ms to avoid CJ API throttling
+          await new Promise(r => setTimeout(r, 1500));
+        } catch (err: any) {
+          if (err.message?.includes("429") || err.status === 429) {
+             console.warn(`### BACKFILL RATE LIMITED (429) for ${item.name}. Waiting 10s...`);
+             await new Promise(r => setTimeout(r, 10000));
+             retries++;
+          } else {
+             failed++;
+             console.warn(`### BACKFILL FAILED for ${item.name}: ${err.message}`);
+             break; // don't retry non-429 errors
           }
         }
-        if (videoUrl && videoUrl.startsWith("//")) {
-          videoUrl = "https:" + videoUrl;
-        }
-
-        let vid = item.cjVid;
-        if (!vid && detail.variants?.length > 0) {
-          vid = detail.variants[0].vid;
-        }
-
-        await storage.updateMenuItem(item.id, { galleryImages, videoUrl, cjVid: vid });
-        patched++;
-        console.log(`### BACKFILL [${patched}/${allItems.length}]: ${item.name}`);
-
-        // Rate-limit: 1 request per 600ms to avoid CJ API throttling
-        await new Promise(r => setTimeout(r, 600));
-      } catch (err: any) {
+      }
+      
+      if (!success && retries >= 3) {
         failed++;
-        console.warn(`### BACKFILL FAILED for ${item.name}: ${err.message}`);
+        console.warn(`### BACKFILL GAVE UP on ${item.name} after 3 retries.`);
       }
     }
 
