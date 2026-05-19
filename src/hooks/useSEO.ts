@@ -30,7 +30,7 @@ export function useSEO({ title, description, keywords, ogImage }: SEOProps) {
       updateMetaTag("name", "keywords", keywords);
     } else {
       // Default fallback keywords
-      updateMetaTag("name", "keywords", "trends store, trends ecommerce ghana, trends marketplace, online shopping accra, electronics store ghana, buy tech accra, Ghana online market, trends ghana");
+      updateMetaTag("name", "keywords", "trends store, trends ecommerce ghana, trends marketplace, online shopping accra, electronics store ghana, buy tech accra, Ghana online market, trends ghana, online shopping store, buy electronics online, global shipping shop, premium tech gadgets, cheap online electronics, buy laptops online, smartphone deals, dropship store, worldwide delivery store");
     }
 
     // 3. Update OpenGraph tags

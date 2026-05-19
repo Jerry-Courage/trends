@@ -72,7 +72,7 @@ const HomePage = () => {
   useSEO({
     title: "Trends Store | Premium Electronics & Online Shopping Ghana",
     description: "Welcome to Trends Store, the leading e-commerce marketplace in Ghana. Buy premium electronics, laptops, phones, and more with fast delivery in Accra and nationwide.",
-    keywords: "trends store, trends ecommerce ghana, trends marketplace, online shopping accra, electronics store ghana, buy tech accra, Ghana online market, trends ghana",
+    keywords: "trends store, trends ecommerce ghana, trends marketplace, online shopping accra, electronics store ghana, buy tech accra, Ghana online market, trends ghana, online shopping store, buy electronics online, global shipping shop, premium tech gadgets, cheap online electronics, buy laptops online, smartphone deals, dropship store, worldwide delivery store",
   });
 
   // Animated Search Placeholder index

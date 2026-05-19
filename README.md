@@ -1,4 +1,4 @@
-# Mr Wu's Delivery App
+# Trends Electronics App
 
 A full-stack Chinese food delivery application with customer ordering, kitchen management, rider delivery tracking, and a Super Admin dashboard.
 
@@ -87,7 +87,7 @@ GET   /api/ai/kitchen-summary       — Kitchen briefing for active orders
 
 ## Seeded Accounts (auto-created on first run)
 
-- **Admin**: `admin@mrwu.com` / `mrwu-admin-2025`
+- **Admin**: `admin@trends.ink` / `trends-admin-2025`
 - (Self-register customers and riders via the app)
 
 ## Environment Variables
