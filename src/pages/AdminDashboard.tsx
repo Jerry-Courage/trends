@@ -421,6 +421,22 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleBackfillMedia = async () => {
+    try {
+      await api.post("/cj/bot/backfill-media", {});
+      toast({
+        title: "Backfill Started 🖼️",
+        description: "Fetching gallery images & videos for existing products. This runs in the background — check server logs for progress.",
+      });
+    } catch (err: any) {
+      toast({
+        variant: "destructive",
+        title: "Backfill Failed",
+        description: err.message || "Could not start media backfill.",
+      });
+    }
+  };
+
   // Profit data — computed from orders + menu item CJ costs
   // Profit data + Orders data — shared query, used by both overview and orders tab
   const { data: allOrders = [], isLoading: ordersLoading, refetch: refetchOrders } = useQuery<any[]>({
@@ -1393,6 +1409,19 @@ export default function AdminDashboard() {
                             </>
                           )}
                         </Button>
+
+                        {/* Backfill Media Button */}
+                        <Button
+                          onClick={handleBackfillMedia}
+                          disabled={botState.running}
+                          variant="outline"
+                          className="w-full h-10 rounded-xl text-xs font-bold gap-2 border-amber-500/30 text-amber-600 hover:bg-amber-500/10"
+                        >
+                          🖼️ Backfill Gallery &amp; Videos
+                        </Button>
+                        <p className="text-[10px] text-muted-foreground leading-relaxed">
+                          Fetches missing gallery pictures and showcase videos for all already-imported products from CJ.
+                        </p>
                       </div>
                     </div>
 

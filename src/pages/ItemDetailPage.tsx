@@ -70,23 +70,23 @@ const ItemDetailPage = () => {
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState<string | null>(null);
 
-  const { data: dbItems = [], isLoading } = useQuery<DBMenuItem[]>({
-    queryKey: ["/api/menu"],
-    queryFn: () => api.get("/menu"),
-    staleTime: 0,
+  // Fetch single product directly by ID — gets fresh galleryImages & videoUrl
+  const { data: dbItem, isLoading } = useQuery<DBMenuItem>({
+    queryKey: [`/api/menu/${id}`],
+    queryFn: () => api.get(`/menu/${id}`),
+    staleTime: 2 * 60 * 1000,
+    enabled: !!id,
   });
-
-  if (isLoading) {
-    return <SplashScreen />;
-  }
-
-  const dbItem = dbItems.find(i => String(i.id) === id);
 
   useEffect(() => {
     if (dbItem?.imageUrl) {
       setActiveImage(dbItem.imageUrl);
     }
-  }, [dbItem]);
+  }, [dbItem?.id]);
+
+  if (isLoading) {
+    return <SplashScreen />;
+  }
 
   if (!dbItem) {
     return (

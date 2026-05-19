@@ -482,4 +482,68 @@ router.post("/bot/trigger", auth, requireRole("admin"), (req, res) => {
   res.json({ message: "Bot triggered successfully in the background", status: botState });
 });
 
+// ─── Backfill Media (Admin only) ───────────────────────────────────────────────
+// Goes through all products with a cjPid but missing gallery/video and patches them.
+
+router.post("/bot/backfill-media", auth, requireRole("admin"), async (_req, res) => {
+  // Respond immediately and run in background
+  res.json({ message: "Backfill started in the background. Check bot logs for progress." });
+
+  try {
+    const { isNull, and, isNotNull } = await import("drizzle-orm");
+    const allItems = await db
+      .select()
+      .from(menuItems)
+      .where(and(isNotNull(menuItems.cjPid), isNull(menuItems.galleryImages)));
+
+    console.log(`### BACKFILL: Found ${allItems.length} products missing gallery/video. Starting...`);
+
+    let patched = 0;
+    let failed = 0;
+
+    for (const item of allItems) {
+      try {
+        const detail = await getCJProductDetail(item.cjPid!);
+
+        let galleryImages: string | null = null;
+        if (detail.productImageSet && detail.productImageSet.length > 0) {
+          galleryImages = JSON.stringify(detail.productImageSet);
+        }
+
+        let videoUrl: string | null = null;
+        const rawVideo: any = (detail as any).productVideo;
+        if (rawVideo) {
+          if (Array.isArray(rawVideo) && rawVideo.length > 0) {
+            videoUrl = rawVideo[0];
+          } else if (typeof rawVideo === "string") {
+            videoUrl = rawVideo;
+          }
+        }
+        if (videoUrl && videoUrl.startsWith("//")) {
+          videoUrl = "https:" + videoUrl;
+        }
+
+        let vid = item.cjVid;
+        if (!vid && detail.variants?.length > 0) {
+          vid = detail.variants[0].vid;
+        }
+
+        await storage.updateMenuItem(item.id, { galleryImages, videoUrl, cjVid: vid });
+        patched++;
+        console.log(`### BACKFILL [${patched}/${allItems.length}]: ${item.name}`);
+
+        // Rate-limit: 1 request per 600ms to avoid CJ API throttling
+        await new Promise(r => setTimeout(r, 600));
+      } catch (err: any) {
+        failed++;
+        console.warn(`### BACKFILL FAILED for ${item.name}: ${err.message}`);
+      }
+    }
+
+    console.log(`### BACKFILL COMPLETE: ${patched} patched, ${failed} failed.`);
+  } catch (err: any) {
+    console.error(`### BACKFILL ERROR: ${err.message}`);
+  }
+});
+
 export default router;
