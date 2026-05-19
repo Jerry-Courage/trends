@@ -80,6 +80,13 @@ const ItemDetailPage = () => {
     }
   }, [dbItem?.id]);
 
+  useSEO({
+    title: dbItem?.name || "Loading...",
+    description: dbItem ? `${dbItem.description} - Buy ${dbItem.name} for ${fmt(parseFloat(dbItem.price))} on Trends.` : "Loading product...",
+    keywords: dbItem ? `${dbItem.name}, ${dbItem.category}, buy online, local courier, dropshipping store` : "trends store, trends ecommerce ghana",
+    ogImage: dbItem?.imageUrl || undefined,
+  });
+
   if (isLoading) {
     return <SplashScreen />;
   }
@@ -95,13 +102,6 @@ const ItemDetailPage = () => {
 
   const item = dbToCart(dbItem);
   const totalPrice = item.price * quantity;
-
-  useSEO({
-    title: item.name,
-    description: `${item.description} - Buy ${item.name} for ${fmt(item.price)} on Trends.`,
-    keywords: `${item.name}, ${item.category}, buy online, local courier, dropshipping store`,
-    ogImage: item.image || undefined,
-  });
 
   const handleAddToCart = () => {
     addItem(item, quantity);
