@@ -123,30 +123,34 @@ export async function searchCJProducts(
   page = 1,
   pageSize = 20
 ): Promise<{ list: CJProduct[]; total: number }> {
-  const data = await cjFetch<{ list: CJProduct[]; total: number; pageNum: number; pageSize: number }>(
-    "/product/list",
+  const trimmedKeyword = keyword.trim();
+
+  // If keyword matches a CJ Product ID pattern (starts with CJ, case-insensitive)
+  if (/^CJ[0-9a-zA-Z]+$/i.test(trimmedKeyword)) {
+    try {
+      const detail = await getCJProductDetail(trimmedKeyword);
+      if (detail && detail.pid) {
+        return { list: [detail], total: 1 };
+      }
+    } catch (e) {
+      console.warn(`Query by PID failed, falling back to keyword search:`, e);
+    }
+  }
+
+  const data = await cjFetch<{ list: CJProduct[]; total: number }>(
+    "/product/listV2",
     {
       params: {
-        productNameEn: keyword,
-        pageNum: page,
-        pageSize: Math.min(pageSize, 200),
+        keyWord: trimmedKeyword,
+        page,
+        size: Math.min(pageSize, 100),
       },
     }
   );
 
-  const list = data.list || [];
-
-  // Filter client-side: only keep products whose name contains at least one keyword word
-  const words = keyword.toLowerCase().split(/\s+/).filter(w => w.length > 2);
-  const filtered = words.length > 0
-    ? list.filter(p => {
-        const name = p.productNameEn.toLowerCase();
-        return words.some(w => name.includes(w));
-      })
-    : list;
-
-  return { list: filtered, total: filtered.length };
+  return { list: data.list || [], total: data.total || 0 };
 }
+
 
 // Fetch products by category ID (no keyword needed)
 export async function getCJProductsByCategory(

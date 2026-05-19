@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useCart } from "@/context/CartContext";
 import type { MenuItem as CartMenuItem } from "@/data/menuData";
 import { api } from "@/lib/api";
+import { useSEO } from "@/hooks/useSEO";
 
 const aiSuggestions = [
   "Laptops with high battery life",
@@ -36,11 +37,17 @@ const SearchPage = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: "assistant",
-      content: "Hi! I'm TRENDS' smart assistant. Ask me anything — high-performance laptops, the latest phones, or premium audio — and I'll find the perfect products for you.",
+      content: "Hi! I'm Mr. Wu's smart assistant. Ask me anything — high-performance laptops, the latest phones, or premium audio — and I'll find the perfect products for you.",
     },
   ]);
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  useSEO({
+    title: "AI Smart Assistant Search",
+    description: "Search products in Mr. Wu Delivery & Dropshipping store using our smart AI shopping assistant. Find best deals, specs, and details instantly.",
+    keywords: "AI search, product finder, smart assistant, electronic gadget search, dropshipping assistant",
+  });
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -180,7 +187,7 @@ const SearchPage = () => {
             value={query}
             onChange={e => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Ask TRENDS anything..."
+            placeholder="Ask Mr. Wu anything..."
             className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none"
             disabled={loading}
           />

@@ -9,6 +9,7 @@ import SplashScreen from "@/components/ui/SplashScreen";
 import type { MenuItem as CartMenuItem } from "@/data/menuData";
 import ThemeToggle from "@/components/ThemeToggle";
 import { useToast } from "@/hooks/use-toast";
+import { useSEO } from "@/hooks/useSEO";
 
 interface DBMenuItem {
   id: number;
@@ -90,6 +91,13 @@ const ItemDetailPage = () => {
   const protectionCost = selectedExtras.reduce((sum, i) => sum + protectionPlans[i].price, 0);
   const totalPrice = (item.price + configurations[selectedSize].price + protectionCost) * quantity;
 
+  useSEO({
+    title: item.name,
+    description: `${item.description} - Buy ${item.name} for ${fmt(item.price)} on Mr. Wu Delivery & Dropshipping.`,
+    keywords: `${item.name}, ${item.category}, buy online, local courier, dropshipping store`,
+    ogImage: item.image || undefined,
+  });
+
   const handleAddToCart = () => {
     addItem(item, quantity);
     toast({
@@ -104,7 +112,7 @@ const ItemDetailPage = () => {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: `Buy ${item.name} on TRENDS`,
+          title: `Buy ${item.name} on Mr. Wu Delivery`,
           text: `Check out this amazing ${item.name} I found!`,
           url: shareUrl,
         });
@@ -126,7 +134,7 @@ const ItemDetailPage = () => {
         <button onClick={() => navigate(-1)} className="p-2 bg-[#F5F5F5] border border-[#EBEBEB] rounded-xl text-gray-700 hover:text-[#FB570B] transition-colors">
           <ChevronLeft className="w-5 h-5" />
         </button>
-        <h1 className="text-xs font-black uppercase tracking-widest text-[#222]">Product Details</h1>
+        <h1 className="text-xs font-black uppercase tracking-widest text-[#222]">{item.name}</h1>
         <div className="flex items-center gap-2">
           <button 
             onClick={handleShareProduct} 
@@ -137,10 +145,10 @@ const ItemDetailPage = () => {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto md:grid md:grid-cols-2 md:gap-8 md:px-6 mt-5">
+      <main className="max-w-7xl mx-auto md:grid md:grid-cols-2 md:gap-8 md:px-6 mt-5">
         
         {/* Left: Product Images */}
-        <div className="px-4 md:px-0">
+        <section className="px-4 md:px-0">
           <div className="bg-white rounded-3xl p-4 border border-[#EDEDED] shadow-sm">
             {item.image ? (
               <img src={item.image} alt={item.name} className="w-full h-80 rounded-2xl object-cover border border-gray-100" />
@@ -162,10 +170,10 @@ const ItemDetailPage = () => {
               </div>
             ))}
           </div>
-        </div>
+        </section>
 
         {/* Right: Selection Grids */}
-        <div className="px-4 md:px-0 mt-6 md:mt-0">
+        <section className="px-4 md:px-0 mt-6 md:mt-0">
           <div className="bg-white border border-[#EDEDED] rounded-3xl p-5 shadow-sm space-y-5">
             <div>
               <span className="bg-[#FFF2EB] border border-[#FFDEC9] text-[#FB570B] text-[8px] font-black uppercase px-2.5 py-1 rounded-full tracking-widest">
@@ -261,9 +269,9 @@ const ItemDetailPage = () => {
               </div>
             </div>
           </div>
-        </div>
+        </section>
 
-      </div>
+      </main>
 
       {/* Secure Quick-Cart Add Drawer */}
       <div className="fixed bottom-4 left-4 right-4 md:bottom-6 md:left-1/2 md:-translate-x-1/2 md:w-full md:max-w-2xl bg-white border border-[#EDEDED] px-5 py-3.5 z-45 shadow-2xl rounded-3xl">

@@ -7,6 +7,7 @@ import { Eye, EyeOff, ArrowLeft, Lock, Truck, CalendarCheck, ShieldCheck } from 
 import { motion, AnimatePresence } from "framer-motion";
 import { GoogleLogin } from "@react-oauth/google";
 import { api } from "@/lib/api";
+import { useSEO } from "@/hooks/useSEO";
 
 const LoginPage = () => {
   const [step, setStep] = useState<1 | 2>(1);
@@ -23,6 +24,12 @@ const LoginPage = () => {
   const [loginData, setLoginData] = useState({ email: "", password: "" });
   const [registerData, setRegisterData] = useState({
     name: "", email: "", password: "", phone: "", address: "", role: "customer", adminSecret: "",
+  });
+
+  useSEO({
+    title: "Sign In or Register",
+    description: "Access your Mr. Wu Delivery & Dropshipping account to manage orders, track live shipments, or save your delivery preferences securely.",
+    keywords: "secure login, user registration, mr wu account, customer portal",
   });
 
   useEffect(() => {
@@ -135,9 +142,9 @@ const LoginPage = () => {
       <header className="w-full bg-white border-b border-[#EDEDED] px-4 md:px-8 py-3 flex items-center justify-between">
         <div onClick={() => navigate("/")} className="flex items-center gap-2.5 cursor-pointer active:opacity-90">
           <div className="w-8 h-8 rounded-lg bg-black flex items-center justify-center overflow-hidden flex-shrink-0 border border-[#F0F0F0]">
-            <img src={logo} alt="TRENDS Logo" className="w-full h-full object-contain scale-110" />
+            <img src={logo} alt="Mr. Wu Logo" className="w-full h-full object-contain scale-110" />
           </div>
-          <span className="text-sm font-black tracking-tight text-[#FB570B] uppercase italic">TRENDS</span>
+          <span className="text-sm font-black tracking-tight text-[#FB570B] uppercase italic">Mr. Wu</span>
         </div>
         <div className="flex items-center gap-1.5 text-[#00A854] text-xs font-bold">
           <Lock className="w-3.5 h-3.5 fill-[#00A854]/5" />
@@ -283,7 +290,7 @@ const LoginPage = () => {
                   <div className="bg-[#FFF2EB] border border-[#FFDEC9] p-3.5 rounded-2xl flex items-start gap-2.5 mb-2">
                     <ShieldCheck className="w-5 h-5 text-[#FB570B] flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-xs font-black text-[#FB570B] uppercase">Welcome to TRENDS!</p>
+                      <p className="text-xs font-black text-[#FB570B] uppercase">Welcome to Mr. Wu!</p>
                       <p className="text-[10px] text-gray-500 font-semibold leading-normal mt-0.5">Let's create your premium customer account instantly to unlock global dropshipping shipping features.</p>
                     </div>
                   </div>

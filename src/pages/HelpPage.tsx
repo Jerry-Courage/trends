@@ -5,6 +5,7 @@ import SupportChat from "@/components/support/SupportChat";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { formatDistanceToNow } from "date-fns";
+import { useSEO } from "@/hooks/useSEO";
 
 const categories = [
   { icon: Truck, label: "Delivery" },
@@ -21,7 +22,7 @@ const faqs = [
 
 const notifications = [
   { icon: Truck, title: "Order #8829 Arriving Soon", desc: "Your iPhone 15 Pro is just 5 minutes away! Get ready for your new gadget.", time: "2m ago", isNew: true },
-  { icon: CreditCard, title: "Weekend Special: 10% OFF", desc: "Use code TRENDS10 for 10% off all tech bundles this weekend. Valid until Sunday midnight.", time: "1h ago", isNew: true },
+  { icon: CreditCard, title: "Weekend Special: 10% OFF", desc: "Use code MRWU10 for 10% off all tech bundles this weekend. Valid until Sunday midnight.", time: "1h ago", isNew: true },
   { icon: CreditCard, title: "Refund Processed Successfully", desc: "The refund of GH₵12.50 for Order #8712 has been sent to your original payment method.", time: "Yesterday", isNew: false },
   { icon: Bell, title: "Account Security Update", desc: "We've enhanced our login security. Your account is now more protected than ever.", time: "2d ago", isNew: false },
 ];
@@ -30,6 +31,12 @@ const HelpPage = () => {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [isChatOpen, setIsChatOpen] = useState(false);
+
+  useSEO({
+    title: "Help & Support Center",
+    description: "Find support and get answers to frequently asked questions about delivery, orders, and payments at Mr. Wu Delivery & Dropshipping.",
+    keywords: "help center, customer support, delivery help, order questions, refund support",
+  });
 
   const { data: orders = [] } = useQuery<any[]>({
     queryKey: ["/api/orders/my"],
@@ -83,12 +90,12 @@ const HelpPage = () => {
           </div>
           <div className="text-left">
             <h3 className="font-bold text-sm">AI Live Support</h3>
-            <p className="text-xs opacity-80">Instant help from TRENDS Intelligence</p>
+            <p className="text-xs opacity-80">Instant help from Mr. Wu Intelligence</p>
           </div>
           <ChevronRight className="w-5 h-5 ml-auto" />
         </button>
         <button 
-          onClick={() => window.location.href = "mailto:support@trends.com"}
+          onClick={() => window.location.href = "mailto:support@mrwudelivery.com"}
           className="w-full bg-card border border-border rounded-xl p-4 flex items-center gap-3 hover:bg-muted/50 transition-all"
         >
           <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
@@ -185,8 +192,8 @@ const HelpPage = () => {
 
       {/* Footer */}
       <div className="text-center mt-8 pb-4">
-        <p className="text-xs text-muted-foreground">Support ID: TRENDS-SUPPORT-2025</p>
-        <p className="text-xs text-muted-foreground">TRENDS Support © 2025</p>
+        <p className="text-xs text-muted-foreground">Support ID: MRWU-SUPPORT-2026</p>
+        <p className="text-xs text-muted-foreground">Mr. Wu Support © 2026</p>
       </div>
       <SupportChat isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
     </div>

@@ -309,6 +309,7 @@ export default function AdminDashboard() {
 
   // CJ Import state
   const [cjQuery, setCjQuery] = useState("");
+  const [selectedCjCategory, setSelectedCjCategory] = useState("");
   const [cjResults, setCjResults] = useState<any[]>([]);
   const [cjSearching, setCjSearching] = useState(false);
   const [cjImporting, setCjImporting] = useState<string | null>(null);
@@ -348,6 +349,12 @@ export default function AdminDashboard() {
     queryKey: ["/api/admin/menu-items"],
     queryFn: () => api.get("/menu"),
     staleTime: 0,
+  });
+
+  const { data: cjCategories = [], isLoading: cjCatsLoading } = useQuery<any[]>({
+    queryKey: ["/api/cj/categories"],
+    queryFn: () => api.get("/cj/categories"),
+    enabled: activeTab === "cj" && cjConfigured === true
   });
 
   const { data: insightsData, isLoading: insightsLoading, refetch: getInsights } = useQuery({
@@ -424,12 +431,22 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleCJSearch = async () => {
-    if (!cjQuery.trim()) return;
+  const handleCJSearch = async (catId?: string) => {
+    const queryCatId = catId !== undefined ? catId : selectedCjCategory;
+    if (!cjQuery.trim() && !queryCatId) return;
     setCjSearching(true);
     setCjResults([]);
     try {
-      const res = await api.get<{ list: any[]; total: number }>(`/cj/products/search?q=${encodeURIComponent(cjQuery)}`);
+      let url = "/cj/products/search";
+      if (queryCatId) {
+        url += `?categoryId=${queryCatId}`;
+        if (cjQuery.trim()) {
+          url += `&q=${encodeURIComponent(cjQuery.trim())}`;
+        }
+      } else {
+        url += `?q=${encodeURIComponent(cjQuery.trim())}`;
+      }
+      const res = await api.get<{ list: any[]; total: number }>(url);
       setCjResults(res.list || []);
     } catch (err: any) {
       toast({ title: "CJ Search Failed", description: err.message, variant: "destructive" });
@@ -438,16 +455,30 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleCategoryChange = (catId: string) => {
+    setSelectedCjCategory(catId);
+    if (catId) {
+      handleCJSearch(catId);
+    } else {
+      setCjResults([]);
+    }
+  };
+
   const handleBulkImport = async () => {
-    if (!cjQuery.trim()) {
-      toast({ title: "Enter a keyword first", description: "Type what you want to bulk import (e.g. 'phone case', 'earbuds')", variant: "destructive" });
+    if (!cjQuery.trim() && !selectedCjCategory) {
+      toast({
+        title: "Select a category or enter a keyword first",
+        description: "Choose a CJ category or type a keyword to bulk import",
+        variant: "destructive"
+      });
       return;
     }
     setBulkImporting(true);
     setBulkResult(null);
     try {
       const result = await api.post<any>("/cj/products/bulk-import", {
-        keyword: cjQuery.trim(),
+        keyword: cjQuery.trim() || undefined,
+        categoryId: selectedCjCategory || undefined,
         limit: bulkLimit,
         markup: cjMarkup,
         storeCategory: bulkCategory,
@@ -1246,27 +1277,47 @@ export default function AdminDashboard() {
                 </div>
               )}
 
-              {/* Search + Markup Controls */}
-              <div className="flex flex-col sm:flex-row gap-3">
-                <div className="flex flex-1 gap-2">
-                  <input
-                    type="text"
-                    value={cjQuery}
-                    onChange={e => setCjQuery(e.target.value)}
-                    onKeyDown={e => e.key === "Enter" && handleCJSearch()}
-                    placeholder="Search CJ catalog (e.g. iPhone case, wireless earbuds...)"
-                    className="flex-1 bg-card border border-border rounded-2xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50"
-                  />
-                  <Button
-                    onClick={handleCJSearch}
-                    disabled={cjSearching || !cjQuery.trim()}
-                    className="h-12 px-5 rounded-2xl bg-primary hover:bg-primary/90 gap-2"
-                  >
-                    {cjSearching ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />}
-                    Search
-                  </Button>
+              {/* Search + Category + Markup Controls */}
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex flex-1 flex-col sm:flex-row gap-3">
+                  {/* Category Selector */}
+                  <div className="w-full sm:w-64">
+                    <select
+                      value={selectedCjCategory}
+                      onChange={e => handleCategoryChange(e.target.value)}
+                      disabled={cjCatsLoading}
+                      className="w-full h-12 bg-card border border-border rounded-2xl px-4 py-2 text-sm text-foreground focus:outline-none focus:border-primary/50"
+                    >
+                      <option value="">-- Choose CJ Category (All) --</option>
+                      {cjCategories.map((cat: any) => (
+                        <option key={cat.categoryId} value={cat.categoryId}>
+                          {cat.categoryFirstName ? `${cat.categoryFirstName} > ` : ""}{cat.categoryName}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Search query input */}
+                  <div className="flex flex-1 gap-2">
+                    <input
+                      type="text"
+                      value={cjQuery}
+                      onChange={e => setCjQuery(e.target.value)}
+                      onKeyDown={e => e.key === "Enter" && handleCJSearch()}
+                      placeholder="Or search CJ catalog by name/SKU..."
+                      className="flex-1 bg-card border border-border rounded-2xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50"
+                    />
+                    <Button
+                      onClick={() => handleCJSearch()}
+                      disabled={cjSearching || (!cjQuery.trim() && !selectedCjCategory)}
+                      className="h-12 px-5 rounded-2xl bg-primary hover:bg-primary/90 gap-2"
+                    >
+                      {cjSearching ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />}
+                      Search
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 bg-card border border-border rounded-2xl px-4 py-2">
+                <div className="flex items-center gap-2 bg-card border border-border rounded-2xl px-4 py-2 self-start md:self-auto h-12">
                   <span className="text-xs text-muted-foreground font-semibold whitespace-nowrap">Markup %</span>
                   <input
                     type="number"
@@ -1284,7 +1335,7 @@ export default function AdminDashboard() {
                 <div className="flex items-center gap-2 mb-3">
                   <Download size={16} className="text-primary" />
                   <span className="text-sm font-bold text-foreground">Bulk Import</span>
-                  <span className="text-xs text-muted-foreground">— import multiple products at once from your search keyword above</span>
+                  <span className="text-xs text-muted-foreground">— import multiple products at once from your selection or search above</span>
                 </div>
                 <div className="flex flex-wrap gap-3 items-end">
                   <div>
@@ -1311,7 +1362,7 @@ export default function AdminDashboard() {
                   </div>
                   <Button
                     onClick={handleBulkImport}
-                    disabled={bulkImporting || !cjQuery.trim()}
+                    disabled={bulkImporting || (!cjQuery.trim() && !selectedCjCategory)}
                     className="h-10 px-5 rounded-xl bg-primary hover:bg-primary/90 gap-2 text-sm font-bold"
                   >
                     {bulkImporting ? <><Loader2 size={14} className="animate-spin" /> Importing...</> : <><Download size={14} /> Bulk Import</>}

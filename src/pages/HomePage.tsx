@@ -11,6 +11,7 @@ import ThemeToggle from "@/components/ThemeToggle";
 import { useToast } from "@/hooks/use-toast";
 import SupportChat from "@/components/support/SupportChat";
 import { motion, AnimatePresence } from "framer-motion";
+import { useSEO } from "@/hooks/useSEO";
 
 const categories = [
   { icon: "👗", label: "Fashion & Apparel" },
@@ -67,6 +68,12 @@ const HomePage = () => {
   const { toast } = useToast();
   const [isAIChatOpen, setIsAIChatOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+
+  useSEO({
+    title: "Best Local & Sourced Delivery",
+    description: "Get the fastest delivery on hot meals, electronics, apparel, and dropshipped products near you. Browse, search, and order on Mr. Wu Delivery & Dropshipping.",
+    keywords: "food delivery, electronics dropshipping, local delivery, Mr. Wu dropshipping, online shopping",
+  });
 
   // Animated Search Placeholder index
   const [searchIndex, setSearchIndex] = useState(0);
@@ -396,189 +403,193 @@ function normalizeCategory(category: string): string {
       </header>
 
 
-      {/* CATEGORY NAV STRIP */}
-      <div className="max-w-7xl mx-auto mt-6">
-        <div className="flex items-center justify-between px-4 mb-3">
-          <h2 className="text-xs font-black uppercase tracking-widest text-gray-400 text-left">Top Categories</h2>
-          <button onClick={() => navigate("/menu")} className="text-[10px] text-[#FB570B] font-black uppercase tracking-wider flex items-center gap-0.5 hover:underline">Explore all <ChevronRight className="w-3.5 h-3.5" /></button>
-        </div>
-        <div className="flex gap-3 overflow-x-auto px-4 pb-2 scrollbar-none">
-          {categories.map(cat => (
-            <button 
-              key={cat.label} 
-              onClick={() => navigate(`/menu?cat=${encodeURIComponent(cat.label)}`)}
-              className="flex items-center gap-2 bg-white border border-[#EBEBEB] hover:border-gray-300 px-5 py-3 rounded-2xl transition-all flex-shrink-0 shadow-sm"
-            >
-              <span className="text-lg">{cat.icon}</span>
-              <span className="text-xs font-black uppercase tracking-wider text-[#222]">{cat.label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
+      <main className="max-w-7xl mx-auto mt-6 px-4 space-y-6">
+        <h1 className="sr-only">Mr. Wu Delivery & Dropshipping - Hot Local Courier Food Delivery & High-Quality Dropshipped Goods</h1>
 
-      {/* DYNAMIC AI RECOMMENDATIONS */}
-      {recommendedItems.length > 0 && (
-        <div className="max-w-7xl mx-auto mt-6 px-4">
+        {/* CATEGORY NAV STRIP */}
+        <section>
           <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-1.5 text-left">
-              <Sparkles className="w-4.5 h-4.5 text-[#FB570B] animate-pulse" />
-              <h2 className="text-xs font-black uppercase tracking-widest text-gray-400">Smart AI Recommendations</h2>
-            </div>
+            <h2 className="text-xs font-black uppercase tracking-widest text-gray-400 text-left">Top Categories</h2>
+            <button onClick={() => navigate("/menu")} className="text-[10px] text-[#FB570B] font-black uppercase tracking-wider flex items-center gap-0.5 hover:underline">Explore all <ChevronRight className="w-3.5 h-3.5" /></button>
           </div>
-
-          <div className="flex gap-4.5 overflow-x-auto pb-3 scrollbar-none">
-            {recommendedItems.map(item => (
-              <div 
-                key={item.id} 
-                onClick={() => navigate(`/item/${item.id}`)}
-                className="bg-white border border-[#EDEDED] hover:border-gray-300 rounded-3xl p-4 w-72 flex-shrink-0 cursor-pointer shadow-sm text-left transition-all relative overflow-hidden"
+          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none">
+            {categories.map(cat => (
+              <button 
+                key={cat.label} 
+                onClick={() => navigate(`/menu?cat=${encodeURIComponent(cat.label)}`)}
+                className="flex items-center gap-2 bg-white border border-[#EBEBEB] hover:border-gray-300 px-5 py-3 rounded-2xl transition-all flex-shrink-0 shadow-sm"
               >
-                <div className="flex gap-3">
-                  {item.image ? (
-                    <img src={item.image} alt={item.name} className="w-16 h-16 rounded-2xl object-cover border border-gray-100 flex-shrink-0" />
-                  ) : (
-                    <div className="w-16 h-16 bg-[#F5F5F5] border border-[#EDEDED] rounded-2xl flex items-center justify-center text-xl flex-shrink-0">💻</div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <h4 className="text-xs font-black uppercase text-[#222] truncate leading-tight">{item.name}</h4>
-                    <p className="text-[9px] text-[#FB570B] font-extrabold uppercase mt-1 flex items-center gap-1">
-                      <Sparkles className="w-3 h-3" /> Selected for you
-                    </p>
-                    <p className="text-[10px] text-gray-400 line-clamp-2 mt-1 leading-normal font-semibold">{item.reason}</p>
-                  </div>
-                </div>
-
-                <div className="border-t border-[#EDEDED] mt-3.5 pt-3.5 flex items-center justify-between">
-                  <span className="text-xs font-black text-[#FB570B]">{fmt(item.price)}</span>
-                  <button 
-                    onClick={(e) => handleAddToCart(e, item)}
-                    className="bg-[#FB570B] hover:bg-[#E04B07] text-white text-[9px] font-black uppercase tracking-widest px-4 py-2.5 rounded-xl shadow active:scale-95 transition-all"
-                  >
-                    Quick Add
-                  </button>
-                </div>
-              </div>
+                <span className="text-lg">{cat.icon}</span>
+                <span className="text-xs font-black uppercase tracking-wider text-[#222]">{cat.label}</span>
+              </button>
             ))}
           </div>
-        </div>
-      )}
+        </section>
 
-      {/* LAST ACTIVE ORDER PANEL */}
-      {lastOrder && (
-        <div className="max-w-7xl mx-auto mt-6 px-4">
-          <div 
-            onClick={() => navigate(`/tracking/${lastOrder.id}`)}
-            className="bg-white border border-[#EDEDED] hover:border-gray-300 rounded-3xl p-4 flex items-center justify-between cursor-pointer shadow-sm text-left transition-all"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 bg-[#FB570B]/5 border border-[#FB570B]/10 rounded-xl flex items-center justify-center flex-shrink-0">
-                <ShoppingBag className="w-4.5 h-4.5 text-[#FB570B]" />
-              </div>
-              <div>
-                <h4 className="text-xs font-black uppercase text-[#222] leading-none">Order Tracking</h4>
-                <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mt-1.5">
-                  ID: #{lastOrder.id} • Status: <span className="text-[#FB570B] font-extrabold uppercase">{lastOrder.status}</span>
-                </p>
+        {/* DYNAMIC AI RECOMMENDATIONS */}
+        {recommendedItems.length > 0 && (
+          <section>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-1.5 text-left">
+                <Sparkles className="w-4.5 h-4.5 text-[#FB570B] animate-pulse" />
+                <h2 className="text-xs font-black uppercase tracking-widest text-gray-400">Smart AI Recommendations</h2>
               </div>
             </div>
-            <ChevronRight className="w-4 h-4 text-gray-400" />
-          </div>
-        </div>
-      )}
 
-      {/* 4. EXACT RESPONSIVE TEMU/CJ GADGETS GRID (5 COLUMNS ON DESKTOP, 2 COLUMNS ON MOBILE) */}
-      <main className="max-w-7xl mx-auto mt-6 px-4">
-        <div className="text-left mb-4">
-          <h2 className="text-lg md:text-xl font-black uppercase tracking-tight text-[#222]">Similar Items</h2>
-          <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-0.5">High-Quality premium electronic gadgets</p>
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3.5">
-          {menuItems.map((item, idx) => {
-            const reviewsCount = ((Number(item.id) * 31) % 1200) + 45;
-            const originalPrice = item.price * 1.45;
-            const pctOff = Math.round((1 - (item.price / originalPrice)) * 100);
-
-            return (
-              <div 
-                key={item.id} 
-                onClick={() => navigate(`/item/${item.id}`)}
-                className="bg-white rounded-2xl overflow-hidden border border-[#EDEDED] flex flex-col justify-between hover:shadow-md transition-shadow relative cursor-pointer text-left pb-3"
-              >
-                {/* Product image block */}
-                <div>
-                  <div className="relative w-full aspect-square bg-[#FAFAFA] flex items-center justify-center border-b border-[#F5F5F5] overflow-hidden">
+            <div className="flex gap-4.5 overflow-x-auto pb-3 scrollbar-none">
+              {recommendedItems.map(item => (
+                <div 
+                  key={item.id} 
+                  onClick={() => navigate(`/item/${item.id}`)}
+                  className="bg-white border border-[#EDEDED] hover:border-gray-300 rounded-3xl p-4 w-72 flex-shrink-0 cursor-pointer shadow-sm text-left transition-all relative overflow-hidden"
+                >
+                  <div className="flex gap-3">
                     {item.image ? (
-                      <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                      <img src={item.image} alt={item.name} className="w-16 h-16 rounded-2xl object-cover border border-gray-100 flex-shrink-0" />
                     ) : (
-                      <div className="text-4xl">💻</div>
+                      <div className="w-16 h-16 bg-[#F5F5F5] border border-[#EDEDED] rounded-2xl flex items-center justify-center text-xl flex-shrink-0">💻</div>
                     )}
-                    
-                    {/* Small tag capsule */}
-                    <div className="absolute top-2 left-2 bg-[#FB570B] text-white text-[7px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider">
-                      TRENDING
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-xs font-black uppercase text-[#222] truncate leading-tight">{item.name}</h4>
+                      <p className="text-[9px] text-[#FB570B] font-extrabold uppercase mt-1 flex items-center gap-1">
+                        <Sparkles className="w-3 h-3" /> Selected for you
+                      </p>
+                      <p className="text-[10px] text-gray-400 line-clamp-2 mt-1 leading-normal font-semibold">{item.reason}</p>
                     </div>
                   </div>
 
-                  <div className="px-3 pt-2.5">
-                    {/* Title */}
-                    <h3 className="text-[11px] font-semibold text-[#222] leading-tight line-clamp-2 h-7.5 hover:text-[#FB570B] transition-colors">
-                      {item.name}
-                    </h3>
-
-                    {/* Sales description line */}
-                    <p className="text-[9px] text-[#A3A3A3] font-bold uppercase mt-1 leading-none">
-                      {reviewsCount * 7}+ sold
-                    </p>
-
-                    {/* Star Rating below */}
-                    <div className="flex items-center gap-0.5 mt-1">
-                      {[...Array(5)].map((_, starIdx) => (
-                        <Star key={starIdx} className="w-2.5 h-2.5 fill-[#FF9E0D] text-[#FF9E0D]" />
-                      ))}
-                      <span className="text-[9px] text-[#737373] font-bold ml-1">
-                        {reviewsCount.toLocaleString()}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Price block */}
-                <div className="px-3 mt-3">
-                  <div className="flex items-center justify-between gap-1.5">
-                    <div className="flex items-baseline gap-1.5 flex-wrap min-w-0">
-                      <span className="text-xs md:text-sm font-black text-[#FB570B] truncate">
-                        {fmt(item.price)}
-                      </span>
-                      <span className="text-[9px] text-[#A3A3A3] line-through font-bold truncate">
-                        {fmt(originalPrice)}
-                      </span>
-                    </div>
-
-                    {/* Circular Add-To-Cart trigger like the screenshot */}
+                  <div className="border-t border-[#EDEDED] mt-3.5 pt-3.5 flex items-center justify-between">
+                    <span className="text-xs font-black text-[#FB570B]">{fmt(item.price)}</span>
                     <button 
                       onClick={(e) => handleAddToCart(e, item)}
-                      className="w-7 h-7 rounded-full border border-[#D9D9D9] hover:border-[#FB570B] bg-white flex items-center justify-center text-gray-700 hover:text-[#FB570B] transition-all flex-shrink-0 hover:bg-[#FB570B]/5 active:scale-95"
+                      className="bg-[#FB570B] hover:bg-[#E04B07] text-white text-[9px] font-black uppercase tracking-widest px-4 py-2.5 rounded-xl shadow active:scale-95 transition-all"
                     >
-                      <Plus className="w-3.5 h-3.5 font-bold" />
+                      Quick Add
                     </button>
                   </div>
-
-                  {/* Percentage OFF badge */}
-                  <div className="mt-2.5 flex items-center gap-1.5">
-                    <span className="text-[9px] font-black text-[#FB570B] bg-[#FFF2EB] px-1.5 py-0.5 rounded">
-                      {pctOff}% OFF
-                    </span>
-                    <span className="text-[8px] text-emerald-600 font-extrabold uppercase bg-emerald-50 px-1 py-0.5 rounded leading-none">
-                      Free shipping
-                    </span>
-                  </div>
                 </div>
+              ))}
+            </div>
+          </section>
+        )}
 
+        {/* LAST ACTIVE ORDER PANEL */}
+        {lastOrder && (
+          <section>
+            <div 
+              onClick={() => navigate(`/tracking/${lastOrder.id}`)}
+              className="bg-white border border-[#EDEDED] hover:border-gray-300 rounded-3xl p-4 flex items-center justify-between cursor-pointer shadow-sm text-left transition-all"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 bg-[#FB570B]/5 border border-[#FB570B]/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <ShoppingBag className="w-4.5 h-4.5 text-[#FB570B]" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-black uppercase text-[#222] leading-none">Order Tracking</h4>
+                  <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mt-1.5">
+                    ID: #{lastOrder.id} • Status: <span className="text-[#FB570B] font-extrabold uppercase">{lastOrder.status}</span>
+                  </p>
+                </div>
               </div>
-            );
-          })}
-        </div>
+              <ChevronRight className="w-4 h-4 text-gray-400" />
+            </div>
+          </section>
+        )}
+
+        {/* 4. EXACT RESPONSIVE TEMU/CJ GADGETS GRID (5 COLUMNS ON DESKTOP, 2 COLUMNS ON MOBILE) */}
+        <section>
+          <div className="text-left mb-4">
+            <h2 className="text-lg md:text-xl font-black uppercase tracking-tight text-[#222]">Similar Items</h2>
+            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-0.5">High-Quality premium electronic gadgets</p>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3.5">
+            {menuItems.map((item, idx) => {
+              const reviewsCount = ((Number(item.id) * 31) % 1200) + 45;
+              const originalPrice = item.price * 1.45;
+              const pctOff = Math.round((1 - (item.price / originalPrice)) * 100);
+
+              return (
+                <div 
+                  key={item.id} 
+                  onClick={() => navigate(`/item/${item.id}`)}
+                  className="bg-white rounded-2xl overflow-hidden border border-[#EDEDED] flex flex-col justify-between hover:shadow-md transition-shadow relative cursor-pointer text-left pb-3"
+                >
+                  {/* Product image block */}
+                  <div>
+                    <div className="relative w-full aspect-square bg-[#FAFAFA] flex items-center justify-center border-b border-[#F5F5F5] overflow-hidden">
+                      {item.image ? (
+                        <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="text-4xl">💻</div>
+                      )}
+                      
+                      {/* Small tag capsule */}
+                      <div className="absolute top-2 left-2 bg-[#FB570B] text-white text-[7px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider">
+                        TRENDING
+                      </div>
+                    </div>
+
+                    <div className="px-3 pt-2.5">
+                      {/* Title */}
+                      <h3 className="text-[11px] font-semibold text-[#222] leading-tight line-clamp-2 h-7.5 hover:text-[#FB570B] transition-colors">
+                        {item.name}
+                      </h3>
+
+                      {/* Sales description line */}
+                      <p className="text-[9px] text-[#A3A3A3] font-bold uppercase mt-1 leading-none">
+                        {reviewsCount * 7}+ sold
+                      </p>
+
+                      {/* Star Rating below */}
+                      <div className="flex items-center gap-0.5 mt-1">
+                        {[...Array(5)].map((_, starIdx) => (
+                          <Star key={starIdx} className="w-2.5 h-2.5 fill-[#FF9E0D] text-[#FF9E0D]" />
+                        ))}
+                        <span className="text-[9px] text-[#737373] font-bold ml-1">
+                          {reviewsCount.toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Price block */}
+                  <div className="px-3 mt-3">
+                    <div className="flex items-center justify-between gap-1.5">
+                      <div className="flex items-baseline gap-1.5 flex-wrap min-w-0">
+                        <span className="text-xs md:text-sm font-black text-[#FB570B] truncate">
+                          {fmt(item.price)}
+                        </span>
+                        <span className="text-[9px] text-[#A3A3A3] line-through font-bold truncate">
+                          {fmt(originalPrice)}
+                        </span>
+                      </div>
+
+                      {/* Circular Add-To-Cart trigger like the screenshot */}
+                      <button 
+                        onClick={(e) => handleAddToCart(e, item)}
+                        className="w-7 h-7 rounded-full border border-[#D9D9D9] hover:border-[#FB570B] bg-white flex items-center justify-center text-gray-700 hover:text-[#FB570B] transition-all flex-shrink-0 hover:bg-[#FB570B]/5 active:scale-95"
+                      >
+                        <Plus className="w-3.5 h-3.5 font-bold" />
+                      </button>
+                    </div>
+
+                    {/* Percentage OFF badge */}
+                    <div className="mt-2.5 flex items-center gap-1.5">
+                      <span className="text-[9px] font-black text-[#FB570B] bg-[#FFF2EB] px-1.5 py-0.5 rounded">
+                        {pctOff}% OFF
+                      </span>
+                      <span className="text-[8px] text-emerald-600 font-extrabold uppercase bg-emerald-50 px-1 py-0.5 rounded leading-none">
+                        Free shipping
+                      </span>
+                    </div>
+                  </div>
+
+                </div>
+              );
+            })}
+          </div>
+        </section>
       </main>
 
       {/* Floating AI Helper Agent Trigger */}

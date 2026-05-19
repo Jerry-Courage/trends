@@ -60,11 +60,16 @@ router.get("/products/search", auth, requireRole("admin"), async (req, res) => {
     return res.status(503).json({ error: "CJ Dropshipping API key not configured. Add CJ_API_KEY to your environment variables." });
   }
 
-  const { q, page = "1", pageSize = "20" } = req.query as Record<string, string>;
-  if (!q) return res.status(400).json({ error: "q (search query) is required" });
+  const { q, categoryId, page = "1", pageSize = "20" } = req.query as Record<string, string>;
+  if (!q && !categoryId) return res.status(400).json({ error: "Either q (search query) or categoryId is required" });
 
   try {
-    const result = await searchCJProducts(q, Number(page), Number(pageSize));
+    let result;
+    if (categoryId) {
+      result = await getCJProductsByCategory(categoryId, Number(page), Number(pageSize));
+    } else {
+      result = await searchCJProducts(q, Number(page), Number(pageSize));
+    }
     res.json(result);
   } catch (err: any) {
     console.error("CJ product search error:", err);
@@ -115,18 +120,33 @@ router.post("/products/import", auth, requireRole("admin"), async (req, res) => 
       }
     }
 
-    const item = await storage.createMenuItem({
-      name,
-      description: description || `${name} — sourced via CJ Dropshipping`,
-      price: sellPrice,
-      imageUrl: imageUrl || null,
-      category,
-      cjPid: pid,
-      cjVid: resolvedVid,
-      cjCost: costPrice.toFixed(2),
-      isAvailable: 1,
-      isTop: 0,
-    });
+    const existing = await db.select().from(menuItems).where(eq(menuItems.cjPid, pid));
+    let item;
+    if (existing.length > 0) {
+      item = await storage.updateMenuItem(existing[0].id, {
+        name,
+        description: description || `${name} — sourced via CJ Dropshipping`,
+        price: sellPrice,
+        imageUrl: imageUrl || null,
+        category,
+        cjVid: resolvedVid,
+        cjCost: costPrice.toFixed(2),
+        isAvailable: 1,
+      });
+    } else {
+      item = await storage.createMenuItem({
+        name,
+        description: description || `${name} — sourced via CJ Dropshipping`,
+        price: sellPrice,
+        imageUrl: imageUrl || null,
+        category,
+        cjPid: pid,
+        cjVid: resolvedVid,
+        cjCost: costPrice.toFixed(2),
+        isAvailable: 1,
+        isTop: 0,
+      });
+    }
 
     res.status(201).json(item);
   } catch (err: any) {
@@ -161,67 +181,81 @@ router.post("/products/bulk-import", auth, requireRole("admin"), async (req, res
   const maxLimit = Math.min(Number(limit), 200);
 
   try {
-    // Fetch products from CJ
-    let products: any[] = [];
-    if (categoryId) {
-      const result = await getCJProductsByCategory(categoryId, 1, maxLimit);
-      products = result.list;
-    } else {
-      // Fetch more than needed so we have enough after filtering
-      const result = await searchCJProducts(keyword, 1, maxLimit);
-      products = result.list;
-    }
-
-    if (products.length === 0) {
-      return res.json({ imported: 0, skipped: 0, message: "No products found" });
-    }
-
     let imported = 0;
     let skipped = 0;
     const errors: string[] = [];
+    let page = 1;
+    const pageSize = 50; // Fetch 50 at a time for efficiency
 
-    for (const product of products) {
-      try {
-        const costPrice = parseFloat(product.sellPrice || "0");
-        if (costPrice <= 0) { skipped++; continue; }
-
-        const sellPrice = (costPrice * (1 + Number(markup) / 100)).toFixed(2);
-
-        // Try to get variant ID
-        let vid: string | null = null;
-        try {
-          const detail = await getCJProductDetail(product.pid);
-          if (detail.variants?.length > 0) vid = detail.variants[0].vid;
-        } catch { /* skip vid if fetch fails */ }
-
-        await storage.createMenuItem({
-          name: product.productNameEn,
-          description: `${product.productNameEn} — ${product.categoryName || storeCategory}`,
-          price: sellPrice,
-          imageUrl: product.productImage || null,
-          category: storeCategory,
-          cjPid: product.pid,
-          cjVid: vid,
-          cjCost: costPrice.toFixed(2),
-          isAvailable: 1,
-          isTop: 0,
-        });
-        imported++;
-
-        // Small delay to avoid CJ rate limits
-        await new Promise(r => setTimeout(r, 100));
-      } catch (err: any) {
-        skipped++;
-        errors.push(`${product.productNameEn}: ${err.message}`);
+    while (imported < maxLimit) {
+      let products: any[] = [];
+      if (categoryId) {
+        const result = await getCJProductsByCategory(categoryId, page, pageSize);
+        products = result.list || [];
+      } else {
+        const result = await searchCJProducts(keyword, page, pageSize);
+        products = result.list || [];
       }
+
+      if (!products || products.length === 0) {
+        break; // No more products available from CJ
+      }
+
+      for (const product of products) {
+        if (imported >= maxLimit) break;
+
+        try {
+          const costPrice = parseFloat(product.sellPrice || "0");
+          if (costPrice <= 0) { skipped++; continue; }
+
+          // Check if already exists in DB
+          const existing = await db.select().from(menuItems).where(eq(menuItems.cjPid, product.pid));
+          if (existing.length > 0) {
+            skipped++;
+            continue; // Skip already imported items to avoid duplicates
+          }
+
+          const sellPrice = (costPrice * (1 + Number(markup) / 100)).toFixed(2);
+
+          // Try to get variant ID
+          let vid: string | null = null;
+          try {
+            const detail = await getCJProductDetail(product.pid);
+            if (detail.variants?.length > 0) vid = detail.variants[0].vid;
+          } catch { /* skip vid if fetch fails */ }
+
+          await storage.createMenuItem({
+            name: product.productNameEn,
+            description: `${product.productNameEn} — ${product.categoryName || storeCategory}`,
+            price: sellPrice,
+            imageUrl: product.productImage || null,
+            category: storeCategory,
+            cjPid: product.pid,
+            cjVid: vid,
+            cjCost: costPrice.toFixed(2),
+            isAvailable: 1,
+            isTop: 0,
+          });
+          imported++;
+
+          // Small delay to avoid CJ rate limits
+          await new Promise(r => setTimeout(r, 100));
+        } catch (err: any) {
+          skipped++;
+          errors.push(`${product.productNameEn}: ${err.message}`);
+        }
+      }
+
+      page++;
+      // Safety cap: don't request more than 10 pages
+      if (page > 10) break;
     }
 
     res.json({
       imported,
       skipped,
-      total: products.length,
-      message: `Imported ${imported} products${skipped > 0 ? `, skipped ${skipped}` : ""}`,
-      errors: errors.slice(0, 5), // only first 5 errors
+      message: `Imported ${imported} new products${skipped > 0 ? `, skipped ${skipped} duplicate/invalid products` : ""}`,
+      errors: errors.slice(0, 5),
     });
   } catch (err: any) {
     console.error("Bulk import error:", err);
