@@ -150,6 +150,40 @@ export async function runBotImport(limitPerCategory = 100, markup = 30) {
                 // Check if already exists in DB
                 const existing = await db.select().from(menuItems).where(eq(menuItems.cjPid, product.pid));
                 if (existing.length > 0) {
+                  // Backfill gallery/video if missing from previous imports
+                  if (!existing[0].galleryImages && !existing[0].videoUrl) {
+                    try {
+                      const detail = await getCJProductDetail(product.pid);
+                      let vid = existing[0].cjVid;
+                      if (detail.variants?.length > 0 && !vid) {
+                        vid = detail.variants[0].vid;
+                      }
+                      let galleryImages: string | null = null;
+                      if (detail.productImageSet && detail.productImageSet.length > 0) {
+                        galleryImages = JSON.stringify(detail.productImageSet);
+                      }
+                      let videoUrl: string | null = null;
+                      let rawVideo: any = (detail as any).productVideo;
+                      if (rawVideo) {
+                        if (Array.isArray(rawVideo) && rawVideo.length > 0) {
+                          videoUrl = rawVideo[0];
+                        } else if (typeof rawVideo === "string") {
+                          videoUrl = rawVideo;
+                        }
+                      }
+                      if (videoUrl && videoUrl.startsWith("//")) {
+                        videoUrl = "https:" + videoUrl;
+                      }
+                      await storage.updateMenuItem(existing[0].id, {
+                        galleryImages,
+                        videoUrl,
+                        cjVid: vid,
+                      });
+                      logMessage(`Backfilled gallery & video for existing item: ${product.productNameEn}`);
+                    } catch (e) {
+                      // ignore backfill errors
+                    }
+                  }
                   botState.skippedCount++;
                   continue; // Skip duplicates
                 }

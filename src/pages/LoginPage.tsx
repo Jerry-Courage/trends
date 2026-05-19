@@ -28,7 +28,7 @@ const LoginPage = () => {
 
   useSEO({
     title: "Sign In or Register",
-    description: "Access your Trends Electronics account to manage orders, track live shipments, or save your delivery preferences securely.",
+    description: "Access your Trends account to manage orders, track live shipments, or save your delivery preferences securely.",
     keywords: "secure login, user registration, Trends account, customer portal",
   });
 

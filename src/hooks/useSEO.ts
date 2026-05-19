@@ -10,7 +10,7 @@ interface SEOProps {
 export function useSEO({ title, description, keywords, ogImage }: SEOProps) {
   useEffect(() => {
     // 1. Update document title
-    const fullTitle = `${title} | Trends Electronics`;
+    const fullTitle = `${title} | Trends`;
     document.title = fullTitle;
 
     // Helper to get or create a meta tag
@@ -30,7 +30,7 @@ export function useSEO({ title, description, keywords, ogImage }: SEOProps) {
       updateMetaTag("name", "keywords", keywords);
     } else {
       // Default fallback keywords
-      updateMetaTag("name", "keywords", "trends store, trends ecommerce ghana, trends marketplace, online shopping accra, electronics store ghana, buy tech accra, Ghana online market, trends ghana, online shopping store, buy electronics online, global shipping shop, premium tech gadgets, cheap online electronics, buy laptops online, smartphone deals, dropship store, worldwide delivery store");
+      updateMetaTag("name", "keywords", "trends store, trends ecommerce ghana, trends marketplace, online shopping accra, Ghana online market, trends ghana, online shopping store, global shipping shop, dropship store, worldwide delivery store, fashion, beauty, home products, local courier");
     }
 
     // 3. Update OpenGraph tags

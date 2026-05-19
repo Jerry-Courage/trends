@@ -103,7 +103,7 @@ const ItemDetailPage = () => {
 
   useSEO({
     title: item.name,
-    description: `${item.description} - Buy ${item.name} for ${fmt(item.price)} on Trends Electronics.`,
+    description: `${item.description} - Buy ${item.name} for ${fmt(item.price)} on Trends.`,
     keywords: `${item.name}, ${item.category}, buy online, local courier, dropshipping store`,
     ogImage: item.image || undefined,
   });
@@ -122,7 +122,7 @@ const ItemDetailPage = () => {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: `Buy ${item.name} on Trends Electronics`,
+          title: `Buy ${item.name} on Trends`,
           text: `Check out this amazing ${item.name} I found!`,
           url: shareUrl,
         });

@@ -141,7 +141,7 @@ const MenuPage = () => {
 
   useSEO({
     title: activeCategory === "All" ? "All Products Catalog" : `${activeCategory} - Catalog`,
-    description: `Browse our extensive collection of ${activeCategory} products. Get free shipping and best deals on Trends Electronics.`,
+    description: `Browse our extensive collection of ${activeCategory} products. Get free shipping and best deals on Trends.`,
     keywords: `${activeCategory}, online shopping, product catalog, dropship collection, Trends`,
   });
 
@@ -197,7 +197,7 @@ const MenuPage = () => {
 
   return (
     <div className="pb-28 bg-[#F7F7F7] text-[#222222] min-h-screen text-left font-sans">
-      <h1 className="sr-only">Trends Electronics Catalog - Browse Sourced and Dropshipped Products</h1>
+      <h1 className="sr-only">Trends Catalog - Browse Sourced and Dropshipped Products</h1>
       
       {/* DESKTOP VIEW PROMOTION BLACK TOP BAR */}
       <div className="hidden md:block bg-black text-white text-[11px] font-semibold py-2 px-6">

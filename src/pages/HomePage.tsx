@@ -70,9 +70,9 @@ const HomePage = () => {
   const [searchQuery, setSearchQuery] = useState("");
 
   useSEO({
-    title: "Trends Store | Premium Electronics & Online Shopping Ghana",
-    description: "Welcome to Trends Store, the leading e-commerce marketplace in Ghana. Buy premium electronics, laptops, phones, and more with fast delivery in Accra and nationwide.",
-    keywords: "trends store, trends ecommerce ghana, trends marketplace, online shopping accra, electronics store ghana, buy tech accra, Ghana online market, trends ghana, online shopping store, buy electronics online, global shipping shop, premium tech gadgets, cheap online electronics, buy laptops online, smartphone deals, dropship store, worldwide delivery store",
+    title: "Trends Store | Global Sourced Goods & Online Shopping Ghana",
+    description: "Welcome to Trends Store, the leading general e-commerce marketplace in Ghana. Shop best-selling items across fashion, home, electronics, and beauty with fast local delivery.",
+    keywords: "trends store, trends ecommerce ghana, trends marketplace, online shopping accra, Ghana online market, trends ghana, online shopping store, global shipping shop, dropship store, worldwide delivery store, fashion, beauty, home products, local courier",
   });
 
   // Animated Search Placeholder index
@@ -404,7 +404,7 @@ function normalizeCategory(category: string): string {
 
 
       <main className="max-w-7xl mx-auto mt-6 px-4 space-y-6">
-        <h1 className="sr-only">Trends Electronics - Hot Local Courier Food Delivery & High-Quality Dropshipped Goods</h1>
+        <h1 className="sr-only">Trends - High-Quality Dropshipped Goods & Local Courier Delivery</h1>
 
         {/* CATEGORY NAV STRIP */}
         <section>

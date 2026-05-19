@@ -37,7 +37,7 @@ const SearchPage = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: "assistant",
-      content: "Hi! I'm Trends' smart assistant. Ask me anything — high-performance laptops, the latest phones, or premium audio — and I'll find the perfect products for you.",
+      content: "Hi! I'm Trends' smart assistant. Ask me anything — high-performance laptops, summer fashion, or home decor — and I'll find the perfect products for you.",
     },
   ]);
   const [loading, setLoading] = useState(false);
@@ -45,8 +45,8 @@ const SearchPage = () => {
 
   useSEO({
     title: "AI Smart Assistant Search",
-    description: "Search products in Trends Electronics store using our smart AI shopping assistant. Find best deals, specs, and details instantly.",
-    keywords: "AI search, product finder, smart assistant, electronic gadget search, dropshipping assistant",
+    description: "Search products in Trends store using our smart AI shopping assistant. Find best deals, specs, and details instantly.",
+    keywords: "AI search, product finder, smart assistant, online store deals, dropshipping assistant",
   });
 
   useEffect(() => {

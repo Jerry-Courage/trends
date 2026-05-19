@@ -34,7 +34,7 @@ const HelpPage = () => {
 
   useSEO({
     title: "Help & Support Center",
-    description: "Find support and get answers to frequently asked questions about delivery, orders, and payments at Trends Electronics.",
+    description: "Find support and get answers to frequently asked questions about delivery, orders, and payments at Trends.",
     keywords: "help center, customer support, delivery help, order questions, refund support",
   });
 
