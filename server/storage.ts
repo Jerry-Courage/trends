@@ -145,7 +145,7 @@ export class Storage implements IStorage {
     return db.select().from(menuItems).where(eq(menuItems.isAvailable, 1)).orderBy(desc(menuItems.createdAt));
   }
 
-  async getPaginatedMenuItems(page: number, limit: number, category?: string, search?: string): Promise<{ items: MenuItem[], total: number }> {
+  async getPaginatedMenuItems(page: number, limit: number, category?: string, search?: string, localOnly?: boolean): Promise<{ items: MenuItem[], total: number }> {
     const offset = (page - 1) * limit;
     
     const conditions = [eq(menuItems.isAvailable, 1)];
@@ -160,6 +160,9 @@ export class Storage implements IStorage {
           like(menuItems.description, s)
         )
       );
+    }
+    if (localOnly) {
+      conditions.push(like(menuItems.tags, '%"available_in_ghana"%'));
     }
     
     const whereClause = and(...conditions);

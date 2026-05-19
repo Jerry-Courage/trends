@@ -210,9 +210,10 @@ router.get("/menu", async (req, res) => {
   const page = req.query.page ? parseInt(req.query.page as string) : undefined;
   const cat = req.query.cat as string | undefined;
   const search = req.query.q as string | undefined;
+  const localOnly = req.query.localOnly === "true";
 
   if (page && limit) {
-    const result = await storage.getPaginatedMenuItems(page, limit, cat, search);
+    const result = await storage.getPaginatedMenuItems(page, limit, cat, search, localOnly);
     return res.json(result);
   }
 

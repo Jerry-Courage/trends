@@ -138,6 +138,7 @@ const MenuPage = () => {
   const { fmt } = useCurrency();
   const { toast } = useToast();
   const [activeCategory, setActiveCategory] = useState(initialCat);
+  const [localOnly, setLocalOnly] = useState(false);
   const [visibleCount, setVisibleCount] = useState(40);
 
   useSEO({
@@ -147,11 +148,12 @@ const MenuPage = () => {
   });
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useInfiniteQuery({
-    queryKey: ["/api/menu", activeCategory, searchQuery],
+    queryKey: ["/api/menu", activeCategory, searchQuery, localOnly],
     queryFn: async ({ pageParam = 1 }) => {
       let url = `/menu?page=${pageParam}&limit=40`;
       if (activeCategory !== "All") url += `&cat=${encodeURIComponent(activeCategory)}`;
       if (searchQuery) url += `&q=${encodeURIComponent(searchQuery)}`;
+      if (localOnly) url += `&localOnly=true`;
       return api.get<{ items: DBMenuItem[], total: number }>(url);
     },
     getNextPageParam: (lastPage, allPages) => {
@@ -315,7 +317,18 @@ const MenuPage = () => {
       </div>
 
       {/* Pill Category Scroller */}
-      <div className="max-w-7xl mx-auto px-4 py-4 flex gap-2 overflow-x-auto scrollbar-none">
+      <div className="max-w-7xl mx-auto px-4 py-4 flex gap-2 overflow-x-auto scrollbar-none items-center">
+        <button
+          onClick={() => setLocalOnly(!localOnly)}
+          className={`px-5 py-2 rounded-full text-xs font-black uppercase tracking-wider transition-all border flex-shrink-0 flex items-center gap-1.5 ${
+            localOnly
+              ? "bg-emerald-500 text-white border-emerald-500 shadow-md shadow-emerald-500/20"
+              : "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
+          }`}
+        >
+          <span className="text-[14px]">🇬🇭</span> Local Stock Only
+        </button>
+        <div className="w-px h-6 bg-gray-200 mx-1 flex-shrink-0"></div>
         {categories.map(cat => (
           <button
             key={cat}
@@ -366,6 +379,11 @@ const MenuPage = () => {
                         <img src={item.image} alt={item.name} loading="lazy" decoding="async" className="w-full h-full object-cover" />
                       ) : (
                         <div className="text-4xl">🛍️</div>
+                      )}
+                      {item.tags?.includes("available_in_ghana") && (
+                        <div className="absolute top-2 left-2 bg-emerald-500 text-white text-[9px] font-black uppercase px-2 py-1 rounded-full flex items-center gap-1 shadow-md z-10 border border-emerald-400">
+                          <span className="text-[10px]">🇬🇭</span> Local
+                        </div>
                       )}
                     </div>
 

@@ -525,10 +525,18 @@ function normalizeCategory(category: string): string {
                         <div className="text-4xl">💻</div>
                       )}
                       
+                      {item.tags?.includes("available_in_ghana") && (
+                        <div className="absolute top-2 left-2 bg-emerald-500 text-white text-[9px] font-black uppercase px-2 py-1 rounded-full flex items-center gap-1 shadow-md z-10 border border-emerald-400">
+                          <span className="text-[10px]">🇬🇭</span> Local
+                        </div>
+                      )}
+                      
                       {/* Small tag capsule */}
-                      <div className="absolute top-2 left-2 bg-[#FB570B] text-white text-[7px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider">
-                        TRENDING
-                      </div>
+                      {!item.tags?.includes("available_in_ghana") && (
+                        <div className="absolute top-2 left-2 bg-[#FB570B] text-white text-[7px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider">
+                          TRENDING
+                        </div>
+                      )}
                     </div>
 
                     <div className="px-3 pt-2.5">
@@ -589,6 +597,15 @@ function normalizeCategory(category: string): string {
                 </div>
               );
             })}
+          </div>
+
+          <div className="flex justify-center mt-8 pb-4">
+            <button
+              onClick={() => navigate("/menu")}
+              className="px-10 py-3.5 bg-white border-2 border-[#EDEDED] text-[#222] text-sm font-black uppercase tracking-widest rounded-full hover:border-[#FB570B] hover:text-[#FB570B] active:scale-95 transition-all shadow-sm flex items-center gap-2 group"
+            >
+              Explore Full Catalog <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </button>
           </div>
         </section>
       </main>

@@ -101,15 +101,17 @@ type ProductForm = {
   category: string;
   imageUrl: string;
   isAvailable: boolean;
+  isLocal: boolean;
 };
 
 const EMPTY_PRODUCT_FORM: ProductForm = {
   name: "",
   description: "",
   price: "",
-  category: "Laptops",
+  category: "Electronics",
   imageUrl: "",
   isAvailable: true,
+  isLocal: false,
 };
 
 const CATEGORIES = ["Electronics", "Fashion & Apparel", "Home & Kitchen", "Beauty & Care", "Sports & Outdoors", "Toys & Hobbies", "Accessories"];
@@ -269,14 +271,28 @@ function ProductModal({
             </div>
           </div>
 
-          <div className="flex items-center gap-3 pt-2">
-            <button
-              onClick={() => onChange({ ...form, isAvailable: !form.isAvailable })}
-              className={`w-10 h-6 rounded-full transition-colors flex items-center ${form.isAvailable ? "bg-primary justify-end" : "bg-slate-700 justify-start"}`}
-            >
-              <div className="w-5 h-5 bg-white rounded-full mx-0.5 shadow" />
-            </button>
-            <span className="text-sm text-foreground font-bold">{form.isAvailable ? "Available in store" : "Hidden from store"}</span>
+          <div className="flex flex-col gap-4 pt-2">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => onChange({ ...form, isAvailable: !form.isAvailable })}
+                className={`w-10 h-6 rounded-full transition-colors flex items-center ${form.isAvailable ? "bg-primary justify-end" : "bg-slate-700 justify-start"}`}
+              >
+                <div className="w-5 h-5 bg-white rounded-full mx-0.5 shadow" />
+              </button>
+              <span className="text-sm text-foreground font-bold">{form.isAvailable ? "Available in store" : "Hidden from store"}</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => onChange({ ...form, isLocal: !form.isLocal })}
+                className={`w-10 h-6 rounded-full transition-colors flex items-center ${form.isLocal ? "bg-emerald-500 justify-end" : "bg-slate-700 justify-start"}`}
+              >
+                <div className="w-5 h-5 bg-white rounded-full mx-0.5 shadow" />
+              </button>
+              <div>
+                <span className="text-sm text-foreground font-bold">{form.isLocal ? "Available locally in Ghana 🇬🇭" : "Global Inventory (Dropship)"}</span>
+                <p className="text-[10px] text-muted-foreground">Tags the item for fast local delivery</p>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -616,7 +632,7 @@ export default function AdminDashboard() {
   });
 
   const createProductMutation = useMutation({
-    mutationFn: (data: Omit<ProductForm, "isAvailable"> & { isAvailable: number }) =>
+    mutationFn: (data: Omit<ProductForm, "isAvailable" | "isLocal"> & { isAvailable: number, tags?: string }) =>
       api.post("/admin/menu-items", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "menu"] });
@@ -631,7 +647,7 @@ export default function AdminDashboard() {
   });
 
   const updateProductMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: Omit<ProductForm, "isAvailable"> & { isAvailable: number } }) =>
+    mutationFn: ({ id, data }: { id: number; data: Omit<ProductForm, "isAvailable" | "isLocal"> & { isAvailable: number, tags?: string } }) =>
       api.patch(`/admin/menu-items/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "menu"] });
@@ -649,7 +665,8 @@ export default function AdminDashboard() {
     setShowAddProduct(true);
   };
 
-  const openEditProduct = (item: MenuItem) => {
+  const openEditProduct = (item: any) => {
+    const tagsArray = item.tags ? JSON.parse(item.tags) : [];
     setProductForm({
       name: item.name,
       description: item.description,
@@ -657,17 +674,31 @@ export default function AdminDashboard() {
       category: item.category,
       imageUrl: item.imageUrl || "",
       isAvailable: item.isAvailable === 1,
+      isLocal: tagsArray.includes("available_in_ghana"),
     });
     setEditingItem(item);
   };
 
   const handleCreateProduct = () => {
-    createProductMutation.mutate({ ...productForm, isAvailable: productForm.isAvailable ? 1 : 0 });
+    const tags = productForm.isLocal ? JSON.stringify(["available_in_ghana"]) : "[]";
+    const { isLocal, ...rest } = productForm;
+    createProductMutation.mutate({ ...rest, isAvailable: productForm.isAvailable ? 1 : 0, tags });
   };
 
   const handleUpdateProduct = () => {
     if (!editingItem) return;
-    updateProductMutation.mutate({ id: editingItem.id, data: { ...productForm, isAvailable: productForm.isAvailable ? 1 : 0 } });
+    const tagsArray = editingItem.tags ? JSON.parse(editingItem.tags) : [];
+    const hasLocalTag = tagsArray.includes("available_in_ghana");
+    
+    let newTagsArray = [...tagsArray];
+    if (productForm.isLocal && !hasLocalTag) {
+      newTagsArray.push("available_in_ghana");
+    } else if (!productForm.isLocal && hasLocalTag) {
+      newTagsArray = newTagsArray.filter((t: string) => t !== "available_in_ghana");
+    }
+    const tags = JSON.stringify(newTagsArray);
+    const { isLocal, ...rest } = productForm;
+    updateProductMutation.mutate({ id: editingItem.id, data: { ...rest, isAvailable: productForm.isAvailable ? 1 : 0, tags } });
   };
 
   if (statsLoading || menuLoading) {

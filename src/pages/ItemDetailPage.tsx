@@ -285,9 +285,16 @@ const ItemDetailPage = () => {
         {/* Right: Product Details & Cart Action */}
         <section className="px-4 md:px-0 mt-6 md:mt-0">
           <div className="bg-white border border-[#EDEDED] rounded-3xl p-6 shadow-sm">
-            <span className="bg-[#FFF2EB] border border-[#FFDEC9] text-[#FB570B] text-[9px] font-black uppercase px-2.5 py-1 rounded-full tracking-widest">
-              {item.category}
-            </span>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="bg-[#FFF2EB] border border-[#FFDEC9] text-[#FB570B] text-[9px] font-black uppercase px-2.5 py-1 rounded-full tracking-widest">
+                {item.category}
+              </span>
+              {item.tags?.includes("available_in_ghana") && (
+                <span className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-[9px] font-black uppercase px-2.5 py-1 rounded-full tracking-widest flex items-center gap-1 shadow-sm">
+                  <span className="text-[10px]">🇬🇭</span> Fast Local Delivery
+                </span>
+              )}
+            </div>
             
             <h2 className="text-2xl font-black text-[#222] mt-4 tracking-tight leading-snug">{item.name}</h2>
             
