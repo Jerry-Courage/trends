@@ -8,8 +8,8 @@ const db = drizzle(sqlite, { schema });
 
 async function createStaffUsers() {
   const users = [
-    { email: "chef@mrwu.com", password: "mrwu-staff-2025", name: "Chef Wu", role: "kitchen" },
-    { email: "rider@mrwu.com", password: "mrwu-staff-2025", name: "Rider Wu", role: "rider" }
+    { email: "chef@trends.ink", password: "trends-staff-2025", name: "Chef Trends", role: "kitchen" },
+    { email: "rider@trends.ink", password: "trends-staff-2025", name: "Rider Trends", role: "rider" }
   ];
 
   for (const u of users) {

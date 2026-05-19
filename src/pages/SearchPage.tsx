@@ -37,7 +37,7 @@ const SearchPage = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: "assistant",
-      content: "Hi! I'm Mr. Wu's smart assistant. Ask me anything — high-performance laptops, the latest phones, or premium audio — and I'll find the perfect products for you.",
+      content: "Hi! I'm Trends' smart assistant. Ask me anything — high-performance laptops, the latest phones, or premium audio — and I'll find the perfect products for you.",
     },
   ]);
   const [loading, setLoading] = useState(false);
@@ -45,7 +45,7 @@ const SearchPage = () => {
 
   useSEO({
     title: "AI Smart Assistant Search",
-    description: "Search products in Mr. Wu Delivery & Dropshipping store using our smart AI shopping assistant. Find best deals, specs, and details instantly.",
+    description: "Search products in Trends Electronics store using our smart AI shopping assistant. Find best deals, specs, and details instantly.",
     keywords: "AI search, product finder, smart assistant, electronic gadget search, dropshipping assistant",
   });
 
@@ -187,7 +187,7 @@ const SearchPage = () => {
             value={query}
             onChange={e => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Ask Mr. Wu anything..."
+            placeholder="Ask Trends anything..."
             className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none"
             disabled={loading}
           />

@@ -140,8 +140,8 @@ const MenuPage = () => {
 
   useSEO({
     title: activeCategory === "All" ? "All Products Catalog" : `${activeCategory} - Catalog`,
-    description: `Browse our extensive collection of ${activeCategory} products. Get free shipping and best deals on Mr. Wu Delivery & Dropshipping.`,
-    keywords: `${activeCategory}, online shopping, product catalog, dropship collection, Mr. Wu`,
+    description: `Browse our extensive collection of ${activeCategory} products. Get free shipping and best deals on Trends Electronics.`,
+    keywords: `${activeCategory}, online shopping, product catalog, dropship collection, Trends`,
   });
 
   const { data: dbItems = [], isLoading } = useQuery<DBMenuItem[]>({
@@ -187,7 +187,7 @@ const MenuPage = () => {
 
   return (
     <div className="pb-28 bg-[#F7F7F7] text-[#222222] min-h-screen text-left font-sans">
-      <h1 className="sr-only">Mr. Wu Delivery Catalog - Browse Sourced and Dropshipped Products</h1>
+      <h1 className="sr-only">Trends Electronics Catalog - Browse Sourced and Dropshipped Products</h1>
       
       {/* DESKTOP VIEW PROMOTION BLACK TOP BAR */}
       <div className="hidden md:block bg-black text-white text-[11px] font-semibold py-2 px-6">
@@ -204,7 +204,7 @@ const MenuPage = () => {
           </div>
           <div className="flex items-center gap-1.5 text-gray-300">
             <span>📱</span>
-            <span className="font-bold hover:underline cursor-pointer">Get the Mr. Wu App</span>
+            <span className="font-bold hover:underline cursor-pointer">Get the Trends App</span>
           </div>
         </div>
       </div>
@@ -217,8 +217,8 @@ const MenuPage = () => {
               <ChevronLeft className="w-6 h-6" />
             </button>
             <div onClick={() => navigate("/")} className="flex items-center gap-2.5 cursor-pointer">
-              <img src={logo} alt="Mr. Wu Logo" className="h-10 object-contain rounded-xl" />
-              <span className="text-xl font-black tracking-tight text-[#FB570B] uppercase italic">Mr. Wu</span>
+              <img src={logo} alt="Trends Logo" className="h-10 object-contain rounded-xl" />
+              <span className="text-xl font-black tracking-tight text-[#FB570B] uppercase italic">Trends</span>
             </div>
             
             <div className="flex items-center gap-4 text-xs font-bold text-[#222] ml-2">
@@ -252,9 +252,9 @@ const MenuPage = () => {
         </button>
         <div onClick={() => navigate("/")} className="flex items-center gap-2.5 cursor-pointer">
           <div className="w-8 h-8 rounded-lg bg-black flex items-center justify-center overflow-hidden flex-shrink-0 border border-[#F0F0F0]">
-            <img src={logo} alt="Mr. Wu Logo" className="w-full h-full object-contain scale-110" />
+            <img src={logo} alt="Trends Logo" className="w-full h-full object-contain scale-110" />
           </div>
-          <span className="text-base font-black tracking-tight text-[#FB570B] uppercase italic">Mr. Wu</span>
+          <span className="text-base font-black tracking-tight text-[#FB570B] uppercase italic">Trends</span>
         </div>
         <div className="flex items-center gap-3">
           <button onClick={() => navigate("/profile")} className="text-gray-700 hover:text-[#FB570B] p-1">

@@ -71,8 +71,8 @@ const HomePage = () => {
 
   useSEO({
     title: "Best Local & Sourced Delivery",
-    description: "Get the fastest delivery on hot meals, electronics, apparel, and dropshipped products near you. Browse, search, and order on Mr. Wu Delivery & Dropshipping.",
-    keywords: "food delivery, electronics dropshipping, local delivery, Mr. Wu dropshipping, online shopping",
+    description: "Get the fastest delivery on hot meals, electronics, apparel, and dropshipped products near you. Browse, search, and order on Trends Electronics.",
+    keywords: "food delivery, electronics dropshipping, local delivery, Trends dropshipping, online shopping",
   });
 
   // Animated Search Placeholder index
@@ -404,7 +404,7 @@ function normalizeCategory(category: string): string {
 
 
       <main className="max-w-7xl mx-auto mt-6 px-4 space-y-6">
-        <h1 className="sr-only">Mr. Wu Delivery & Dropshipping - Hot Local Courier Food Delivery & High-Quality Dropshipped Goods</h1>
+        <h1 className="sr-only">Trends Electronics - Hot Local Courier Food Delivery & High-Quality Dropshipped Goods</h1>
 
         {/* CATEGORY NAV STRIP */}
         <section>

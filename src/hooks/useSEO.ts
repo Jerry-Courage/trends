@@ -10,7 +10,7 @@ interface SEOProps {
 export function useSEO({ title, description, keywords, ogImage }: SEOProps) {
   useEffect(() => {
     // 1. Update document title
-    const fullTitle = `${title} | Mr. Wu Delivery & Dropshipping`;
+    const fullTitle = `${title} | Trends Electronics`;
     document.title = fullTitle;
 
     // Helper to get or create a meta tag

@@ -93,7 +93,7 @@ const ItemDetailPage = () => {
 
   useSEO({
     title: item.name,
-    description: `${item.description} - Buy ${item.name} for ${fmt(item.price)} on Mr. Wu Delivery & Dropshipping.`,
+    description: `${item.description} - Buy ${item.name} for ${fmt(item.price)} on Trends Electronics.`,
     keywords: `${item.name}, ${item.category}, buy online, local courier, dropshipping store`,
     ogImage: item.image || undefined,
   });
@@ -112,7 +112,7 @@ const ItemDetailPage = () => {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: `Buy ${item.name} on Mr. Wu Delivery`,
+          title: `Buy ${item.name} on Trends Electronics`,
           text: `Check out this amazing ${item.name} I found!`,
           url: shareUrl,
         });
