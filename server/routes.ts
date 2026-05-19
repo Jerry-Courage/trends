@@ -205,9 +205,12 @@ router.patch("/auth/profile", auth, async (req: AuthRequest, res) => {
 
 // ─── Menu ────────────────────────────────────────────────────────────────────
 
-router.get("/menu", async (_req, res) => {
+router.get("/menu", async (req, res) => {
   const items = await storage.getMenuItems();
-  res.json(items);
+  // Support optional category filter on server to reduce payload
+  const cat = req.query.cat as string | undefined;
+  const filtered = cat ? items.filter(i => i.category === cat) : items;
+  res.json(filtered);
 });
 
 router.get("/menu/:id", async (req, res) => {

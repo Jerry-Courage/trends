@@ -138,6 +138,7 @@ const MenuPage = () => {
   const { fmt } = useCurrency();
   const { toast } = useToast();
   const [activeCategory, setActiveCategory] = useState(initialCat);
+  const [visibleCount, setVisibleCount] = useState(40);
 
   useSEO({
     title: activeCategory === "All" ? "All Products Catalog" : `${activeCategory} - Catalog`,
@@ -148,7 +149,7 @@ const MenuPage = () => {
   const { data: dbItems = [], isLoading } = useQuery<DBMenuItem[]>({
     queryKey: ["/api/menu"],
     queryFn: () => api.get("/menu"),
-    staleTime: 0,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
   const menuItems = dbItems.map(dbToCart);
@@ -163,6 +164,10 @@ const MenuPage = () => {
       item.category.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
   });
+
+  // Paginate: only render the first `visibleCount` items
+  const visibleItems = filtered.slice(0, visibleCount);
+  const hasMore = visibleCount < filtered.length;
 
   const handleAddToCart = (e: React.MouseEvent, item: CartMenuItem) => {
     e.stopPropagation();
@@ -310,7 +315,7 @@ const MenuPage = () => {
         {categories.map(cat => (
           <button
             key={cat}
-            onClick={() => setActiveCategory(cat)}
+            onClick={() => { setActiveCategory(cat); setVisibleCount(40); }}
             className={`px-5 py-2 rounded-full text-xs font-black uppercase tracking-wider transition-all border flex-shrink-0 ${
               activeCategory === cat
                 ? "bg-[#FB570B] text-white border-transparent shadow"
@@ -338,8 +343,9 @@ const MenuPage = () => {
             <p className="text-[#888] text-sm">No items found in this category.</p>
           </div>
         ) : (
+          <>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3.5">
-            {filtered.map(item => {
+            {visibleItems.map(item => {
               const reviewsCount = ((Number(item.id) * 31) % 1200) + 45;
               const originalPrice = item.price * 1.45;
               const pctOff = Math.round((1 - (item.price / originalPrice)) * 100);
@@ -353,9 +359,9 @@ const MenuPage = () => {
                   <div>
                     <div className="relative w-full aspect-square bg-[#FAFAFA] flex items-center justify-center border-b border-[#F5F5F5] overflow-hidden">
                       {item.image ? (
-                        <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                        <img src={item.image} alt={item.name} loading="lazy" decoding="async" className="w-full h-full object-cover" />
                       ) : (
-                        <div className="text-4xl">💻</div>
+                        <div className="text-4xl">🛍️</div>
                       )}
                     </div>
 
@@ -409,6 +415,19 @@ const MenuPage = () => {
               );
             })}
           </div>
+
+          {/* Load More Button */}
+          {hasMore && (
+            <div className="flex justify-center mt-8 mb-4">
+              <button
+                onClick={() => setVisibleCount(c => c + 40)}
+                className="px-8 py-3 bg-[#FB570B] text-white text-sm font-black uppercase tracking-wider rounded-full hover:bg-orange-600 active:scale-95 transition-all shadow-md"
+              >
+                Load More ({filtered.length - visibleCount} remaining)
+              </button>
+            </div>
+          )}
+          </>
         )}
       </main>
     </div>

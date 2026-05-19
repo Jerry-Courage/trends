@@ -87,7 +87,7 @@ const HomePage = () => {
   const { data: dbItems = [] } = useQuery<DBMenuItem[]>({
     queryKey: ["/api/menu"],
     queryFn: () => api.get("/menu"),
-    staleTime: 0,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
   const { data: aiRecs, isLoading: aiLoading } = useQuery<AIRecommendation[]>({
@@ -445,7 +445,7 @@ function normalizeCategory(category: string): string {
                 >
                   <div className="flex gap-3">
                     {item.image ? (
-                      <img src={item.image} alt={item.name} className="w-16 h-16 rounded-2xl object-cover border border-gray-100 flex-shrink-0" />
+                      <img src={item.image} alt={item.name} loading="lazy" decoding="async" className="w-16 h-16 rounded-2xl object-cover border border-gray-100 flex-shrink-0" />
                     ) : (
                       <div className="w-16 h-16 bg-[#F5F5F5] border border-[#EDEDED] rounded-2xl flex items-center justify-center text-xl flex-shrink-0">💻</div>
                     )}
@@ -519,7 +519,7 @@ function normalizeCategory(category: string): string {
                   <div>
                     <div className="relative w-full aspect-square bg-[#FAFAFA] flex items-center justify-center border-b border-[#F5F5F5] overflow-hidden">
                       {item.image ? (
-                        <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                        <img src={item.image} alt={item.name} loading="lazy" decoding="async" className="w-full h-full object-cover" />
                       ) : (
                         <div className="text-4xl">💻</div>
                       )}
