@@ -1545,7 +1545,7 @@ export default function AdminDashboard() {
                         <SelectValue placeholder="Select category" />
                       </SelectTrigger>
                       <SelectContent className="bg-card border-border rounded-xl">
-                        {STORE_CATEGORIES.map(cat => (
+                        {CATEGORIES.map(cat => (
                           <SelectItem key={cat} value={cat} className="font-semibold text-sm focus:bg-primary/10">
                             {cat}
                           </SelectItem>
