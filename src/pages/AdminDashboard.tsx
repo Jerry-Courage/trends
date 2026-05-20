@@ -1521,17 +1521,6 @@ export default function AdminDashboard() {
                     </Button>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 bg-card border border-border rounded-2xl px-4 py-2 self-start md:self-auto h-12">
-                  <span className="text-xs text-muted-foreground font-semibold whitespace-nowrap">Markup %</span>
-                  <input
-                    type="number"
-                    min={0}
-                    max={500}
-                    value={cjMarkup}
-                    onChange={e => setCjMarkup(Number(e.target.value))}
-                    className="w-16 bg-transparent text-foreground text-sm font-bold focus:outline-none text-center"
-                  />
-                </div>
               </div>
 
               {/* Bulk Import Bar */}
@@ -1543,56 +1532,51 @@ export default function AdminDashboard() {
                 </div>
                 <div className="flex flex-wrap gap-3 items-end">
                   <div>
-                    <label className="text-xs text-muted-foreground font-semibold block mb-1">How many</label>
-                    <select
-                      value={bulkLimit}
-                      onChange={e => setBulkLimit(Number(e.target.value))}
-                      className="bg-card border border-border rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none"
-                    >
-                      {[10, 20, 50, 100].map(n => <option key={n} value={n}>{n} products</option>)}
-                    </select>
+                    <label className="text-xs font-bold text-muted-foreground block mb-1">Target Category</label>
+                    <Select value={bulkCategory} onValueChange={setBulkCategory}>
+                      <SelectTrigger className="w-48 bg-card border-border rounded-xl h-11 font-semibold text-sm">
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-card border-border rounded-xl">
+                        {STORE_CATEGORIES.map(cat => (
+                          <SelectItem key={cat} value={cat} className="font-semibold text-sm focus:bg-primary/10">
+                            {cat}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div>
-                    <label className="text-xs text-muted-foreground font-semibold block mb-1">Store category</label>
-                    <select
-                      value={bulkCategory}
-                      onChange={e => setBulkCategory(e.target.value)}
-                      className="bg-card border border-border rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none"
-                    >
-                      {CATEGORIES.map(c => (
-                        <option key={c} value={c}>{c}</option>
-                      ))}
-                    </select>
+                    <label className="text-xs font-bold text-muted-foreground block mb-1">Max Items</label>
+                    <Select value={String(bulkLimit)} onValueChange={val => setBulkLimit(Number(val))}>
+                      <SelectTrigger className="w-24 bg-card border-border rounded-xl h-11 font-semibold text-sm">
+                        <SelectValue placeholder="Limit" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-card border-border rounded-xl">
+                        {[5, 10, 20, 50].map(val => (
+                          <SelectItem key={val} value={String(val)} className="font-semibold text-sm focus:bg-primary/10">
+                            {val}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <Button
-                    onClick={handleBulkImport}
+                    onClick={() => handleBulkImport()}
                     disabled={bulkImporting}
-                    className="h-10 px-5 rounded-xl bg-primary hover:bg-primary/90 gap-2 text-sm font-bold"
+                    className="h-11 px-5 rounded-xl bg-primary hover:bg-primary/90 font-bold gap-2 text-sm"
                   >
-                    {bulkImporting ? <><Loader2 size={14} className="animate-spin" /> Importing...</> : <><Download size={14} /> Bulk Import</>}
+                    {bulkImporting ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+                    Start Bulk Import
                   </Button>
                 </div>
-                {bulkResult && (
-                  <div className="mt-3 flex items-center gap-2 text-sm">
-                    <CheckCircle2 size={16} className="text-emerald-400" />
-                    <span className="text-emerald-400 font-semibold">{bulkResult.message}</span>
-                  </div>
-                )}
               </div>
 
-              {/* Results */}
+              {/* CJ Search Results */}
               {cjSearching && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {[1,2,3,4,5,6].map(i => (
-                    <div key={i} className="bg-card border border-border rounded-2xl overflow-hidden animate-pulse">
-                      <div className="h-40 bg-muted" />
-                      <div className="p-4 space-y-2">
-                        <div className="h-4 bg-muted rounded w-3/4" />
-                        <div className="h-3 bg-muted rounded w-1/2" />
-                        <div className="h-8 bg-muted rounded mt-3" />
-                      </div>
-                    </div>
-                  ))}
+                <div className="flex flex-col items-center justify-center py-20 gap-3">
+                  <Loader2 size={32} className="animate-spin text-primary" />
+                  <p className="text-sm font-bold text-muted-foreground">Searching CJ dropshipping database...</p>
                 </div>
               )}
 
@@ -1601,26 +1585,28 @@ export default function AdminDashboard() {
                   <p className="text-xs text-muted-foreground font-semibold">{cjResults.length} products found · Your price = (CJ cost + $4.99 shipping) × 1.10 — all-in, FREE shipping at checkout</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {cjResults.map(product => {
-                      const rawSellPrice = String(product.sellPrice);
-                      let displayYourPrice = "NaN";
-                      let displayCJCost = rawSellPrice;
+                       const rawSellPrice = String(product.sellPrice);
+                       let displayYourPrice = "NaN";
+                       let displayCJCost = rawSellPrice;
 
-                      if (rawSellPrice.includes('--')) {
-                        const parts = rawSellPrice.split('--').map(p => parseFloat(p.trim()));
-                        if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
-                          const minPrice = (parts[0] * (1 + cjMarkup / 100)).toFixed(2);
-                          const maxPrice = (parts[1] * (1 + cjMarkup / 100)).toFixed(2);
-                          displayYourPrice = `${minPrice} - ${maxPrice}`;
-                        }
-                      } else {
-                        const SHIPPING_ESTIMATE = 4.99;
-                        const PROFIT_MARGIN = 0.10;
-                        const priceNum = parseFloat(rawSellPrice);
-                        if (!isNaN(priceNum)) {
-                          displayCJCost = priceNum.toFixed(2);
-                          displayYourPrice = ((priceNum + SHIPPING_ESTIMATE) * (1 + PROFIT_MARGIN)).toFixed(2);
-                        }
-                      }
+                       if (rawSellPrice.includes('--')) {
+                         const parts = rawSellPrice.split('--').map(p => parseFloat(p.trim()));
+                         if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+                           const SHIPPING_ESTIMATE = 4.99;
+                           const PROFIT_MARGIN = 0.10;
+                           const minPrice = ((parts[0] + SHIPPING_ESTIMATE) * (1 + PROFIT_MARGIN)).toFixed(2);
+                           const maxPrice = ((parts[1] + SHIPPING_ESTIMATE) * (1 + PROFIT_MARGIN)).toFixed(2);
+                           displayYourPrice = `${minPrice} - ${maxPrice}`;
+                         }
+                       } else {
+                         const SHIPPING_ESTIMATE = 4.99;
+                         const PROFIT_MARGIN = 0.10;
+                         const priceNum = parseFloat(rawSellPrice);
+                         if (!isNaN(priceNum)) {
+                           displayCJCost = priceNum.toFixed(2);
+                           displayYourPrice = ((priceNum + SHIPPING_ESTIMATE) * (1 + PROFIT_MARGIN)).toFixed(2);
+                         }
+                       }
 
                       return (
                         <Card key={product.pid} className="bg-card border-border overflow-hidden group hover:border-primary/30 transition-all duration-300">
