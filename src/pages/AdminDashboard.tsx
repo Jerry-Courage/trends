@@ -60,6 +60,13 @@ import { useCurrency } from "@/context/CurrencyContext";
 import logo from "@/assets/logo.png";
 
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type AdminStats = {
   revenue: { date: string; amount: number }[];
