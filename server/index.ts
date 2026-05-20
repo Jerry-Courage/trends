@@ -223,6 +223,30 @@ async function seedDemoCustomers() {
   }
 }
 
+async function updateExistingCJPrices() {
+  console.log("### DB_CHECKPOINT: Checking if existing CJ product prices need updating...");
+  const items = await db.select().from(menuItems);
+  let updatedCount = 0;
+  for (const item of items) {
+    if (item.cjPid && item.cjCost) {
+      const costPrice = parseFloat(item.cjCost);
+      if (!isNaN(costPrice) && costPrice > 0) {
+        const SHIPPING_ESTIMATE = 4.99;
+        const PROFIT_MARGIN = 0.10;
+        const expectedPrice = ((costPrice + SHIPPING_ESTIMATE) * (1 + PROFIT_MARGIN)).toFixed(2);
+        
+        if (item.price !== expectedPrice) {
+          await db.update(menuItems)
+            .set({ price: expectedPrice })
+            .where(eq(menuItems.id, item.id));
+          updatedCount++;
+        }
+      }
+    }
+  }
+  console.log(`### DB_SUCCESS: Price migration completed. Recalculated and updated ${updatedCount} existing CJ products.`);
+}
+
 // ─── Start Server ─────────────────────────────────────────────────────────────
 
 console.log("### SERVER_CHECKPOINT: Attempting to listen on PORT:", PORT);
@@ -238,6 +262,7 @@ httpServer.listen(PORT, "0.0.0.0", async () => {
     await seedSuperAdmin();
     await seedMenuItems();
     await seedDemoCustomers();
+    await updateExistingCJPrices();
     console.log("### SERVER_CHECKPOINT: Startup complete");
   } catch (err) {
     console.error("### SERVER_ERROR: Seed error:", err);
