@@ -184,27 +184,7 @@ const MenuPage = () => {
     });
   };
 
-  if (isLoading) {
-    return (
-      <div className="pb-8 bg-[#F7F7F7] text-[#222222] min-h-screen text-left">
-        <AppHeader title="Catalog - TRENDS" showBack />
-        <div className="flex gap-2 px-4 py-4 overflow-x-auto scrollbar-none">
-          {[1, 2, 3, 4, 5].map(i => (
-            <Skeleton key={i} className="h-9 w-24 rounded-full bg-white border border-[#EDEDED] flex-shrink-0" />
-          ))}
-        </div>
-        <div className="px-4 grid grid-cols-2 md:grid-cols-5 gap-3.5 mt-5">
-          {[1, 2, 3, 4, 5].map(i => (
-            <div key={i} className="bg-white rounded-2xl p-4 space-y-3 border border-[#EDEDED]">
-              <Skeleton className="w-full aspect-square rounded-xl bg-gray-100" />
-              <Skeleton className="h-4 w-5/6 bg-gray-100" />
-              <Skeleton className="h-4 w-1/2 bg-gray-100" />
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
+
 
   return (
     <div className="pb-28 bg-[#F7F7F7] text-[#222222] min-h-screen text-left font-sans">
@@ -348,14 +328,24 @@ const MenuPage = () => {
       <main className="max-w-7xl mx-auto px-4 mt-2">
         <div className="flex items-center justify-between mb-4 px-1">
           <h2 className="text-sm font-black uppercase tracking-widest text-[#888]">
-            {activeCategory} Products ({filtered.length})
+            {activeCategory} Products ({isLoading ? "..." : filtered.length})
           </h2>
           <button className="p-2 bg-white border border-[#EBEBEB] rounded-xl text-gray-500 hover:text-black transition-colors">
             <SlidersHorizontal className="w-3.5 h-3.5" />
           </button>
         </div>
 
-        {filtered.length === 0 ? (
+        {isLoading ? (
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3.5">
+            {[...Array(10)].map((_, i) => (
+              <div key={i} className="bg-white rounded-2xl p-4 space-y-3 border border-[#EDEDED] shadow-sm animate-pulse">
+                <div className="w-full aspect-square rounded-xl bg-gray-100" />
+                <div className="h-3.5 w-5/6 bg-gray-100 rounded" />
+                <div className="h-3.5 w-1/2 bg-gray-100 rounded" />
+              </div>
+            ))}
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="text-center py-16 bg-white border border-[#EDEDED] rounded-3xl p-6 shadow-sm">
             <p className="text-[#888] text-sm">No items found in this category.</p>
           </div>
