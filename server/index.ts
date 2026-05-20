@@ -262,8 +262,17 @@ httpServer.listen(PORT, "0.0.0.0", async () => {
     await seedSuperAdmin();
     await seedMenuItems();
     await seedDemoCustomers();
-    await updateExistingCJPrices();
     console.log("### SERVER_CHECKPOINT: Startup complete");
+
+    // Run the price migration in the background after startup — non-blocking
+    setTimeout(async () => {
+      try {
+        await updateExistingCJPrices();
+      } catch (err) {
+        console.error("### PRICE_MIGRATION_ERROR:", err);
+      }
+    }, 3000);
+
   } catch (err) {
     console.error("### SERVER_ERROR: Seed error:", err);
   }
@@ -271,12 +280,12 @@ httpServer.listen(PORT, "0.0.0.0", async () => {
 
 process.on("uncaughtException", (err) => {
   console.error("### CRITICAL_ERROR: Uncaught Exception:", err);
-  process.exit(1);
+  // Don't exit — log and keep the server alive
 });
 
 process.on("unhandledRejection", (reason) => {
   console.error("### CRITICAL_ERROR: Unhandled Rejection:", reason);
-  process.exit(1);
+  // Don't exit — log and keep the server alive
 });
 
 export { io };
