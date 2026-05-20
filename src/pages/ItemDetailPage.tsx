@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ChevronLeft, ShoppingCart, Star, Zap, Shield, AlertTriangle, Minus, Plus, Share2, Lock, Truck, RefreshCcw, Package } from "lucide-react";
+import { ChevronLeft, ChevronRight, ShoppingCart, Star, Zap, Shield, AlertTriangle, Minus, Plus, Share2, Lock, Truck, RefreshCcw, Package } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCart } from "@/context/CartContext";
 import { useCurrency } from "@/context/CurrencyContext";
