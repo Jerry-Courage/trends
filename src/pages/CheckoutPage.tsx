@@ -78,7 +78,7 @@ const CheckoutPage = () => {
 
   const discountAmount = subtotal * discountPercent;
   const discountedSubtotal = subtotal - discountAmount;
-  const shippingFee = 4.99;
+  const shippingFee = 0; // Shipping is FREE — already baked into all product prices
   const tax = discountedSubtotal * 0.0;
   const total = discountedSubtotal + shippingFee + tax;
   const totalLocal = total * rate;
@@ -412,7 +412,7 @@ const CheckoutPage = () => {
               {discountPercent > 0 && (
                 <div className="flex justify-between font-semibold text-[#FB570B]"><span className="font-black uppercase tracking-wide">Promo Discount</span><span className="font-extrabold">-{fmt(discountAmount)}</span></div>
               )}
-              <div className="flex justify-between font-semibold"><span className="text-[#888] font-bold">CJ Flat Shipping Fee</span><span className="text-[#222] font-extrabold">{fmt(shippingFee)}</span></div>
+              <div className="flex justify-between font-semibold"><span className="text-[#888] font-bold">Shipping</span><span className="text-emerald-600 font-extrabold">FREE 🚚</span></div>
               <div className="flex justify-between font-semibold"><span className="text-[#888] font-bold">Estimated VAT (0%)</span><span className="text-[#222] font-extrabold">{fmt(tax)}</span></div>
               <div className="border-t border-[#EDEDED] my-3" />
               <div className="flex justify-between items-end">

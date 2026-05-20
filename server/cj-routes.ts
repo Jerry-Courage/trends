@@ -105,7 +105,10 @@ router.post("/products/import", auth, requireRole("admin"), async (req, res) => 
 
   try {
     const costPrice = parseFloat(price);
-    const sellPrice = (costPrice * (1 + Number(markup) / 100)).toFixed(2);
+    // All-in price: CJ wholesale cost + $4.99 flat shipping + 10% profit margin
+    const SHIPPING_ESTIMATE = 4.99;
+    const PROFIT_MARGIN = 0.10;
+    const sellPrice = ((costPrice + SHIPPING_ESTIMATE) * (1 + PROFIT_MARGIN)).toFixed(2);
 
     // Fetch product detail to get variants, gallery images, and video URL
     let resolvedVid = vid || null;
@@ -215,14 +218,14 @@ router.post("/products/bulk-import", auth, requireRole("admin"), async (req, res
           const costPrice = parseFloat(product.sellPrice || "0");
           if (costPrice <= 0) { skipped++; continue; }
 
-          // Check if already exists in DB
+          // Skip already imported products to avoid duplicates
           const existing = await db.select().from(menuItems).where(eq(menuItems.cjPid, product.pid));
-          if (existing.length > 0) {
-            skipped++;
-            continue; // Skip already imported items to avoid duplicates
-          }
+          if (existing.length > 0) { skipped++; continue; }
 
-          const sellPrice = (costPrice * (1 + Number(markup) / 100)).toFixed(2);
+          // All-in price: CJ wholesale cost + $4.99 flat shipping + 10% profit margin
+          const SHIPPING_ESTIMATE = 4.99;
+          const PROFIT_MARGIN = 0.10;
+          const sellPrice = ((costPrice + SHIPPING_ESTIMATE) * (1 + PROFIT_MARGIN)).toFixed(2);
 
           // Try to get variant ID, gallery images, and video URL
           let vid: string | null = null;

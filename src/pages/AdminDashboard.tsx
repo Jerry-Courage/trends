@@ -1598,7 +1598,7 @@ export default function AdminDashboard() {
 
               {!cjSearching && cjResults.length > 0 && (
                 <>
-                  <p className="text-xs text-muted-foreground font-semibold">{cjResults.length} products found · Sell price = CJ cost + {cjMarkup}% markup</p>
+                  <p className="text-xs text-muted-foreground font-semibold">{cjResults.length} products found · Your price = (CJ cost + $4.99 shipping) × 1.10 — all-in, FREE shipping at checkout</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {cjResults.map(product => {
                       const rawSellPrice = String(product.sellPrice);
@@ -1613,10 +1613,12 @@ export default function AdminDashboard() {
                           displayYourPrice = `${minPrice} - ${maxPrice}`;
                         }
                       } else {
+                        const SHIPPING_ESTIMATE = 4.99;
+                        const PROFIT_MARGIN = 0.10;
                         const priceNum = parseFloat(rawSellPrice);
                         if (!isNaN(priceNum)) {
                           displayCJCost = priceNum.toFixed(2);
-                          displayYourPrice = (priceNum * (1 + cjMarkup / 100)).toFixed(2);
+                          displayYourPrice = ((priceNum + SHIPPING_ESTIMATE) * (1 + PROFIT_MARGIN)).toFixed(2);
                         }
                       }
 
