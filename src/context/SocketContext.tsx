@@ -25,7 +25,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       return;
     }
 
-    const socketUrl = import.meta.env.VITE_SOCKET_URL || "http://localhost:3001";
+    const socketUrl = import.meta.env.VITE_SOCKET_URL || (import.meta.env.MODE === "production" ? window.location.origin : "http://localhost:3001");
     const newSocket = io(socketUrl, {
       withCredentials: true,
       transports: ["websocket", "polling"],

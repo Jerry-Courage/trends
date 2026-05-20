@@ -8,6 +8,7 @@ import { useCurrency } from "@/context/CurrencyContext";
 import { api } from "@/lib/api";
 import { useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import logo from "@/assets/logo.png";
 
 declare global {
   interface Window {
@@ -178,7 +179,7 @@ const CheckoutPage = () => {
           </button>
           <div onClick={() => navigate("/")} className="flex items-center gap-2.5 cursor-pointer">
             <div className="w-8 h-8 rounded-lg bg-black flex items-center justify-center overflow-hidden flex-shrink-0 border border-[#F0F0F0]">
-              <img src="/assets/logo.png" alt="TRENDS Logo" className="w-full h-full object-contain scale-110" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+              <img src={logo} alt="TRENDS Logo" className="w-full h-full object-contain scale-110" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
             </div>
             <span className="text-sm font-black tracking-tight text-[#FB570B] uppercase italic hidden sm:inline-block">TRENDS</span>
           </div>
